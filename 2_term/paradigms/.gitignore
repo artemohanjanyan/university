@@ -1,0 +1,7 @@
+# compilation products
+**/out/
+
+**/.idea/workspace.xml
+**/.idea/tasks.xml
+
+paradigms-2015/

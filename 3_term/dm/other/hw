@@ -1,0 +1,6 @@
+uv not in G:
+P(G, x) = P(G U uv, x) + P(G / uv, x)
+
+P(K_1,m, x) = x * (x - 1) ^ m
+
+K_n,m = P(

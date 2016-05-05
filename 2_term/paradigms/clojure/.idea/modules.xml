@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ProjectModuleManager">
+    <modules>
+      <module fileurl="file://$PROJECT_DIR$/expressions/expressions.iml" filepath="$PROJECT_DIR$/expressions/expressions.iml" />
+      <module fileurl="file://$PROJECT_DIR$/objects/objects.iml" filepath="$PROJECT_DIR$/objects/objects.iml" />
+    </modules>
+  </component>
+</project>
