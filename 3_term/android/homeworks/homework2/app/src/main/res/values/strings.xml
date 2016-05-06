@@ -1,0 +1,4 @@
+<resources>
+    <string name="app_name">City Cam</string>
+    <string name="download_error">Ошибка загрузки</string>
+</resources>
