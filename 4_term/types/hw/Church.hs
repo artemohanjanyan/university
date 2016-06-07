@@ -34,3 +34,9 @@ isEven = L "n" $ V "n" $$ not $$ true
 add = L "a" $ L "b" $ L "f" $ L "x" $ V "a" $$ V "f" $$ (V "b" $$ V "f" $$ V "x")
 mul = L "a" $ L "b" $ V "a" $$ (add $$ V "b") $$ fromInt 0
 pow = L "a" $ L "b" $ V "b" $$ V "a"
+
+pair = expr $ "\\a.\\b.\\f. f a b"
+first = L "p" $ V "p" $$ true
+second = L "p" $ V "p" $$ false
+dec = L "n" $ first $$ (V "n" $$ (L "p" $ pair $$ (second $$ V "p") $$ (inc $$ (second $$ V "p"))) $$ (pair $$ fromInt 0 $$ fromInt 0))
+sub = L "a" $ L "b" $ V "b" $$ dec $$ V "a"
