@@ -43,9 +43,17 @@ naiveSubstitute expr1 var expr2
         | otherwise   = expr
 
 rename :: Map.Map Var Var -> Expression -> Expression
-rename dict (L var expr) = (L var $ rename (Map.delete var dict) expr)
-rename dict (expr1 :$: expr2) = rename dict expr1 :$: rename dict expr2
-rename dict (V var) = V $ Map.findWithDefault var var dict
+rename = rename' Map.empty
+  where
+    rename' :: Map.Map Var Var -> Map.Map Var Var -> Expression -> Expression
+    rename' act dict (L var expr)
+        | Map.member var dict = L newVar $ rename' (Map.insert var newVar act) (Map.delete var dict) expr
+        | Map.member var act  = L var    $ rename' (Map.delete var act)        dict                  expr
+        | otherwise           = L var    $ rename' act                         dict                  expr
+      where
+        newVar = dict Map.! var
+    rename' act dict (expr1 :$: expr2) = rename' act dict expr1 :$: rename' act dict expr2
+    rename' act dict (V var) = V $ Map.findWithDefault var var act
 
 applyRedex :: Expression -> Expression -> Expression
 applyRedex (L var expr1) expr2 = newExpr
@@ -69,9 +77,9 @@ applyRedex (L var expr1) expr2 = newExpr
           where
             newName = name ++ "'"
 
-    renamings = Map.fromList $ mapMaybe id $ evalState (mapM makeRenaming $ Set.toList freeVars) boundVars
+    renamings = Map.fromList $ mapMaybe id $ evalState (mapM makeRenaming $ Set.toList boundVars) freeVars
 
-    Right newExpr = naiveSubstitute expr1 var (rename renamings expr2)
+    Right newExpr = naiveSubstitute (rename renamings expr1) var expr2
 
 normalStep :: Expression -> Maybe Expression
 normalStep (L var expr)

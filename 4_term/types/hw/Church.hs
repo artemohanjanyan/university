@@ -27,3 +27,10 @@ toInt (L _ (L _ e)) = toInt' e
   where
     toInt' (V _) = 0
     toInt' (_ :$: x) = 1 + toInt' x
+
+inc = L "n" $ L "f" $ L "x" $ V "f" $$ (V "n" $$ V "f" $$ V "x")
+isZero = L "n" $ V "n" $$ (L "x" false) $$ true
+isEven = L "n" $ V "n" $$ not $$ true
+add = L "a" $ L "b" $ L "f" $ L "x" $ V "a" $$ V "f" $$ (V "b" $$ V "f" $$ V "x")
+mul = L "a" $ L "b" $ V "a" $$ (add $$ V "b") $$ fromInt 0
+pow = L "a" $ L "b" $ V "b" $$ V "a"
