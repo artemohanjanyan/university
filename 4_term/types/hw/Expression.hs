@@ -34,7 +34,7 @@ show' (V var) _ _ = var
 embrace str = "(" ++ str ++ ")"
 
 parensShow :: Expression -> String
-parensShow (L var expr) = embrace $ "\\" ++ show var ++ "." ++ parensShow expr
+parensShow (L var expr) = embrace $ "\\" ++ var ++ "." ++ parensShow expr
 parensShow (expr1 :$: expr2) = embrace $ parensShow expr1 ++ " " ++ parensShow expr2
 parensShow (V name) = name
 
@@ -73,10 +73,10 @@ expressionParser =
 
 abstractionParser = do
     token' $ char '\\'
-    var <- token' $ varParser
+    vars <- many1 $ token' $ varParser
     token' $ string "."
     expr <- token' $ expressionParser
-    return $ L var expr
+    return $ foldr ($) expr $ map L vars
 
 applicationParser = chainl1 (token' atomParser) (return (:$:))
 

@@ -77,3 +77,52 @@ resolveStep system = (\(system4, flag4) -> (system4, flag1 || flag2 || flag3 || 
 resolveSystem :: System -> Maybe System
 resolveSystem system = resolveStep system >>=
         (\(system', flag) -> if flag then resolveSystem system' else Just system')
+
+applySystem :: System -> Type -> Type
+applySystem system = apply
+  where
+    systemMap = Map.fromList $ map (\(a :=: b) -> (a, b)) system
+    apply t@(BaseType _) = Map.findWithDefault t t systemMap
+    apply (t1 :>: t2) = apply t1 :>: apply t2
+
+inferType :: Expression -> Maybe CurryExpression
+inferType expression = do
+    system <- maybeSystem
+    return $ expression ::: applySystem system exprType
+  where
+    renameAbstractions :: Expression -> State (Int, Map.Map Var Var) Expression
+    renameAbstractions (V var) = do
+        (n, map) <- get
+        return $ V $ Map.findWithDefault var var map
+    renameAbstractions (expr1 :$: expr2) = do
+        newExpr1 <- renameAbstractions expr1
+        newExpr2 <- renameAbstractions expr2
+        return $ newExpr1 :$: newExpr2
+    renameAbstractions (L var expr) = do
+        (n, map) <- get
+        let newVar = show n
+        put (n + 1, Map.insert var newVar map)
+        newExpr <- renameAbstractions expr
+        modify (\(n, _) -> (n, map))
+        return $ L newVar newExpr
+
+    makeSystem :: Expression -> State (Int, System) Type
+    makeSystem (V var) = return $ BaseType $ "t" ++ var
+    makeSystem (expr1 :$: expr2) = do
+        type1 <- makeSystem expr1
+        type2 <- makeSystem expr2
+        (n, system) <- get
+        let typeName = "e" ++ show n
+        let newType = BaseType typeName
+        put (n + 1, type1 :=: type2 :>: newType : system)
+        return newType
+    makeSystem (L var expr) = do
+        exprType <- makeSystem expr
+        (n, system) <- get
+        let typeName = "e" ++ show n
+        let newType = BaseType typeName
+        put (n + 1, newType :=: (BaseType $ "t" ++ var) :>: exprType : system)
+        return newType
+
+    (exprType, (_, rawSystem)) = runState (makeSystem $ evalState (renameAbstractions expression) (0, Map.empty)) (0, [])
+    maybeSystem = resolveSystem rawSystem
