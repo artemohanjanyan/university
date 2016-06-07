@@ -85,10 +85,10 @@ applySystem system = apply
     apply t@(BaseType _) = Map.findWithDefault t t systemMap
     apply (t1 :>: t2) = apply t1 :>: apply t2
 
-inferType :: Expression -> Maybe CurryExpression
+inferType :: Expression -> Maybe Type
 inferType expression = do
     system <- maybeSystem
-    return $ expression ::: applySystem system exprType
+    return $ applySystem system exprType
   where
     renameAbstractions :: Expression -> State (Int, Map.Map Var Var) Expression
     renameAbstractions (V var) = do

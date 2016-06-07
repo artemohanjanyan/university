@@ -33,10 +33,16 @@ show' (V var) _ _ = var
 
 embrace str = "(" ++ str ++ ")"
 
+fullShow :: String -> Expression -> String
+fullShow dot (L var expr) = embrace $ "\\" ++ var ++ dot ++ fullShow dot expr
+fullShow dot (expr1 :$: expr2) = embrace $ fullShow dot expr1 ++ " " ++ fullShow dot expr2
+fullShow dot (V name) = name
+
 parensShow :: Expression -> String
-parensShow (L var expr) = embrace $ "\\" ++ var ++ "." ++ parensShow expr
-parensShow (expr1 :$: expr2) = embrace $ parensShow expr1 ++ " " ++ parensShow expr2
-parensShow (V name) = name
+parensShow = fullShow "."
+
+haskellShow :: Expression -> String
+haskellShow = fullShow "->"
 
 instance Show Expression where
     show expr = show' expr True True
