@@ -1,4 +1,4 @@
-module Types where
+module Expression where
 
 import Text.Parsec
 import Text.Parsec.Char (char)
@@ -10,15 +10,22 @@ data Expression
     | Expression :$: Expression
     | V Var -- V for Var
     deriving (Eq, Ord)
-
+infixl 9 :$:
 type Var = String
+
+data Type
+    = BaseType TypeName
+    | Type :>: Type
+    deriving (Eq, Ord)
+infixr 9 :>:
+type TypeName = String
+
+data CurryExpression = Expression ::: Type
+infix 1 :::
 
 ------------
 --- Show ---
 ------------
-
-instance Show Expression where
-    show expr = show' expr True True
 
 show' (L var expr) flag1 flag2 = (if flag1 then id else embrace) $ "\\" ++ var ++ "." ++ show expr
 show' (expr1 :$: expr2) flag1 flag2 = (if flag2 then id else embrace) $ show' expr1 False True ++ " " ++ show' expr2 flag1 False
@@ -27,9 +34,20 @@ show' (V var) _ _ = var
 embrace str = "(" ++ str ++ ")"
 
 parensShow :: Expression -> String
-parensShow (L var expr) = "(\\" ++ show var ++ "." ++ parensShow expr ++ ")"
-parensShow (expr1 :$: expr2) = "(" ++ parensShow expr1 ++ " " ++ parensShow expr2 ++ ")"
+parensShow (L var expr) = embrace $ "\\" ++ show var ++ "." ++ parensShow expr
+parensShow (expr1 :$: expr2) = embrace $ parensShow expr1 ++ " " ++ parensShow expr2
 parensShow (V name) = name
+
+instance Show Expression where
+    show expr = show' expr True True
+
+instance Show Type where
+    show (BaseType name) = name
+    show (t1@(_ :>: _) :>: t2) = embrace (show t1) ++ " -> " ++ show t2
+    show (t1 :>: t2) = show t1 ++ " -> " ++ show t2
+
+instance Show CurryExpression where
+    show (e ::: t) = show e ++ " : " ++ show t
 
 ------------
 -- Parser --

@@ -2,7 +2,7 @@ module Church where
 
 import Prelude hiding (not, and, or)
 
-import Types
+import Expression
 import Reduction
 
 ($$) :: Expression -> Expression -> Expression

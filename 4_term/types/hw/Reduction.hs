@@ -1,6 +1,6 @@
 module Reduction where
 
-import Types    
+import Expression
 import qualified Data.Set as Set
 import qualified Data.Map.Strict as Map
 import Data.Maybe (mapMaybe)
