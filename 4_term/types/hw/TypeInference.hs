@@ -85,10 +85,8 @@ applySystem system = apply
     apply t@(BaseType _) = Map.findWithDefault t t systemMap
     apply (t1 :>: t2) = apply t1 :>: apply t2
 
-inferType :: Expression -> Maybe Type
-inferType expression = do
-    system <- maybeSystem
-    return $ applySystem system exprType
+makeSystem :: Expression -> (System, Type)
+makeSystem expr = (rawSystem, exprType)
   where
     renameAbstractions :: Expression -> State (Int, Map.Map Var Var) Expression
     renameAbstractions (V var) = do
@@ -106,23 +104,30 @@ inferType expression = do
         modify (\(n, _) -> (n, map))
         return $ L newVar newExpr
 
-    makeSystem :: Expression -> State (Int, System) Type
-    makeSystem (V var) = return $ BaseType $ "t" ++ var
-    makeSystem (expr1 :$: expr2) = do
-        type1 <- makeSystem expr1
-        type2 <- makeSystem expr2
+    makeSystem' :: Expression -> State (Int, System) Type
+    makeSystem' (V var) = return $ BaseType $ "t" ++ var
+    makeSystem' (expr1 :$: expr2) = do
+        type1 <- makeSystem' expr1
+        type2 <- makeSystem' expr2
         (n, system) <- get
         let typeName = "e" ++ show n
         let newType = BaseType typeName
         put (n + 1, type1 :=: type2 :>: newType : system)
         return newType
-    makeSystem (L var expr) = do
-        exprType <- makeSystem expr
+    makeSystem' (L var expr) = do
+        exprType <- makeSystem' expr
         (n, system) <- get
         let typeName = "e" ++ show n
         let newType = BaseType typeName
         put (n + 1, newType :=: (BaseType $ "t" ++ var) :>: exprType : system)
         return newType
 
-    (exprType, (_, rawSystem)) = runState (makeSystem $ evalState (renameAbstractions expression) (0, Map.empty)) (0, [])
+    (exprType, (_, rawSystem)) = runState (makeSystem' $ evalState (renameAbstractions expr) (0, Map.empty)) (0, [])
+
+inferType :: Expression -> Maybe Type
+inferType expr = do
+    system <- maybeSystem
+    return $ applySystem system exprType
+  where
+    (rawSystem, exprType) = makeSystem expr
     maybeSystem = resolveSystem rawSystem

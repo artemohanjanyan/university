@@ -17,10 +17,7 @@ and = L "a" $ L "b" $ V "a" :$: V "b" :$: false
 or = L "a" $ L "b" $ V "a" :$: true :$: V "b"
 
 fromInt :: Int -> Expression
-fromInt n = L "f" $ L "x" $ fromInt' n
-  where
-    fromInt' 0 = V "x"
-    fromInt' n = V "f" :$: fromInt' (n - 1)
+fromInt n = L "f" $ L "x" $ foldr ($) (V "x") $ replicate n (V "f" :$:)
 
 toInt :: Expression -> Int
 toInt (L _ (L _ e)) = toInt' e
@@ -34,6 +31,7 @@ isEven = L "n" $ V "n" $$ not $$ true
 add = L "a" $ L "b" $ L "f" $ L "x" $ V "a" $$ V "f" $$ (V "b" $$ V "f" $$ V "x")
 mul = L "a" $ L "b" $ V "a" $$ (add $$ V "b") $$ fromInt 0
 pow = L "a" $ L "b" $ V "b" $$ V "a"
+pow' = L "a" $ L "b" $ V "b" $$ (mul $$ V "a") $$ fromInt 1
 
 pair = expr $ "\\a.\\b.\\f. f a b"
 first = L "p" $ V "p" $$ true
