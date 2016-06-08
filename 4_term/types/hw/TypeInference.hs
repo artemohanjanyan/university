@@ -116,11 +116,7 @@ makeSystem expr = (rawSystem, exprType)
         return newType
     makeSystem' (L var expr) = do
         exprType <- makeSystem' expr
-        (n, system) <- get
-        let typeName = "e" ++ show n
-        let newType = BaseType typeName
-        put (n + 1, newType :=: (BaseType $ "t" ++ var) :>: exprType : system)
-        return newType
+        return $ (BaseType $ "t" ++ var) :>: exprType
 
     (exprType, (_, rawSystem)) = runState (makeSystem' $ evalState (renameAbstractions expr) (0, Map.empty)) (0, [])
 
