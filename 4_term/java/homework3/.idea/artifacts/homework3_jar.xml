@@ -1,0 +1,13 @@
+<component name="ArtifactManager">
+  <artifact type="jar" name="homework3:jar">
+    <output-path>$PROJECT_DIR$/out/artifacts/homework3_jar</output-path>
+    <root id="archive" name="homework3.jar">
+      <element id="module-output" name="homework3" />
+      <element id="extracted-dir" path="$PROJECT_DIR$/../java-advanced-2016/lib/hamcrest-core-1.3.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$PROJECT_DIR$/../java-advanced-2016/lib/jsoup-1.8.1.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$PROJECT_DIR$/../java-advanced-2016/lib/junit-4.11.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$PROJECT_DIR$/../java-advanced-2016/lib/quickcheck-0.6.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$PROJECT_DIR$/../java-advanced-2016/artifacts/ImplementorTest.jar" path-in-jar="/" />
+    </root>
+  </artifact>
+</component>

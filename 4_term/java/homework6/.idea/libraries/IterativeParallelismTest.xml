@@ -1,0 +1,9 @@
+<component name="libraryTable">
+  <library name="IterativeParallelismTest">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/../java-advanced-2016/artifacts/IterativeParallelismTest.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>
