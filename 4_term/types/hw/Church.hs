@@ -5,9 +5,6 @@ import Prelude hiding (not, and, or)
 import Expression
 import Reduction
 
-($$) :: Expression -> Expression -> Expression
-expr1 $$ expr2 = normalize $ expr1 :$: expr2
-
 true = expr "\\a.\\b.a"
 --true = L "a" $ L "b" $ V "a"
 false = expr "\\a.\\b.b"

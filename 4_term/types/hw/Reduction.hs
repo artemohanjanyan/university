@@ -96,3 +96,6 @@ normalize :: Expression -> Expression
 normalize expr = case normalStep expr of
     Just expr' -> normalize expr'
     Nothing    -> expr
+
+($$) :: Expression -> Expression -> Expression
+expr1 $$ expr2 = normalize $ expr1 :$: expr2
