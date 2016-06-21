@@ -4,10 +4,14 @@ import qualified Data.Set as Set
 
 import Expression
 import Reduction
+import Church
 
 s = L "x" $ L "y" $ L "z" $ V "x" :$: V "z" :$: (V "y" :$: V "z")
 k = L "x" $ L "y" $ V "x"
 i = s $$ k $$ k
+y = L "f" $ (L "x" $ V "f" :$: (V "x" :$: V "x")) :$: (L "x" $ V "f" :$: (V "x" :$: V "x"))
+fact' = L "f" $ L "n" $ isZero :$: V "n" :$: fromInt 1 :$: (mul :$: V "n" :$: (V "f" :$: (dec :$: V "n")))
+fact = y :$: fact'
 
 data CombExpr
     = S | K | I

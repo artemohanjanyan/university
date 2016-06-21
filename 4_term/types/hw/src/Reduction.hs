@@ -1,11 +1,11 @@
 module Reduction where
 
-import Expression
 import qualified Data.Set as Set
 import qualified Data.Map.Strict as Map
 import Data.Maybe (mapMaybe)
-
 import Control.Monad.State.Lazy
+
+import Expression
 
 getFreeVars :: Expression -> Set.Set Var
 getFreeVars (L var expr) = Set.delete var $ getFreeVars expr

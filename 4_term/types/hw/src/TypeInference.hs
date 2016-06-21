@@ -1,13 +1,14 @@
 module TypeInference where
 
-import Expression
 import Data.Maybe (mapMaybe)
 import Control.Monad (foldM)
 import qualified Data.Set as Set
 import qualified Data.Map.Strict as Map
 import Data.List (nub, sort, find)
-
 import Control.Monad.State.Lazy
+
+import Expression
+import Reduction
 
 data Equation = Type :=: Type deriving (Eq, Ord)
 type System = [Equation]
@@ -120,10 +121,12 @@ makeSystem expr = (rawSystem, exprType)
 
     (exprType, (_, rawSystem)) = runState (makeSystem' $ evalState (renameAbstractions expr) (0, Map.empty)) (0, [])
 
-inferType :: Expression -> Maybe Type
+inferType :: Expression -> Maybe (Type, [(Var, Type)])
 inferType expr = do
     system <- maybeSystem
-    return $ applySystem system exprType
+    return $ (applySystem system exprType, makeContext system)
   where
     (rawSystem, exprType) = makeSystem expr
     maybeSystem = resolveSystem rawSystem
+    freeVars = getFreeVars expr
+    makeContext system = map (\var -> (var, applySystem system $ BaseType $ "t" ++ var)) $ Set.toList freeVars

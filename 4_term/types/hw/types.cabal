@@ -1,0 +1,16 @@
+name:              tt-hw
+version:           1.0
+Build-Type:        Simple
+cabal-version:     >= 1.2
+
+executable hw1
+  main-is:         MainNormalize.hs
+  hs-source-dirs:  src/
+  build-depends:   mtl, base, parsec, containers, transformers, text
+  extensions:      PatternGuards
+
+executable hw2
+  main-is:         MainInferType.hs
+  hs-source-dirs:  src/
+  build-depends:   mtl, base, parsec, containers, transformers, text
+  extensions:      PatternGuards
