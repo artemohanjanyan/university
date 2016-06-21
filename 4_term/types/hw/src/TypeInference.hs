@@ -61,7 +61,7 @@ resolveStep system = (\(system4, flag4) -> (system4, flag1 || flag2 || flag3 || 
         maybeEq = find check system
         check eq1@(BaseType name :=: _) = any checkOther system
           where
-            checkOther eq2@(type1 :=: type2) = eq1 /= eq2 &&
+            checkOther eq2@(type1 :=: type2) = (eq1 /= eq2 || Set.member name (getBaseTypes type2)) &&
                     any (Set.member name) [getBaseTypes type1, getBaseTypes type2]
         check _ = False
         substWith eq1@(BaseType name :=: otherType) eq2@(type1 :=: type2) =
