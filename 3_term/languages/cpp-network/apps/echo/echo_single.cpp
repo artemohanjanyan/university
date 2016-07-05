@@ -2,7 +2,7 @@
 
 int main()
 {
-	network::socket server{2539};
+	network::server_socket server{2539};
 	network::client_socket client{server.accept()};
 
 	std::string str;

@@ -9,34 +9,29 @@
 
 namespace network
 {
-
-
-	class client_socket
+	class client_socket : public base_descriptor_resource
 	{
-		file_descriptor fd;
-
 	public:
-		client_socket(file_descriptor &&fd);
+		client_socket(file_descriptor &&fd) noexcept;
 
-		file_descriptor const& get_fd();
+		client_socket(client_socket &&rhs) noexcept;
 
 		std::string read();
+
 		size_t write(std::string);
 	};
 
-
-	class socket
+	class server_socket : public base_descriptor_resource
 	{
-		file_descriptor fd;
-
 	public:
-		socket(file_descriptor &&fd);
-		socket(uint16_t port);
+		server_socket(file_descriptor &&fd);
+
+		server_socket(server_socket &&rhs);
+
+		server_socket(uint16_t port);
 
 		client_socket accept();
 	};
-
-
 }
 
 

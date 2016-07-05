@@ -7,28 +7,22 @@
 
 namespace network
 {
-
-
-	client_socket::client_socket(file_descriptor &&fd) : fd{std::move(fd)}
+	client_socket::client_socket(file_descriptor &&fd) noexcept : base_descriptor_resource{std::move(fd)}
 	{
 	}
 
-
-	file_descriptor const &client_socket::get_fd()
+	client_socket::client_socket(client_socket &&rhs) noexcept : client_socket{std::move(rhs.fd)}
 	{
-		return fd;
 	}
-
 
 	std::string client_socket::read()
 	{
 		char buf[1024];
 		ssize_t read_n = ::read(fd.get_raw_fd(), buf, sizeof buf);
-		check_return_code(read_n);
 		//return std::string{buf, (size_t) read_n};
-		return std::string(buf, (size_t) read_n);
+		check_return_code(read_n);
+		return std::string(buf, static_cast<size_t>(read_n));
 	}
-
 
 	size_t client_socket::write(std::string str)
 	{
@@ -37,13 +31,16 @@ namespace network
 		return static_cast<size_t>(written);
 	}
 
-
-	socket::socket(file_descriptor &&fd) : fd(std::move(fd))
+	server_socket::server_socket(file_descriptor &&fd) : base_descriptor_resource{std::move(fd)}
 	{
 	}
 
+	server_socket::server_socket(server_socket &&rhs) : server_socket{std::move(rhs.fd)}
+	{
+	}
 
-	socket::socket(uint16_t port) : socket(file_descriptor(::socket(AF_INET, SOCK_STREAM, 0)))
+	server_socket::server_socket(uint16_t port) :
+			server_socket{file_descriptor{check_return_code(::socket(AF_INET, SOCK_STREAM, 0))}}
 	{
 		int enable = 1;
 		setsockopt(fd.get_raw_fd(), SOL_SOCKET, SO_REUSEPORT, &enable, sizeof(enable));
@@ -54,18 +51,16 @@ namespace network
 		address.sin_port = htons(port);
 
 		check_return_code(
-				bind(fd.get_raw_fd(), static_cast<sockaddr*>(&address), sizeof address));
+				bind(fd.get_raw_fd(), reinterpret_cast<sockaddr *>(&address), sizeof address));
 
 		check_return_code(
 				listen(fd.get_raw_fd(), SOMAXCONN));
 	}
 
-
-	client_socket socket::accept()
+	client_socket server_socket::accept()
 	{
 		int new_fd = ::accept(fd.get_raw_fd(), nullptr, nullptr);
-		return network::client_socket(file_descriptor(new_fd));
+		check_return_code(new_fd);
+		return network::client_socket{file_descriptor{new_fd}};
 	}
-
-
 }
