@@ -15,7 +15,7 @@ include_directories(.)
 set(LIB_FILES network/file_descriptor.h network/file_descriptor.cpp
         network/socket.cpp network/socket.h
         network/network_exception.cpp network/network_exception.h
-        network/epoll.cpp network/epoll.h)
+        network/epoll.cpp network/epoll.h network/utils/string_buffer.cpp network/utils/string_buffer.h)
 
 set(RSHD_FILES apps/rshd/rshd.c
         apps/rshd/ptr_set.h apps/rshd/ptr_set.cpp

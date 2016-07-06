@@ -18,7 +18,7 @@ namespace network
 
 		std::string read();
 
-		size_t write(std::string);
+		size_t write(std::string const &);
 	};
 
 	class server_socket : public base_descriptor_resource
