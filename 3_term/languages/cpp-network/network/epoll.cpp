@@ -7,6 +7,10 @@
 
 namespace network
 {
+	epoll_registration::epoll_registration(file_descriptor const &fd) noexcept : raw_fd{fd.get_raw_fd()}
+	{
+	}
+
 	void epoll_registration::set_on_read(callback on_read)
 	{
 		this->on_read = on_read;
@@ -49,7 +53,7 @@ namespace network
 	{
 	}
 
-	void epoll::add(const file_descriptor &fd, epoll_registration const &registration)
+	void epoll::add(epoll_registration const &registration)
 	{
 		epoll_event event;
 		event.data.ptr = const_cast<void *>(static_cast<const void *>(&registration));
@@ -57,10 +61,10 @@ namespace network
 		               (registration.on_write != nullptr ? EPOLLOUT : 0u) |
 		               EPOLLRDHUP;
 		check_return_code(
-				epoll_ctl(this->fd.get_raw_fd(), EPOLL_CTL_ADD, fd.get_raw_fd(), &event));
+				epoll_ctl(this->fd.get_raw_fd(), EPOLL_CTL_ADD, registration.raw_fd, &event));
 	}
 
-	void epoll::update(const file_descriptor &fd, epoll_registration const &registration)
+	void epoll::update(epoll_registration const &registration)
 	{
 		epoll_event event;
 		event.data.ptr = const_cast<void *>(static_cast<const void *>(&registration));
@@ -68,13 +72,13 @@ namespace network
 		               (registration.on_write != nullptr ? EPOLLOUT : 0u) |
 		               EPOLLRDHUP;
 		check_return_code(
-				epoll_ctl(this->fd.get_raw_fd(), EPOLL_CTL_MOD, fd.get_raw_fd(), &event));
+				epoll_ctl(this->fd.get_raw_fd(), EPOLL_CTL_MOD, registration.raw_fd, &event));
 	}
 
-	void epoll::remove(const file_descriptor &fd)
+	void epoll::remove(epoll_registration const &registration)
 	{
 		check_return_code(
-				epoll_ctl(this->fd.get_raw_fd(), EPOLL_CTL_DEL, fd.get_raw_fd(), nullptr));
+				epoll_ctl(this->fd.get_raw_fd(), EPOLL_CTL_DEL, registration.raw_fd, nullptr));
 	}
 
 	void epoll::run()

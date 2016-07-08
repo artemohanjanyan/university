@@ -9,10 +9,11 @@ class connection
 {
 public:
 	network::client_socket client;
-	network::epoll_registration registration{};
+	network::epoll_registration registration;
 	network::utils::string_buffer string_buffer{};
 
-	connection(network::client_socket &&client) : client{std::move(client)}
+	connection(network::client_socket &&client) :
+			client{std::move(client)}, registration{this->client.get_fd()}
 	{
 	}
 };
@@ -21,7 +22,7 @@ int main()
 {
 	network::server_socket server{2539};
 	network::epoll epoll{};
-	network::epoll_registration server_registration{};
+	network::epoll_registration server_registration{server.get_fd()};
 	std::map<int, std::unique_ptr<connection>> map;
 
 	server_registration.set_on_read([&] {
@@ -39,25 +40,25 @@ int main()
 					if (conn->string_buffer.is_empty())
 					{
 						conn->registration.unset_on_write();
-						epoll.update(conn->client.get_fd(), conn->registration);
+						epoll.update(conn->registration);
 					}
 				});
-				epoll.update(conn->client.get_fd(), conn->registration);
+				epoll.update(conn->registration);
 			}
 			conn->string_buffer.push(msg);
 		});
 
-		conn->registration.set_on_close([raw_fd, &epoll, &map] {
+		conn->registration.set_on_close([raw_fd, conn, &epoll, &map] {
 			auto it = map.find(raw_fd);
-			epoll.remove(it->second->client.get_fd());
+			epoll.remove(conn->registration);
 			map.erase(it);
 		});
 
-		epoll.add(conn->client.get_fd(), conn->registration);
+		epoll.add(conn->registration);
 		map.insert(std::make_pair(raw_fd, std::move(unique_conn)));
 	});
 
-	epoll.add(server.get_fd(), server_registration);
+	epoll.add(server_registration);
 	epoll.run();
 
 	return 0;

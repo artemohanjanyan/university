@@ -14,7 +14,11 @@ namespace network
 
 		callback on_read, on_write, on_close;
 
+		int raw_fd;
+
 	public:
+		explicit epoll_registration(file_descriptor const &fd) noexcept;
+
 		void set_on_read(callback on_read);
 
 		void set_on_write(callback on_write);
@@ -39,11 +43,11 @@ namespace network
 
 		epoll(epoll &&rhs) noexcept;
 
-		void add(const file_descriptor &fd, epoll_registration const &registration);
+		void add(epoll_registration const &registration);
 
-		void update(const file_descriptor &fd, epoll_registration const &registration);
+		void update(epoll_registration const &registration);
 
-		void remove(const file_descriptor &fd);
+		void remove(epoll_registration const &registration);
 
 		void run();
 
