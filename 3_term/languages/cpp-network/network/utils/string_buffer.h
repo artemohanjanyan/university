@@ -1,6 +1,8 @@
 #ifndef CPP_NETWORK_STRING_BUFFER_H
 #define CPP_NETWORK_STRING_BUFFER_H
 
+#include "string_view.h"
+
 #include <queue>
 #include <string>
 
@@ -14,9 +16,7 @@ namespace network
 			size_t read_n = 0;
 
 		public:
-			std::string const & get_str() const noexcept;
-
-			size_t get_read_n() const noexcept;
+			string_view top() const noexcept;
 
 			void pop(size_t read_n) noexcept;
 

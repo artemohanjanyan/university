@@ -2,6 +2,7 @@
 #define CPP_NETWORK_SERVER_SOCKET_H
 
 #include "file_descriptor.h"
+#include "utils/string_view.h"
 
 #include <stdint.h>
 
@@ -18,7 +19,7 @@ namespace network
 
 		std::string read();
 
-		size_t write(std::string const &);
+		size_t write(utils::string_view const &str);
 	};
 
 	class server_socket : public base_descriptor_resource

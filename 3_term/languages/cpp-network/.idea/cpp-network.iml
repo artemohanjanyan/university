@@ -2,16 +2,18 @@
 <module type="CPP_MODULE" version="4">
   <component name="NewModuleRootManager">
     <content url="file://$MODULE_DIR$">
-      <sourceFolder url="file://$MODULE_DIR$/network/socket.h" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/network/epoll.h" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/network/network_exception.h" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/network/socket.cpp" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/network/file_descriptor.h" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/network/epoll.cpp" isTestSource="false" />
-      <sourceFolder url="file://$MODULE_DIR$/network/epoll.h" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/network/utils/string_buffer.h" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/network/utils/string_buffer.cpp" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/network/utils/string_view.h" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/network/utils/string_view.cpp" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/network/network_exception.cpp" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/network/file_descriptor.cpp" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/network/socket.h" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/apps/rshd/string_buffer.h" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/apps/rshd/ptr_set.cpp" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/apps/rshd/string_buffer.cpp" isTestSource="false" />

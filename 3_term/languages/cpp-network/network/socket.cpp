@@ -24,9 +24,9 @@ namespace network
 		return std::string(buf, static_cast<size_t>(read_n));
 	}
 
-	size_t client_socket::write(std::string const &str)
+	size_t client_socket::write(utils::string_view const &str)
 	{
-		ssize_t written = ::write(fd.get_raw_fd(), str.c_str(), str.size());
+		ssize_t written = ::write(fd.get_raw_fd(), str.begin(), str.size());
 		check_return_code(written);
 		return static_cast<size_t>(written);
 	}

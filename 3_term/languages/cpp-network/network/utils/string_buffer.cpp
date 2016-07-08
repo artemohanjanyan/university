@@ -4,21 +4,19 @@ namespace network
 {
 	namespace utils
 	{
-		std::string const &string_buffer::get_str() const noexcept
+		string_view string_buffer::top() const noexcept
 		{
-			return queue.front();
-		}
-
-		size_t string_buffer::get_read_n() const noexcept
-		{
-			return read_n;
+			return string_view(queue.front().begin() + read_n, queue.front().end());
 		}
 
 		void string_buffer::pop(size_t read_n) noexcept
 		{
 			this->read_n += read_n;
-			while (read_n >= queue.front().size())
+			while (queue.size() > 0 && this->read_n >= queue.front().size())
+			{
 				queue.pop();
+				this->read_n = 0;
+			}
 			this->read_n = 0;
 		}
 

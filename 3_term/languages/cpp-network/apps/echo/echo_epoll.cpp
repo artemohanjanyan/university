@@ -1,38 +1,60 @@
-#include <network/socket.h>
-#include <network/epoll.h>
+#include "network/socket.h"
+#include "network/epoll.h"
+#include "network/utils/string_buffer.h"
 
 #include <map>
 #include <memory>
+
+class connection
+{
+public:
+	network::client_socket client;
+	network::epoll_registration registration{};
+	network::utils::string_buffer string_buffer{};
+
+	connection(network::client_socket &&client) : client{std::move(client)}
+	{
+	}
+};
 
 int main()
 {
 	network::server_socket server{2539};
 	network::epoll epoll{};
 	network::epoll_registration server_registration{};
-
-	using info_type = std::pair<network::client_socket, network::epoll_registration>;
-	std::map<int, std::unique_ptr<info_type>> map;
+	std::map<int, std::unique_ptr<connection>> map;
 
 	server_registration.set_on_read([&] {
-		network::client_socket client = server.accept();
-		network::epoll_registration registration{};
+		std::unique_ptr<connection> unique_conn = std::make_unique<connection>(server.accept());
+		int raw_fd = unique_conn->client.get_fd().get_raw_fd();
+		connection *conn = unique_conn.get();
 
-		int raw_fd = client.get_fd().get_raw_fd();
-		std::unique_ptr<info_type> ptr;
-		ptr = std::make_unique<info_type>(std::move(client), std::move(registration));
-
-		ptr->second.set_on_read([raw_ptr = ptr.get()] {
-			std::string msg = raw_ptr->first.read();
-			raw_ptr->first.write(msg);
+		conn->registration.set_on_read([conn, &epoll] {
+			std::string msg = conn->client.read();
+			if (conn->string_buffer.is_empty())
+			{
+				conn->registration.set_on_write([conn, &epoll] {
+					size_t written = conn->client.write(conn->string_buffer.top());
+					conn->string_buffer.pop(written);
+					if (conn->string_buffer.is_empty())
+					{
+						conn->registration.unset_on_write();
+						epoll.update(conn->client.get_fd(), conn->registration);
+					}
+				});
+				epoll.update(conn->client.get_fd(), conn->registration);
+			}
+			conn->string_buffer.push(msg);
 		});
-		ptr->second.set_on_close([raw_fd, &map, &epoll] {
+
+		conn->registration.set_on_close([raw_fd, &epoll, &map] {
 			auto it = map.find(raw_fd);
-			epoll.del(it->second->first.get_fd());
+			epoll.remove(it->second->client.get_fd());
 			map.erase(it);
 		});
 
-		epoll.add(ptr->first.get_fd(), ptr->second);
-		map.insert(std::make_pair(raw_fd, std::move(ptr)));
+		epoll.add(conn->client.get_fd(), conn->registration);
+		map.insert(std::make_pair(raw_fd, std::move(unique_conn)));
 	});
 
 	epoll.add(server.get_fd(), server_registration);

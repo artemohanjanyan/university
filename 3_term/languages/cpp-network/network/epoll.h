@@ -41,9 +41,9 @@ namespace network
 
 		void add(const file_descriptor &fd, epoll_registration const &registration);
 
-		void mod(const file_descriptor &fd, epoll_registration const &registration);
+		void update(const file_descriptor &fd, epoll_registration const &registration);
 
-		void del(const file_descriptor &fd);
+		void remove(const file_descriptor &fd);
 
 		void run();
 

@@ -60,7 +60,7 @@ namespace network
 				epoll_ctl(this->fd.get_raw_fd(), EPOLL_CTL_ADD, fd.get_raw_fd(), &event));
 	}
 
-	void epoll::mod(const file_descriptor &fd, epoll_registration const &registration)
+	void epoll::update(const file_descriptor &fd, epoll_registration const &registration)
 	{
 		epoll_event event;
 		event.data.ptr = const_cast<void *>(static_cast<const void *>(&registration));
@@ -71,7 +71,7 @@ namespace network
 				epoll_ctl(this->fd.get_raw_fd(), EPOLL_CTL_MOD, fd.get_raw_fd(), &event));
 	}
 
-	void epoll::del(const file_descriptor &fd)
+	void epoll::remove(const file_descriptor &fd)
 	{
 		check_return_code(
 				epoll_ctl(this->fd.get_raw_fd(), EPOLL_CTL_DEL, fd.get_raw_fd(), nullptr));
