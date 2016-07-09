@@ -1,6 +1,6 @@
 #include "network/socket.h"
 #include "network/epoll.h"
-#include "network/utils/string_buffer.h"
+#include "utils/string_buffer.h"
 
 #include <map>
 #include <memory>

@@ -22,8 +22,6 @@ namespace network
 
 			string_view(std::string const &str) noexcept;
 
-			//string_view(string_view const &rhs) noexcept;
-
 			char const *begin() const noexcept;
 
 			char const *end() const noexcept;

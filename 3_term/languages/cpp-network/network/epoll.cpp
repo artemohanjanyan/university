@@ -4,6 +4,7 @@
 #include <sys/epoll.h>
 
 #include <forward_list>
+#include <iostream>
 
 namespace network
 {
@@ -87,7 +88,7 @@ namespace network
 		while (!is_stopped)
 		{
 			epoll_event events[10];
-			int event_n = epoll_wait(fd.get_raw_fd(), events, sizeof events, -1);
+			int event_n = epoll_wait(fd.get_raw_fd(), events, sizeof events / sizeof events[0], -1);
 			check_return_code(event_n);
 
 			std::forward_list<int> closed;
@@ -107,10 +108,7 @@ namespace network
 			{
 				epoll_registration *registration = static_cast<epoll_registration *>(events[event_i].data.ptr);
 				if (registration->on_close != nullptr)
-				{
-					auto cleanup_f = registration->on_close;
-					cleanup_f();
-				}
+					registration->on_close();
 			}
 		}
 	}

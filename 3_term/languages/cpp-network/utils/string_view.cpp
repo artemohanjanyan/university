@@ -29,11 +29,6 @@ namespace network
 		{
 		}
 
-//		string_view::string_view(string_view const &rhs) :
-//				begin_ptr{rhs.begin_ptr}, end_ptr{rhs.end_ptr}
-//		{
-//		}
-
 		char const *string_view::begin() const noexcept
 		{
 			return begin_ptr;
