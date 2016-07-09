@@ -4,6 +4,7 @@
 #include <sys/epoll.h>
 
 #include <forward_list>
+#include <iostream>
 
 namespace network
 {
@@ -108,17 +109,32 @@ namespace network
 			for (int event_i = 0; event_i < event_n; ++event_i)
 			{
 				epoll_registration *registration = static_cast<epoll_registration *>(events[event_i].data.ptr);
-				if (events[event_i].events & EPOLLIN)
-					registration->on_read();
-				if (events[event_i].events & EPOLLOUT)
-					registration->on_write();
-				if (events[event_i].events & ~(EPOLLIN | EPOLLOUT))
-					if (registration->on_close != nullptr)
-						registration->on_close();
+				try
+				{
+					if (events[event_i].events & EPOLLIN)
+						registration->on_read();
+					if (events[event_i].events & EPOLLOUT)
+						registration->on_write();
+					if (events[event_i].events & ~(EPOLLIN | EPOLLOUT))
+						if (registration->on_close != nullptr)
+							registration->on_close();
+				}
+				catch (std::exception &exception)
+				{
+					this->schedule_cleanup(*registration);
+				}
 			}
 
 			for (auto registration : cleanup_set)
-				registration->cleanup();
+				if (registration->cleanup != nullptr)
+					try
+					{
+						registration->cleanup();
+					}
+					catch (std::exception &exception)
+					{
+						std::cerr << "Exception during cleanup: " << exception.what() << "\n";
+					}
 			cleanup_set.clear();
 		}
 	}

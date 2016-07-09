@@ -18,35 +18,21 @@ public:
 			client{std::move(client)}, registration{this->client.get_fd()}
 	{
 		registration.set_on_read([this, &epoll] {
-			try
+			std::string msg = this->client.read();
+			if (this->string_buffer.is_empty())
 			{
-				std::string msg = this->client.read();
-				if (this->string_buffer.is_empty())
-				{
-					this->registration.set_on_write([this, &epoll] {
-						try
-						{
-							size_t written = this->client.write(this->string_buffer.top());
-							this->string_buffer.pop(written);
-							if (this->string_buffer.is_empty())
-							{
-								this->registration.unset_on_write();
-								epoll.update(this->registration);
-							}
-						}
-						catch (network::network_exception &exception)
-						{
-							epoll.schedule_cleanup(this->registration);
-						}
-					});
-					epoll.update(this->registration);
-				}
-				this->string_buffer.push(msg);
+				this->registration.set_on_write([this, &epoll] {
+					size_t written = this->client.write(this->string_buffer.top());
+					this->string_buffer.pop(written);
+					if (this->string_buffer.is_empty())
+					{
+						this->registration.unset_on_write();
+						epoll.update(this->registration);
+					}
+				});
+				epoll.update(this->registration);
 			}
-			catch (network::network_exception &exception)
-			{
-				epoll.schedule_cleanup(this->registration);
-			}
+			this->string_buffer.push(msg);
 		});
 
 		registration.set_on_close([this, &epoll] {
