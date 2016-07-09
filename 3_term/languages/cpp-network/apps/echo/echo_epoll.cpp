@@ -4,6 +4,7 @@
 
 #include <map>
 #include <memory>
+#include <network/network_exception.h>
 
 class connection
 {
@@ -12,9 +13,51 @@ public:
 	network::epoll_registration registration;
 	network::utils::string_buffer string_buffer{};
 
-	connection(network::client_socket &&client) :
+	connection(network::client_socket &&client,
+	           network::epoll &epoll, std::map<int, std::unique_ptr<connection>> &map) :
 			client{std::move(client)}, registration{this->client.get_fd()}
 	{
+		registration.set_on_read([this, &epoll] {
+			try
+			{
+				std::string msg = this->client.read();
+				if (this->string_buffer.is_empty())
+				{
+					this->registration.set_on_write([this, &epoll] {
+						try
+						{
+							size_t written = this->client.write(this->string_buffer.top());
+							this->string_buffer.pop(written);
+							if (this->string_buffer.is_empty())
+							{
+								this->registration.unset_on_write();
+								epoll.update(this->registration);
+							}
+						}
+						catch (network::network_exception &exception)
+						{
+							epoll.schedule_cleanup(this->registration);
+						}
+					});
+					epoll.update(this->registration);
+				}
+				this->string_buffer.push(msg);
+			}
+			catch (network::network_exception &exception)
+			{
+				epoll.schedule_cleanup(this->registration);
+			}
+		});
+
+		registration.set_on_close([this, &epoll] {
+			epoll.schedule_cleanup(this->registration);
+		});
+
+		registration.set_cleanup([this, &epoll, &map] {
+			auto it = map.find(this->client.get_fd().get_raw_fd());
+			epoll.remove(this->registration);
+			map.erase(it);
+		});
 	}
 };
 
@@ -26,36 +69,11 @@ int main()
 	std::map<int, std::unique_ptr<connection>> map;
 
 	server_registration.set_on_read([&] {
-		std::unique_ptr<connection> unique_conn = std::make_unique<connection>(server.accept());
-		int raw_fd = unique_conn->client.get_fd().get_raw_fd();
+		std::unique_ptr<connection> unique_conn = std::make_unique<connection>(server.accept(), epoll, map);
 		connection *conn = unique_conn.get();
 
-		conn->registration.set_on_read([conn, &epoll] {
-			std::string msg = conn->client.read();
-			if (conn->string_buffer.is_empty())
-			{
-				conn->registration.set_on_write([conn, &epoll] {
-					size_t written = conn->client.write(conn->string_buffer.top());
-					conn->string_buffer.pop(written);
-					if (conn->string_buffer.is_empty())
-					{
-						conn->registration.unset_on_write();
-						epoll.update(conn->registration);
-					}
-				});
-				epoll.update(conn->registration);
-			}
-			conn->string_buffer.push(msg);
-		});
-
-		conn->registration.set_on_close([raw_fd, conn, &epoll, &map] {
-			auto it = map.find(raw_fd);
-			epoll.remove(conn->registration);
-			map.erase(it);
-		});
-
 		epoll.add(conn->registration);
-		map.insert(std::make_pair(raw_fd, std::move(unique_conn)));
+		map.insert(std::make_pair(unique_conn->client.get_fd().get_raw_fd(), std::move(unique_conn)));
 	});
 
 	epoll.add(server_registration);

@@ -2,6 +2,7 @@
 #define CPP_NETWORK_EPOLL_H
 
 #include <functional>
+#include <set>
 #include "file_descriptor.h"
 
 namespace network
@@ -12,7 +13,7 @@ namespace network
 	{
 		friend class epoll;
 
-		callback on_read, on_write, on_close;
+		callback on_read, on_write, on_close, cleanup;
 
 		int raw_fd;
 
@@ -25,16 +26,22 @@ namespace network
 
 		void set_on_close(callback on_close);
 
+		void set_cleanup(callback cleanup);
+
 		void unset_on_read();
 
 		void unset_on_write();
 
 		void unset_on_close();
+
+		void unset_cleanup();
 	};
 
 	class epoll : public base_descriptor_resource
 	{
-		bool is_stopped = false;
+		bool is_running = false;
+
+		std::set<epoll_registration const *> cleanup_set;
 
 	public:
 		epoll(file_descriptor &&fd) noexcept;
@@ -48,6 +55,8 @@ namespace network
 		void update(epoll_registration const &registration);
 
 		void remove(epoll_registration const &registration);
+
+		void schedule_cleanup(epoll_registration const &registration);
 
 		void run();
 

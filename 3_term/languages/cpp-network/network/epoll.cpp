@@ -4,7 +4,6 @@
 #include <sys/epoll.h>
 
 #include <forward_list>
-#include <iostream>
 
 namespace network
 {
@@ -27,6 +26,11 @@ namespace network
 		this->on_close = on_close;
 	}
 
+	void epoll_registration::set_cleanup(callback cleanup)
+	{
+		this->cleanup = cleanup;
+	}
+
 	void epoll_registration::unset_on_read()
 	{
 		this->on_read = nullptr;
@@ -40,6 +44,11 @@ namespace network
 	void epoll_registration::unset_on_close()
 	{
 		this->on_close = nullptr;
+	}
+
+	void epoll_registration::unset_cleanup()
+	{
+		this->cleanup = nullptr;
 	}
 
 	epoll::epoll(file_descriptor &&fd) noexcept : base_descriptor_resource{std::move(fd)}
@@ -82,16 +91,19 @@ namespace network
 				epoll_ctl(this->fd.get_raw_fd(), EPOLL_CTL_DEL, registration.raw_fd, nullptr));
 	}
 
+	void epoll::schedule_cleanup(epoll_registration const &registration)
+	{
+		cleanup_set.insert(&registration);
+	}
+
 	void epoll::run()
 	{
-		is_stopped = false;
-		while (!is_stopped)
+		is_running = true;
+		while (is_running)
 		{
 			epoll_event events[10];
 			int event_n = epoll_wait(fd.get_raw_fd(), events, sizeof events / sizeof events[0], -1);
 			check_return_code(event_n);
-
-			std::forward_list<int> closed;
 
 			for (int event_i = 0; event_i < event_n; ++event_i)
 			{
@@ -101,20 +113,18 @@ namespace network
 				if (events[event_i].events & EPOLLOUT)
 					registration->on_write();
 				if (events[event_i].events & ~(EPOLLIN | EPOLLOUT))
-					closed.push_front(event_i);
+					if (registration->on_close != nullptr)
+						registration->on_close();
 			}
 
-			for (auto event_i : closed)
-			{
-				epoll_registration *registration = static_cast<epoll_registration *>(events[event_i].data.ptr);
-				if (registration->on_close != nullptr)
-					registration->on_close();
-			}
+			for (auto registration : cleanup_set)
+				registration->cleanup();
+			cleanup_set.clear();
 		}
 	}
 
 	void epoll::soft_stop() noexcept
 	{
-		is_stopped = true;
+		is_running = false;
 	}
 }

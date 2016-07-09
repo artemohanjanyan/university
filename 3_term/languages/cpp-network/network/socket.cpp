@@ -3,7 +3,6 @@
 
 #include <sys/socket.h>
 #include <netinet/in.h>
-#include <unistd.h>
 
 namespace network
 {
@@ -18,15 +17,14 @@ namespace network
 	std::string client_socket::read()
 	{
 		char buf[1024];
-		ssize_t read_n = ::read(fd.get_raw_fd(), buf, sizeof buf);
-		//return std::string{buf, (size_t) read_n};
+		ssize_t read_n = ::recv(fd.get_raw_fd(), buf, sizeof buf, MSG_NOSIGNAL);
 		check_return_code(read_n);
 		return std::string(buf, static_cast<size_t>(read_n));
 	}
 
 	size_t client_socket::write(utils::string_view const &str)
 	{
-		ssize_t written = ::write(fd.get_raw_fd(), str.begin(), str.size());
+		ssize_t written = ::send(fd.get_raw_fd(), str.begin(), str.size(), MSG_NOSIGNAL);
 		check_return_code(written);
 		return static_cast<size_t>(written);
 	}
@@ -43,7 +41,7 @@ namespace network
 			server_socket{file_descriptor{check_return_code(::socket(AF_INET, SOCK_STREAM, 0))}}
 	{
 		int enable = 1;
-		setsockopt(fd.get_raw_fd(), SOL_SOCKET, SO_REUSEPORT, &enable, sizeof(enable));
+		setsockopt(fd.get_raw_fd(), SOL_SOCKET, SO_REUSEPORT, &enable, sizeof enable);
 
 		struct sockaddr_in address;
 		address.sin_family = AF_INET;
