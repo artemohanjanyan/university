@@ -50,13 +50,13 @@ namespace network
 
 		epoll(epoll &&rhs) noexcept;
 
-		void add(epoll_registration const &registration);
+		void add(epoll_registration &registration);
 
-		void update(epoll_registration const &registration);
+		void update(epoll_registration &registration);
 
-		void remove(epoll_registration const &registration);
+		void remove(epoll_registration &registration);
 
-		void schedule_cleanup(epoll_registration const &registration);
+		void schedule_cleanup(epoll_registration &registration);
 
 		void run();
 

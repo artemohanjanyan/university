@@ -1,10 +1,12 @@
 #include "network/socket.h"
 #include "network/epoll.h"
+#include "network/file_descriptor.h"
+#include "network/network_exception.h"
 #include "utils/string_buffer.h"
 
 #include <map>
 #include <memory>
-#include <network/network_exception.h>
+#include <iostream>
 
 class connection
 {
@@ -49,7 +51,7 @@ public:
 
 int main()
 {
-	network::server_socket server{2539};
+	network::server_socket server{network::make_local_endpoint(2539)};
 	network::epoll epoll{};
 	network::epoll_registration server_registration{server.get_fd()};
 	std::map<int, std::unique_ptr<connection>> map;
@@ -63,6 +65,7 @@ int main()
 	});
 
 	epoll.add(server_registration);
+	std::cout << to_string(get_socket_endpoint(server.get_fd())) << "\n";
 	epoll.run();
 
 	return 0;

@@ -64,10 +64,10 @@ namespace network
 	{
 	}
 
-	void epoll::add(epoll_registration const &registration)
+	void epoll::add(epoll_registration &registration)
 	{
 		epoll_event event;
-		event.data.ptr = const_cast<void *>(static_cast<const void *>(&registration));
+		event.data.ptr = static_cast<void *>(&registration);
 		event.events = (registration.on_read != nullptr ? EPOLLIN : 0u) |
 		               (registration.on_write != nullptr ? EPOLLOUT : 0u) |
 		               EPOLLRDHUP;
@@ -75,10 +75,10 @@ namespace network
 				epoll_ctl(this->fd.get_raw_fd(), EPOLL_CTL_ADD, registration.raw_fd, &event));
 	}
 
-	void epoll::update(epoll_registration const &registration)
+	void epoll::update(epoll_registration &registration)
 	{
 		epoll_event event;
-		event.data.ptr = const_cast<void *>(static_cast<const void *>(&registration));
+		event.data.ptr = static_cast<void *>(&registration);
 		event.events = (registration.on_read != nullptr ? EPOLLIN : 0u) |
 		               (registration.on_write != nullptr ? EPOLLOUT : 0u) |
 		               EPOLLRDHUP;
@@ -86,13 +86,13 @@ namespace network
 				epoll_ctl(this->fd.get_raw_fd(), EPOLL_CTL_MOD, registration.raw_fd, &event));
 	}
 
-	void epoll::remove(epoll_registration const &registration)
+	void epoll::remove(epoll_registration &registration)
 	{
 		check_return_code(
 				epoll_ctl(this->fd.get_raw_fd(), EPOLL_CTL_DEL, registration.raw_fd, nullptr));
 	}
 
-	void epoll::schedule_cleanup(epoll_registration const &registration)
+	void epoll::schedule_cleanup(epoll_registration &registration)
 	{
 		cleanup_set.insert(&registration);
 	}
