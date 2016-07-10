@@ -11,7 +11,7 @@ class connection
 public:
 	network::client_socket client;
 	network::epoll_registration registration;
-	network::utils::string_buffer string_buffer{};
+	utils::string_buffer string_buffer{};
 
 	connection(network::client_socket &&client,
 	           network::epoll &epoll, std::map<int, std::unique_ptr<connection>> &map) :

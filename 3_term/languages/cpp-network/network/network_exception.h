@@ -1,7 +1,6 @@
 #ifndef CPP_NETWORK_EXCEPTION_H
 #define CPP_NETWORK_EXCEPTION_H
 
-
 #include <errno.h>
 #include <string.h>
 
