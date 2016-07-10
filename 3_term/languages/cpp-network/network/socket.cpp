@@ -4,6 +4,8 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 
+#include <array>
+
 namespace network
 {
 	client_socket::client_socket(file_descriptor &&fd) noexcept : base_descriptor_resource{std::move(fd)}
@@ -16,10 +18,10 @@ namespace network
 
 	std::string client_socket::read()
 	{
-		char buf[1024];
-		ssize_t read_n = ::recv(fd.get_raw_fd(), buf, sizeof buf, MSG_NOSIGNAL);
+		std::array<char, 1024> buf;
+		ssize_t read_n = ::recv(fd.get_raw_fd(), buf.begin(), buf.size(), MSG_NOSIGNAL);
 		check_return_code(read_n);
-		return std::string(buf, static_cast<size_t>(read_n));
+		return std::string(buf.begin(), static_cast<size_t>(read_n));
 	}
 
 	size_t client_socket::write(utils::string_view const &str)

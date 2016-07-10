@@ -28,7 +28,7 @@ namespace network
 #ifdef CPP_NETWORK_DEBUG
 		std::cerr << "~file_descriptor(" << fd << "), ";
 		int error = 0;
-		socklen_t err_len = sizeof(error);
+		socklen_t err_len = sizeof error;
 		if (getsockopt(fd, SOL_SOCKET, SO_ERROR, static_cast<void *>(&error), &err_len) == 0)
 			std::cerr << "last error: " << strerror(error);
 		std::cerr << std::endl;

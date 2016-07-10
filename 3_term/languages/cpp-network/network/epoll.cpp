@@ -102,8 +102,8 @@ namespace network
 		is_running = true;
 		while (is_running)
 		{
-			epoll_event events[10];
-			int event_n = epoll_wait(fd.get_raw_fd(), events, sizeof events / sizeof events[0], -1);
+			std::array<epoll_event, 10> events;
+			int event_n = epoll_wait(fd.get_raw_fd(), events.begin(), static_cast<int>(events.size()), -1);
 			check_return_code(event_n);
 
 			for (int event_i = 0; event_i < event_n; ++event_i)
