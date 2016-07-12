@@ -30,7 +30,7 @@ public:
 			this->string_buffer.push(msg);
 		});
 
-		registration.set_cleanup([this, &epoll, &map] {
+		registration.set_cleanup([this, &map] {
 			map.erase(this->client.get_fd().get_raw_fd());
 		});
 	}

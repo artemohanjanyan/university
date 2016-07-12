@@ -7,6 +7,7 @@
 #include <stdint.h>
 
 #include <string>
+#include <vector>
 
 namespace network
 {
@@ -59,12 +60,19 @@ namespace network
 	std::string to_string(ipv4_endpoint endpoint);
 
 
+	std::vector<ipv4_endpoint> get_hosts(std::string host_name);
+
+
 	class client_socket : public base_descriptor_resource
 	{
+		static file_descriptor connect(std::vector<ipv4_endpoint> endpoints);
+
 	public:
 		client_socket(file_descriptor &&fd) noexcept;
 
 		client_socket(client_socket &&rhs) noexcept;
+
+		client_socket(std::vector<ipv4_endpoint> endpoints);
 
 		std::string read();
 

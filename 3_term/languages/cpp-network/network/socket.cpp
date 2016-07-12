@@ -2,10 +2,9 @@
 #include "network_exception.h"
 
 #include <arpa/inet.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
 
 #include <array>
+#include <netdb.h>
 
 namespace network
 {
@@ -74,11 +73,61 @@ namespace network
 		return to_string(endpoint.get_address()) + ":" + std::to_string(endpoint.get_port_h());
 	}
 
+	std::vector<ipv4_endpoint> get_hosts(std::string name)
+	{
+		addrinfo hints;
+		addrinfo *info;
+
+		memset(&hints, 0, sizeof hints);
+		hints.ai_family = AF_INET;
+		hints.ai_socktype = SOCK_STREAM;
+
+		int code;
+		if ((code = getaddrinfo(name.c_str(), "http", &hints, &info)) != 0)
+			throw network_exception{gai_strerror(code)};
+
+		std::vector<ipv4_endpoint> endpoints{};
+		try
+		{
+			for (addrinfo *p = info; p != nullptr; p = p->ai_next)
+			{
+				sockaddr_in *address = (sockaddr_in *) p->ai_addr;
+				endpoints.push_back(make_ipv4_endpoint_n(address->sin_addr.s_addr, address->sin_port));
+			}
+		}
+		catch (std::exception &exception)
+		{
+			freeaddrinfo(info);
+			throw exception;
+		}
+
+		freeaddrinfo(info);
+
+		return std::move(endpoints);
+	}
+
+	file_descriptor client_socket::connect(std::vector<ipv4_endpoint> endpoints)
+	{
+		file_descriptor fd{check_return_code(::socket(AF_INET, SOCK_STREAM, 0))};
+		sockaddr_in address;
+		address.sin_family = AF_INET;
+		address.sin_addr.s_addr = endpoints.front().get_address().get_raw_address();
+		address.sin_port = endpoints.front().get_port_n();
+		check_return_code(
+				::connect(fd.get_raw_fd(), reinterpret_cast<sockaddr const *>(&address), sizeof address));
+		return std::move(fd);
+	}
+
 	client_socket::client_socket(file_descriptor &&fd) noexcept : base_descriptor_resource{std::move(fd)}
 	{
 	}
 
 	client_socket::client_socket(client_socket &&rhs) noexcept : client_socket{std::move(rhs.fd)}
+	{
+	}
+
+	client_socket::client_socket(std::vector<ipv4_endpoint> endpoints) :
+			client_socket{connect(endpoints)}
 	{
 	}
 
@@ -135,7 +184,7 @@ namespace network
 		sockaddr_in address;
 		socklen_t tmp = sizeof address;
 		check_return_code(
-				getsockname(fd.get_raw_fd(), reinterpret_cast<sockaddr*>(&address), &tmp));
+				getsockname(fd.get_raw_fd(), reinterpret_cast<sockaddr *>(&address), &tmp));
 		return make_ipv4_endpoint_n(address.sin_addr.s_addr, address.sin_port);
 	}
 }

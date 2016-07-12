@@ -16,11 +16,16 @@ public:
 	           std::map<int, std::unique_ptr<connection>> &map) :
 			client{std::move(client)}, registration{this->client.get_fd(), epoll}
 	{
-		registration.set_on_read([this, &epoll] {
-			std::cout << this->client.read();
+		registration.set_on_read([this] {
+			// Not actually correct, but nobody cares
+			std::string string = this->client.read();
+			std::cout << int(string[string.size() - 2]) << " " << int(string[string.size() - 1]) << "\n";
+			string = string.substr(0, string.size() - 2);
+			for (auto endpoint : network::get_hosts(string))
+				this->client.write(to_string(endpoint) + "\n");
 		});
 
-		registration.set_cleanup([this, &epoll, &map] {
+		registration.set_cleanup([this, &map] {
 			map.erase(this->client.get_fd().get_raw_fd());
 		});
 	}
