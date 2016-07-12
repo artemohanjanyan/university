@@ -9,39 +9,43 @@ namespace network
 {
 	using callback = std::function<void()>;
 
+	class epoll;
+
 	class epoll_registration
 	{
 		friend class epoll;
 
 		callback on_read, on_write, on_close, cleanup;
-
-		int raw_fd;
+		file_descriptor const *fd;
+		epoll *ep;
 
 	public:
-		explicit epoll_registration(file_descriptor const &fd) noexcept;
+		explicit epoll_registration(file_descriptor const &fd, epoll &ep) noexcept;
 
-		void set_on_read(callback on_read);
+		epoll_registration &set_on_read(callback on_read);
 
-		void set_on_write(callback on_write);
+		epoll_registration &set_on_write(callback on_write);
 
-		void set_on_close(callback on_close);
+		epoll_registration &set_on_close(callback on_close);
 
-		void set_cleanup(callback cleanup);
+		epoll_registration &set_cleanup(callback cleanup);
 
-		void unset_on_read();
+		epoll_registration &unset_on_read();
 
-		void unset_on_write();
+		epoll_registration &unset_on_write();
 
-		void unset_on_close();
+		epoll_registration &unset_on_close();
 
-		void unset_cleanup();
+		epoll_registration &unset_cleanup();
+
+		void update();
 	};
 
 	class epoll : public base_descriptor_resource
 	{
 		bool is_running = false;
 
-		std::set<epoll_registration const *> cleanup_set;
+		std::set<epoll_registration *> cleanup_set;
 
 	public:
 		epoll(file_descriptor &&fd) noexcept;

@@ -8,48 +8,65 @@
 
 namespace network
 {
-	epoll_registration::epoll_registration(file_descriptor const &fd) noexcept : raw_fd{fd.get_raw_fd()}
+	epoll_registration::epoll_registration(file_descriptor const &fd, epoll &ep) noexcept :
+			fd{&fd}, ep{&ep}
 	{
+		on_close = [this] {
+			this->ep->schedule_cleanup(*this);
+		};
 	}
 
-	void epoll_registration::set_on_read(callback on_read)
+	epoll_registration &epoll_registration::set_on_read(callback on_read)
 	{
 		this->on_read = on_read;
+		return *this;
 	}
 
-	void epoll_registration::set_on_write(callback on_write)
+	epoll_registration &epoll_registration::set_on_write(callback on_write)
 	{
 		this->on_write = on_write;
+		return *this;
 	}
 
-	void epoll_registration::set_on_close(callback on_close)
+	epoll_registration &epoll_registration::set_on_close(callback on_close)
 	{
 		this->on_close = on_close;
+		return *this;
 	}
 
-	void epoll_registration::set_cleanup(callback cleanup)
+	epoll_registration &epoll_registration::set_cleanup(callback cleanup)
 	{
 		this->cleanup = cleanup;
+		return *this;
 	}
 
-	void epoll_registration::unset_on_read()
+	epoll_registration &epoll_registration::unset_on_read()
 	{
 		this->on_read = nullptr;
+		return *this;
 	}
 
-	void epoll_registration::unset_on_write()
+	epoll_registration &epoll_registration::unset_on_write()
 	{
 		this->on_write = nullptr;
+		return *this;
 	}
 
-	void epoll_registration::unset_on_close()
+	epoll_registration &epoll_registration::unset_on_close()
 	{
 		this->on_close = nullptr;
+		return *this;
 	}
 
-	void epoll_registration::unset_cleanup()
+	epoll_registration &epoll_registration::unset_cleanup()
 	{
 		this->cleanup = nullptr;
+		return *this;
+	}
+
+	void epoll_registration::update()
+	{
+		ep->update(*this);
 	}
 
 	epoll::epoll(file_descriptor &&fd) noexcept : base_descriptor_resource{std::move(fd)}
@@ -72,7 +89,7 @@ namespace network
 		               (registration.on_write != nullptr ? EPOLLOUT : 0u) |
 		               EPOLLRDHUP;
 		check_return_code(
-				epoll_ctl(this->fd.get_raw_fd(), EPOLL_CTL_ADD, registration.raw_fd, &event));
+				epoll_ctl(this->fd.get_raw_fd(), EPOLL_CTL_ADD, registration.fd->get_raw_fd(), &event));
 	}
 
 	void epoll::update(epoll_registration &registration)
@@ -83,13 +100,13 @@ namespace network
 		               (registration.on_write != nullptr ? EPOLLOUT : 0u) |
 		               EPOLLRDHUP;
 		check_return_code(
-				epoll_ctl(this->fd.get_raw_fd(), EPOLL_CTL_MOD, registration.raw_fd, &event));
+				epoll_ctl(this->fd.get_raw_fd(), EPOLL_CTL_MOD, registration.fd->get_raw_fd(), &event));
 	}
 
 	void epoll::remove(epoll_registration &registration)
 	{
 		check_return_code(
-				epoll_ctl(this->fd.get_raw_fd(), EPOLL_CTL_DEL, registration.raw_fd, nullptr));
+				epoll_ctl(this->fd.get_raw_fd(), EPOLL_CTL_DEL, registration.fd->get_raw_fd(), nullptr));
 	}
 
 	void epoll::schedule_cleanup(epoll_registration &registration)
@@ -120,8 +137,8 @@ namespace network
 				}
 				catch (std::exception &exception)
 				{
-					std::cerr << "Exception thrown while processing file descriptor " << registration->raw_fd <<
-							": " << exception.what() << "\n";
+					std::cerr << "Exception thrown while processing file descriptor " <<
+							registration->fd->get_raw_fd() << ": " << exception.what() << "\n";
 					this->schedule_cleanup(*registration);
 				}
 			}
@@ -130,12 +147,13 @@ namespace network
 				if (registration->cleanup != nullptr)
 					try
 					{
+						this->remove(*registration);
 						registration->cleanup();
 					}
 					catch (std::exception &exception)
 					{
-						std::cerr << "Exception during cleanup on file descriptor " << registration->raw_fd <<
-								": " << exception.what() << "\n";
+						std::cerr << "Exception during cleanup on file descriptor " <<
+								registration->fd->get_raw_fd() << ": " << exception.what() << "\n";
 					}
 			cleanup_set.clear();
 		}

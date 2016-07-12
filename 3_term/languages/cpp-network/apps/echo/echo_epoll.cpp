@@ -16,32 +16,21 @@ public:
 
 	connection(network::client_socket &&client,
 	           network::epoll &epoll, std::map<int, std::unique_ptr<connection>> &map) :
-			client{std::move(client)}, registration{this->client.get_fd()}
+			client{std::move(client)}, registration{this->client.get_fd(), epoll}
 	{
-		registration.set_on_read([this, &epoll] {
+		registration.set_on_read([this] {
 			std::string msg = this->client.read();
 			if (this->string_buffer.is_empty())
-			{
-				this->registration.set_on_write([this, &epoll] {
+				this->registration.set_on_write([this] {
 					size_t written = this->client.write(this->string_buffer.top());
 					this->string_buffer.pop(written);
 					if (this->string_buffer.is_empty())
-					{
-						this->registration.unset_on_write();
-						epoll.update(this->registration);
-					}
-				});
-				epoll.update(this->registration);
-			}
+						this->registration.unset_on_write().update();
+				}).update();
 			this->string_buffer.push(msg);
 		});
 
-		registration.set_on_close([this, &epoll] {
-			epoll.schedule_cleanup(this->registration);
-		});
-
 		registration.set_cleanup([this, &epoll, &map] {
-			epoll.remove(this->registration);
 			map.erase(this->client.get_fd().get_raw_fd());
 		});
 	}
@@ -51,7 +40,7 @@ int main()
 {
 	network::server_socket server{network::make_local_endpoint(2539)};
 	network::epoll epoll{};
-	network::epoll_registration server_registration{server.get_fd()};
+	network::epoll_registration server_registration{server.get_fd(), epoll};
 	std::map<int, std::unique_ptr<connection>> map;
 
 	server_registration.set_on_read([&] {
