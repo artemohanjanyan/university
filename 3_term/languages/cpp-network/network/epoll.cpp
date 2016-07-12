@@ -106,7 +106,7 @@ namespace network
 			int event_n = epoll_wait(fd.get_raw_fd(), events.begin(), static_cast<int>(events.size()), -1);
 			check_return_code(event_n);
 
-			for (int event_i = 0; event_i < event_n; ++event_i)
+			for (int event_i = 0; event_i < event_n && is_running; ++event_i)
 			{
 				epoll_registration *registration = static_cast<epoll_registration *>(events[event_i].data.ptr);
 				try
@@ -116,11 +116,12 @@ namespace network
 					if (events[event_i].events & EPOLLOUT)
 						registration->on_write();
 					if (events[event_i].events & ~(EPOLLIN | EPOLLOUT))
-						if (registration->on_close != nullptr)
-							registration->on_close();
+						registration->on_close();
 				}
 				catch (std::exception &exception)
 				{
+					std::cerr << "Exception thrown while processing file descriptor " << registration->raw_fd <<
+							": " << exception.what() << "\n";
 					this->schedule_cleanup(*registration);
 				}
 			}
@@ -133,7 +134,8 @@ namespace network
 					}
 					catch (std::exception &exception)
 					{
-						std::cerr << "Exception during cleanup: " << exception.what() << "\n";
+						std::cerr << "Exception during cleanup on file descriptor " << registration->raw_fd <<
+								": " << exception.what() << "\n";
 					}
 			cleanup_set.clear();
 		}
