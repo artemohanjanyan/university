@@ -27,3 +27,5 @@ add_executable(rshd ${RSHD_FILES})
 
 add_executable(echo_single apps/echo/echo_single.cpp ${LIB_FILES})
 add_executable(echo_epoll apps/echo/echo_epoll.cpp ${LIB_FILES})
+
+add_executable(request_printer apps/proxy/request_printer.cpp ${LIB_FILES})

@@ -1,6 +1,5 @@
 #include "network/socket.h"
 #include "network/epoll.h"
-#include "network/file_descriptor.h"
 #include "network/network_exception.h"
 #include "utils/string_buffer.h"
 
@@ -42,9 +41,8 @@ public:
 		});
 
 		registration.set_cleanup([this, &epoll, &map] {
-			auto it = map.find(this->client.get_fd().get_raw_fd());
 			epoll.remove(this->registration);
-			map.erase(it);
+			map.erase(this->client.get_fd().get_raw_fd());
 		});
 	}
 };
@@ -59,9 +57,12 @@ int main()
 	server_registration.set_on_read([&] {
 		std::unique_ptr<connection> unique_conn = std::make_unique<connection>(server.accept(), epoll, map);
 		connection *conn = unique_conn.get();
-
 		epoll.add(conn->registration);
 		map.insert(std::make_pair(unique_conn->client.get_fd().get_raw_fd(), std::move(unique_conn)));
+	});
+
+	server_registration.set_cleanup([&] {
+		epoll.soft_stop();
 	});
 
 	epoll.add(server_registration);
