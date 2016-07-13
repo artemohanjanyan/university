@@ -1,8 +1,15 @@
 #ifndef CPP_NETWORK_FILE_DESCRIPTOR_H
 #define CPP_NETWORK_FILE_DESCRIPTOR_H
 
+namespace utils
+{
+	class log;
+}
+
 namespace network
 {
+	extern utils::log log;
+
 	class file_descriptor
 	{
 		int fd;

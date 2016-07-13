@@ -5,14 +5,15 @@
 #include <unistd.h>
 
 #include <iostream>
+#include <utils/log.h>
 
 namespace network
 {
+	utils::log log{std::cout};
+
 	file_descriptor::file_descriptor(int fd) noexcept : fd(fd)
 	{
-#ifdef CPP_NETWORK_DEBUG
-		std::cerr << "file_descriptor(" << fd << ")\n";
-#endif
+		log(utils::info) << "file_descriptor(" << *this << ")\n";
 	}
 
 	file_descriptor::file_descriptor(file_descriptor &&rhs) noexcept : fd(rhs.fd)
@@ -25,14 +26,12 @@ namespace network
 		if (fd == -1)
 			return;
 
-#ifdef CPP_NETWORK_DEBUG
-		std::cerr << "~file_descriptor(" << fd << "), ";
+		log(utils::info) << "~file_descriptor(" << *this << "), ";
 		int error = 0;
 		socklen_t err_len = sizeof error;
 		if (getsockopt(fd, SOL_SOCKET, SO_ERROR, static_cast<void *>(&error), &err_len) == 0)
-			std::cerr << "last error: " << strerror(error);
-		std::cerr << std::endl;
-#endif
+			log(utils::info) <<  "last error: " << strerror(error);
+		log(utils::info) << "\n";
 
 		close(fd);
 	}

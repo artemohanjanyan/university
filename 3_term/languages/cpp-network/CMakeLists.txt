@@ -12,13 +12,14 @@ set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O3")
 
 include_directories(.)
 
-set(LIB_FILES network/file_descriptor.h network/file_descriptor.cpp
+set(LIB_FILES network/file_descriptor.cpp network/file_descriptor.h
         network/socket.cpp network/socket.h
         network/network_exception.cpp network/network_exception.h
         network/epoll.cpp network/epoll.h
         utils/string_buffer.cpp utils/string_buffer.h
         utils/string_view.cpp utils/string_view.h
-        utils/executor.cpp utils/executor.h)
+        utils/executor.cpp utils/executor.h
+        utils/log.cpp utils/log.h)
 
 set(RSHD_FILES apps/rshd/rshd.c
         apps/rshd/ptr_set.h apps/rshd/ptr_set.cpp

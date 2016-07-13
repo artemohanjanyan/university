@@ -5,6 +5,7 @@
 
 #include <array>
 #include <netdb.h>
+#include <utils/log.h>
 
 namespace network
 {
@@ -136,13 +137,20 @@ namespace network
 		std::array<char, 1024> buf;
 		ssize_t read_n = ::recv(fd.get_raw_fd(), buf.begin(), buf.size(), MSG_NOSIGNAL);
 		check_return_code(read_n);
-		return std::string(buf.begin(), static_cast<size_t>(read_n));
+		std::string string{buf.begin(), static_cast<size_t>(read_n)};
+#ifdef CPP_NETWORK_DEBUG
+		log(utils::verbose) << "read " << std::to_string(string.size()) << " bytes from " << fd << "\n";
+#endif
+		return std::move(string);
 	}
 
 	size_t client_socket::write(utils::string_view const &str)
 	{
 		ssize_t written = ::send(fd.get_raw_fd(), str.begin(), str.size(), MSG_NOSIGNAL);
 		check_return_code(written);
+#ifdef CPP_NETWORK_DEBUG
+		log(utils::verbose) << "written " << std::to_string(written) << " bytes to " << fd << "\n";
+#endif
 		return static_cast<size_t>(written);
 	}
 

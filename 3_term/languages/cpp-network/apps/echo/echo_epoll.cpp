@@ -6,6 +6,7 @@
 #include <map>
 #include <memory>
 #include <iostream>
+#include <utils/log.h>
 
 class connection
 {
@@ -38,6 +39,8 @@ public:
 
 int main()
 {
+	network::log.print_mask |= utils::verbose;
+
 	network::server_socket server{network::make_local_endpoint(2539)};
 	network::epoll epoll{};
 	network::epoll_registration server_registration{server.get_fd(), epoll};
