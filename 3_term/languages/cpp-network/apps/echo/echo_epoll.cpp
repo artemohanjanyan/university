@@ -11,26 +11,26 @@ class connection
 {
 public:
 	network::client_socket client;
-	network::epoll_registration registration;
+	network::epoll_registration client_registration;
 	utils::string_buffer string_buffer{};
 
-	connection(network::client_socket &&client,
+	connection(network::client_socket &&client_init,
 	           network::epoll &epoll, std::map<int, std::unique_ptr<connection>> &map) :
-			client{std::move(client)}, registration{this->client.get_fd(), epoll}
+			client{std::move(client_init)}, client_registration{this->client.get_fd(), epoll}
 	{
-		registration.set_on_read([this] {
-			std::string msg = this->client.read();
-			if (this->string_buffer.is_empty())
-				this->registration.set_on_write([this] {
-					size_t written = this->client.write(this->string_buffer.top());
-					this->string_buffer.pop(written);
-					if (this->string_buffer.is_empty())
-						this->registration.unset_on_write().update();
+		client_registration.set_on_read([this] {
+			std::string msg = client.read();
+			if (string_buffer.is_empty())
+				client_registration.set_on_write([this] {
+					size_t written = client.write(string_buffer.top());
+					string_buffer.pop(written);
+					if (string_buffer.is_empty())
+						client_registration.unset_on_write().update();
 				}).update();
-			this->string_buffer.push(msg);
+			string_buffer.push(msg);
 		});
 
-		registration.set_cleanup([this, &map] {
+		client_registration.set_cleanup([this, &map] {
 			map.erase(this->client.get_fd().get_raw_fd());
 		});
 	}
@@ -46,7 +46,7 @@ int main()
 	server_registration.set_on_read([&] {
 		std::unique_ptr<connection> unique_conn = std::make_unique<connection>(server.accept(), epoll, map);
 		connection *conn = unique_conn.get();
-		epoll.add(conn->registration);
+		epoll.add(conn->client_registration);
 		map.insert(std::make_pair(unique_conn->client.get_fd().get_raw_fd(), std::move(unique_conn)));
 	});
 

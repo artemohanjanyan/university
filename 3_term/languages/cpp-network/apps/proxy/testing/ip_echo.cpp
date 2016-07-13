@@ -9,14 +9,14 @@ class connection
 {
 public:
 	network::client_socket client;
-	network::epoll_registration registration;
+	network::epoll_registration client_registration;
 
 	connection(network::client_socket &&client,
 	           network::epoll &epoll,
 	           std::map<int, std::unique_ptr<connection>> &map) :
-			client{std::move(client)}, registration{this->client.get_fd(), epoll}
+			client{std::move(client)}, client_registration{this->client.get_fd(), epoll}
 	{
-		registration.set_on_read([this] {
+		client_registration.set_on_read([this] {
 			// Not actually correct, but nobody cares
 			std::string string = this->client.read();
 			std::cout << int(string[string.size() - 2]) << " " << int(string[string.size() - 1]) << "\n";
@@ -25,7 +25,7 @@ public:
 				this->client.write(to_string(endpoint) + "\n");
 		});
 
-		registration.set_cleanup([this, &map] {
+		client_registration.set_cleanup([this, &map] {
 			map.erase(this->client.get_fd().get_raw_fd());
 		});
 	}
@@ -41,7 +41,7 @@ int main()
 	server_registration.set_on_read([&] {
 		std::unique_ptr<connection> conn = std::make_unique<connection>(server.accept(), epoll, map);
 		connection *raw_conn = conn.get();
-		epoll.add(conn->registration);
+		epoll.add(conn->client_registration);
 		map.insert(std::make_pair(raw_conn->client.get_fd().get_raw_fd(), std::move(conn)));
 	});
 

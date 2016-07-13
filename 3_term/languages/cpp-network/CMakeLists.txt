@@ -30,3 +30,5 @@ add_executable(echo_epoll apps/echo/echo_epoll.cpp ${LIB_FILES})
 
 add_executable(request_printer apps/proxy/testing/request_printer.cpp ${LIB_FILES})
 add_executable(ip_echo apps/proxy/testing/ip_echo.cpp ${LIB_FILES})
+
+add_executable(main apps/proxy/main.cpp ${LIB_FILES})
