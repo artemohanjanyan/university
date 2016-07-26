@@ -5,6 +5,7 @@
 
 #include <forward_list>
 #include <iostream>
+#include <utils/log.h>
 
 namespace network
 {
@@ -129,16 +130,25 @@ namespace network
 				try
 				{
 					if (events[event_i].events & EPOLLIN)
+					{
+						log(utils::verbose) << "can read from " << *registration->fd << "\n";
 						registration->on_read();
+					}
 					if (events[event_i].events & EPOLLOUT)
+					{
+						log(utils::verbose) << "can write to " << *registration->fd << "\n";
 						registration->on_write();
+					}
 					if (events[event_i].events & ~(EPOLLIN | EPOLLOUT))
+					{
+						log(utils::verbose) << "closed on " << *registration->fd << "\n";
 						registration->on_close();
+					}
 				}
 				catch (std::exception &exception)
 				{
-					std::cerr << "Exception thrown while processing file descriptor " <<
-							registration->fd->get_raw_fd() << ": " << exception.what() << "\n";
+					log(utils::error) << "Exception thrown while processing file descriptor " <<
+							*registration->fd << ": " << exception.what() << "\n";
 					this->schedule_cleanup(*registration);
 				}
 			}
@@ -152,8 +162,8 @@ namespace network
 					}
 					catch (std::exception &exception)
 					{
-						std::cerr << "Exception during cleanup on file descriptor " <<
-								registration->fd->get_raw_fd() << ": " << exception.what() << "\n";
+						log(utils::error) << "Exception during cleanup on file descriptor " <<
+								*registration->fd << ": " << exception.what() << "\n";
 					}
 			cleanup_set.clear();
 		}

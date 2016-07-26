@@ -5,6 +5,7 @@
 #include <memory>
 #include <map>
 #include <iostream>
+#include <utils/log.h>
 
 struct connection
 {
@@ -37,7 +38,6 @@ struct connection
 		size_t pos1 = request.find("ost: ");
 		size_t pos2 = request.find("\r\n", pos1);
 		std::string host_name = request.substr(pos1 + 5, pos2 - pos1 - 5);
-		std::cerr << host_name << "\n";
 
 		host = std::make_unique<host_data>(network::client_socket{network::get_hosts(host_name)}, epoll);
 		write_buffer.push(request);
@@ -97,6 +97,7 @@ struct connection
 
 int main()
 {
+	network::log.print_mask |= utils::verbose;
 	network::server_socket server{network::make_local_endpoint(2539)};
 	network::epoll epoll{};
 	network::epoll_registration server_registration{server.get_fd(), epoll};

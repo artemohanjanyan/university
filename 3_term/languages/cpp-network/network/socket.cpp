@@ -76,6 +76,8 @@ namespace network
 
 	std::vector<ipv4_endpoint> get_hosts(std::string name)
 	{
+		log(utils::verbose) << "getting hosts of " << name << "\n";
+
 		addrinfo hints;
 		addrinfo *info;
 
@@ -104,11 +106,18 @@ namespace network
 
 		freeaddrinfo(info);
 
+		log(utils::verbose) << "get_hosts returned [ ";
+		for (auto &endpoint : endpoints) {
+			log(utils::verbose) << to_string(endpoint) << " ";
+		}
+		log(utils::verbose) << "]\n";
+
 		return std::move(endpoints);
 	}
 
 	file_descriptor client_socket::connect(std::vector<ipv4_endpoint> endpoints)
 	{
+		log(utils::verbose) << "connecting to " << to_string(endpoints.front()) << "...\n";
 		file_descriptor fd{check_return_code(::socket(AF_INET, SOCK_STREAM, 0))};
 		sockaddr_in address;
 		address.sin_family = AF_INET;
@@ -165,6 +174,8 @@ namespace network
 	server_socket::server_socket(ipv4_endpoint endpoint) :
 			server_socket{file_descriptor{check_return_code(::socket(AF_INET, SOCK_STREAM, 0))}}
 	{
+		log(utils::verbose) << "starting server at " << to_string(endpoint) << "\n";
+
 		int enable = 1;
 		setsockopt(fd.get_raw_fd(), SOL_SOCKET, SO_REUSEPORT, &enable, sizeof enable);
 
@@ -182,9 +193,12 @@ namespace network
 
 	client_socket server_socket::accept()
 	{
+		log(utils::verbose) << "accepting at " << fd << "...\n";
 		int new_fd = ::accept(fd.get_raw_fd(), nullptr, nullptr);
 		check_return_code(new_fd);
-		return network::client_socket{file_descriptor{new_fd}};
+		client_socket accepted{file_descriptor{new_fd}};
+		log(utils::verbose) << "accepted " << accepted.get_fd() << "\n";
+		return std::move(accepted);
 	}
 
 	ipv4_endpoint get_socket_endpoint(file_descriptor const &fd)
