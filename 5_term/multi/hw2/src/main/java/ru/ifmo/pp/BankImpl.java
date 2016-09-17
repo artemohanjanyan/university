@@ -7,7 +7,7 @@ import java.util.concurrent.locks.ReentrantLock;
  * Bank implementation.
  * This implementation is thread-safe.
  *
- * @author Ohanjanyan
+ * @author Оганджанян
  */
 public class BankImpl implements Bank {
     /**
@@ -40,9 +40,11 @@ public class BankImpl implements Bank {
     @Override
     public long getAmount(int index) {
         accounts[index].lock.lock();
-        long amount = accounts[index].amount;
-        accounts[index].lock.unlock();
-        return amount;
+        try {
+            return accounts[index].amount;
+        } finally {
+            accounts[index].lock.unlock();
+        }
     }
 
     /**
@@ -157,7 +159,7 @@ public class BankImpl implements Bank {
         Lock lock;
 
         /**
-         * Creates new Account instance.
+         * Creates new account instance.
          * @param lock lock implementation to use with this account.
          */
         Account(Lock lock) {
