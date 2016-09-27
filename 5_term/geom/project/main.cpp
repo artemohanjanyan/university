@@ -9,24 +9,28 @@ struct vertex_t
 	uint32_t triangle_id;
 };
 
-uint8_t cw(uint8_t i)
+uint8_t cw(uint8_t i) // Clockwise
 {
 	static constexpr std::array<uint8_t, 3> array = {{1, 2, 0}};
 	return array[i];
 }
 
-uint8_t ccw(uint8_t i)
+uint8_t ccw(uint8_t i) // Counterclockwise
 {
 	static constexpr std::array<uint8_t, 3> array = {{2, 0, 1}};
 	return array[i];
 }
 
-using edge_t = std::pair<uint32_t, uint32_t>;
-
-edge_t twin(edge_t const &edge)
+struct edge_t : public std::pair<uint32_t, uint32_t>
 {
-	return {edge.second, edge.first};
-}
+	edge_t(uint32_t const &a, uint32_t const &b) : pair(a, b)
+	{}
+
+	edge_t twin() const
+	{
+		return {second, first};
+	}
+};
 
 struct triangle_t
 {
@@ -35,7 +39,7 @@ struct triangle_t
 
 	edge_t edge(uint8_t i) const
 	{
-		return {vertices[ccw(i)], vertices[cw(i)]};
+		return {vertices[cw(i)], vertices[ccw(i)]};
 	}
 
 	uint8_t vertex_id(uint32_t v) const
@@ -65,7 +69,7 @@ struct triangle_cursor_t
 		triangle_t const &triangle = triangulation_->triangles[triangle_id_];
 		uint32_t vertex_id = triangle.vertices[cw(edge_id)];
 		triangle_id_ = triangle.neighbours[edge_id];
-		return ccw(triangulation_->triangles[triangle_id_].vertex_id(vertex_id));
+		return cw(triangulation_->triangles[triangle_id_].vertex_id(vertex_id));
 	}
 
 	uint32_t triangle_id() const
@@ -90,7 +94,7 @@ int main(int argc, char *argv[])
 	if (argc > 2)
 		freopen(argv[2], "w", stdout);
 
-	triangulation_t triangulation;
+	triangulation_t triangulation{};
 
 	std::string tmp;
 	std::cin >> tmp;
@@ -101,13 +105,12 @@ int main(int argc, char *argv[])
 	{
 		int32_t x, y;
 		std::cin >> x >> y >> tmp;
-		triangulation.vertices.push_back({x, y, 15000, FAKE_ID});
+		triangulation.vertices.push_back({x, y, 30000, FAKE_ID});
 	}
 	uint32_t const inf_index = static_cast<uint32_t>(triangulation.vertices.size());
-	triangulation.vertices.push_back({0, 0, 0, FAKE_ID});
+	triangulation.vertices.push_back({0, 0, 0, m});
 
-	std::map<edge_t, uint32_t> edge_map;
-
+	std::map<edge_t, uint32_t> edge_to_triangle;
 	for (uint32_t i = 0; i < m; ++i)
 	{
 		triangle_t triangle;
@@ -119,34 +122,34 @@ int main(int argc, char *argv[])
 			triangulation.vertices[id].triangle_id = i;
 
 		for (uint8_t j = 0; j < 3; ++j)
-			edge_map[triangle.edge(j)] = i;
+			edge_to_triangle[triangle.edge(j)] = i;
 
 		triangulation.triangles.push_back(triangle);
 	}
 
-	std::unordered_map<uint32_t, uint32_t> next_ch_vertex;
+	std::unordered_map<uint32_t, uint32_t> next_ch_vertex; // ch for convex hull
 	for (uint32_t i = 0; i < m; ++i)
-	{
 		for (uint8_t j = 0; j < 3; ++j)
 		{
 			auto edge = triangulation.triangles[i].edge(j);
-			auto edge_twin = twin(edge);
+			auto twin = edge.twin();
 
-			if (edge_map.count(edge_twin))
-			{
-				triangulation.triangles[i].neighbours[j] = edge_map[edge_twin];
-			}
+			if (edge_to_triangle.count(twin))
+				triangulation.triangles[i].neighbours[j] = edge_to_triangle[twin];
 			else
 			{
 				triangle_t triangle;
-				triangle.vertices = {inf_index, edge_twin.first, edge_twin.second};
+				triangle.vertices = {inf_index, twin.first, twin.second};
 				triangle.neighbours[0] = i;
-				next_ch_vertex[edge_twin.first] = edge_twin.second;
-				edge_map[edge_twin] = static_cast<uint32_t>(triangulation.triangles.size());
+
+				next_ch_vertex[twin.first] = twin.second;
+				uint32_t new_triangle_id = static_cast<uint32_t>(triangulation.triangles.size());
+				edge_to_triangle[twin] = new_triangle_id;
+				triangulation.triangles[i].neighbours[j] = new_triangle_id;
+
 				triangulation.triangles.push_back(triangle);
 			}
 		}
-	}
 
 	uint32_t v = next_ch_vertex.begin()->first;
 	uint32_t done = v;
@@ -154,8 +157,8 @@ int main(int argc, char *argv[])
 	{
 		uint32_t next = next_ch_vertex.at(v);
 
-		uint32_t triangle_id = edge_map.at({v, next});
-		uint32_t next_triangle_id = edge_map.at({next, next_ch_vertex.at(next)});
+		uint32_t triangle_id = edge_to_triangle.at({v, next});
+		uint32_t next_triangle_id = edge_to_triangle.at({next, next_ch_vertex.at(next)});
 
 		assert(triangulation.triangles[triangle_id].vertices[2] == next);
 		assert(triangulation.triangles[next_triangle_id].vertices[1] == next);
