@@ -44,7 +44,7 @@ public class VolatileNonVolatile {
 
     // Volatile, not shared
 
-    @State(Scope.Benchmark)
+    @State(Scope.Thread)
     public static class VolatileNotSharedState {
         volatile int var;
     }
@@ -63,20 +63,20 @@ public class VolatileNonVolatile {
 
     // Non-volatile, not shared
 
-    @State(Scope.Benchmark)
+    @State(Scope.Thread)
     public static class NonVolatileNotSharedState {
         int var;
     }
 
     @Benchmark
     @Group("non_volatile_not_shared")
-    public int nonVolatileNotSharedreader(NonVolatileNotSharedState s) {
+    public int nonVolatileNotSharedReader(NonVolatileNotSharedState s) {
         return s.var;
     }
 
     @Benchmark
     @Group("non_volatile_not_shared")
-    public void nonVolatileNotSharedwriter(NonVolatileNotSharedState s) {
+    public void nonVolatileNotSharedWriter(NonVolatileNotSharedState s) {
         ++s.var;
     }
 }

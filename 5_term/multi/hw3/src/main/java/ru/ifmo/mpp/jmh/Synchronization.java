@@ -101,7 +101,7 @@ public class Synchronization {
 
     // Synchronized, not shared
 
-    @State(Scope.Group)
+    @State(Scope.Thread)
     public static class SynchronizedNotSharedState {
         long var;
     }
