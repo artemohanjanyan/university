@@ -10,7 +10,7 @@ interface ResultsProvider {
 }
 
 interface TicketService {
-    fun makeTicketPage(group: Int, newTasks: IntRange)
+    fun makeTicketPage(group: Int, newTasks: IntRange, tickets: Map<String, Set<Int>>)
     fun makeSummaryPage(groups: List<Pair<Int, IntRange>>)
     fun share(emails: List<String>)
 }

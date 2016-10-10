@@ -13,7 +13,11 @@ fun main(args: Array<String>) {
     val infoProvider = SheetStudentInfoProvider(service, oldInfoId, newInfoId)
     val resultsProvider = SheetsResultsProvider(service, resultsId, infoProvider)
     val ticketService = SheetTicketService(service, ticketsId, resultsProvider, infoProvider)
+
+//    ticketService.share(infoProvider.getInfo().toList().map { it.second.email })
+    val tickets = ticketService.getTickets(39 downTo 36)
+    ticketService.backup(tickets)
     for (group in 39 downTo 36) {
-        ticketService.makeTicketPage(group, 61 until 72)
+        ticketService.makeTicketPage(group, 61 until 72, tickets)
     }
 }
