@@ -129,12 +129,6 @@ class SheetTicketService(val service: Sheets,
                          val resultsProvider: ResultsProvider,
                          val infoProvider: StudentInfoProvider) : TicketService {
 
-//    private val spreadsheet: Spreadsheet by lazy {
-//        service.spreadsheets()
-//                .get(id)
-//                .execute()
-//    }
-
     private fun spreadsheet(): Spreadsheet {
         return service.spreadsheets()
                 .get(id)
@@ -282,8 +276,34 @@ class SheetTicketService(val service: Sheets,
             requests.add(Request().setAddProtectedRange(addStudentProtectedRangeRequest))
         }
 
-        // todo conditional formatting
-        // TODO Request().setUpdateBorders
+        val booleanRule = BooleanRule()
+        booleanRule.condition = BooleanCondition()
+                .setType("TEXT_EQ")
+                .setValues(listOf(ConditionValue().setUserEnteredValue("1")))
+        booleanRule.format = CellFormat().setBackgroundColor(Color()
+                .setRed(0.7176471f)
+                .setGreen(0.88235285f)
+                .setBlue(0.8039216f))
+        val conditionalFormatRule = ConditionalFormatRule()
+        conditionalFormatRule.ranges = listOf(unprotectedRange)
+        conditionalFormatRule.booleanRule = booleanRule
+        val addConditionalFormatRuleRequest = AddConditionalFormatRuleRequest()
+        addConditionalFormatRuleRequest.rule = conditionalFormatRule
+        requests.add(Request().setAddConditionalFormatRule(addConditionalFormatRuleRequest))
+
+        val bordersRange = GridRange()
+        bordersRange.sheetId = gridRange.sheetId
+        bordersRange.startRowIndex = gridRange.startRowIndex
+        bordersRange.startColumnIndex = gridRange.startColumnIndex
+        bordersRange.endRowIndex = gridRange.endRowIndex
+        bordersRange.endColumnIndex = 3 + newNotSolvedTasks.size
+        val border = Border()
+        border.style = "SOLID"
+        border.color = Color().setRed(0f).setGreen(0f).setBlue(0f).setAlpha(1f)
+        val updateBordersRequest = UpdateBordersRequest()
+        updateBordersRequest.range = bordersRange
+        updateBordersRequest.right = border
+        requests.add(Request().setUpdateBorders(updateBordersRequest))
 
         service.spreadsheets()
                 .batchUpdate(spreadsheet().spreadsheetId,
