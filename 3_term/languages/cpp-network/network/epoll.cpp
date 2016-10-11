@@ -9,7 +9,8 @@
 
 namespace network
 {
-	epoll_registration::epoll_registration(file_descriptor const &fd, epoll &ep) noexcept :
+	epoll_registration::epoll_registration(file_descriptor const &fd, epoll &ep) noexcept
+			:
 			fd{&fd}, ep{&ep}
 	{
 		on_close = [this] {
@@ -70,17 +71,17 @@ namespace network
 		ep->update(*this);
 	}
 
-	epoll::epoll(file_descriptor &&fd) noexcept : base_descriptor_resource{std::move(fd)}
-	{
-	}
+	epoll::epoll(file_descriptor &&fd) noexcept
+			: base_descriptor_resource{std::move(fd)}
+	{}
 
-	epoll::epoll() : epoll{file_descriptor{check_return_code(::epoll_create1(0))}}
-	{
-	}
+	epoll::epoll()
+			: epoll{file_descriptor{check_return_code(::epoll_create1(0))}}
+	{}
 
-	epoll::epoll(epoll &&rhs) noexcept : epoll{std::move(rhs.fd)}
-	{
-	}
+	epoll::epoll(epoll &&rhs) noexcept
+			: epoll{std::move(rhs.fd)}
+	{}
 
 	void epoll::add(epoll_registration &registration)
 	{

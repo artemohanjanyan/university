@@ -33,8 +33,9 @@ namespace utils
 		}
 	}
 
-	log::log(std::ostream &stream) noexcept : stream(stream)
-	{ }
+	log::log(std::ostream &stream) noexcept
+			: stream(stream)
+	{}
 
 	log &log::operator<<(std::string const &msg)
 	{

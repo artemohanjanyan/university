@@ -2,19 +2,20 @@
 
 namespace utils
 {
-	string_view::string_view(char const *begin, char const *end) noexcept :
-			begin_ptr{begin}, end_ptr{end}
-	{
-	}
+	string_view::string_view(char const *begin, char const *end) noexcept
+			: begin_ptr{begin}
+			, end_ptr{end}
+	{}
 
-	string_view::string_view(std::string::const_iterator begin, std::string::const_iterator end) noexcept :
-			begin_ptr{&*begin}, end_ptr{&*end}
-	{
-	}
+	string_view::string_view(std::string::const_iterator begin, std::string::const_iterator end) noexcept
+			: begin_ptr{&*begin}
+			, end_ptr{&*end}
+	{}
 
-	string_view::string_view(char const *str) noexcept : begin_ptr{str}
+	string_view::string_view(char const *str) noexcept
+			: begin_ptr{str}
 	{
-		for (auto it = str; ; ++it)
+		for (auto it = str;; ++it)
 			if (*it == 0)
 			{
 				end_ptr = it;
@@ -22,10 +23,9 @@ namespace utils
 			}
 	}
 
-	string_view::string_view(std::string const &str) noexcept :
-			string_view{str.begin(), str.end()}
-	{
-	}
+	string_view::string_view(std::string const &str) noexcept
+			: string_view{str.begin(), str.end()}
+	{}
 
 	char const *string_view::begin() const noexcept
 	{

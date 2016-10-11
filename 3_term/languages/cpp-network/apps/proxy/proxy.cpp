@@ -1,11 +1,11 @@
 #include <network/socket.h>
 #include <network/epoll.h>
 #include <utils/string_buffer.h>
+#include <utils/log.h>
 
 #include <memory>
 #include <map>
 #include <iostream>
-#include <utils/log.h>
 
 utils::log log{std::cout};
 
@@ -16,8 +16,9 @@ struct connection
 		network::client_socket host;
 		network::epoll_registration host_registration;
 
-		host_data(network::client_socket &&host, network::epoll &epoll) :
-				host{std::move(host)}, host_registration{this->host.get_fd(), epoll}
+		host_data(network::client_socket &&host, network::epoll &epoll)
+				: host{std::move(host)}
+				, host_registration{this->host.get_fd(), epoll}
 		{
 		}
 	};
@@ -45,11 +46,9 @@ struct connection
 		write_buffer.push(request);
 
 		host_write = [this] {
-			log(utils::debug) << "I'll write now\n";
 			write_buffer.pop(host->host.write(write_buffer.top()));
 			if (write_buffer.is_empty())
 				host->host_registration.unset_on_write().update();
-			log(utils::debug) << "I've written\n";
 		};
 
 		client_registration.set_on_read([this] {
@@ -59,16 +58,13 @@ struct connection
 		}).update();
 
 		host->host_registration.set_on_read([this] {
-			log(utils::debug) << "I'll read soon\n";
 			if (read_buffer.is_empty())
 				client_registration.set_on_write([this] {
 					read_buffer.pop(client.write(read_buffer.top()));
 					if (read_buffer.is_empty())
 						client_registration.unset_on_write().update();
 				}).update();
-			log(utils::debug) << "I'll read now\n";
 			read_buffer.push(host->host.read());
-			log(utils::debug) << "I've read\n";
 		});
 
 		host->host_registration.set_on_write(host_write);
@@ -86,9 +82,11 @@ struct connection
 
 	connection(network::client_socket &&client_init,
 	           network::epoll &epoll_init,
-	           std::map<int, std::unique_ptr<connection>> &map_init) :
-			client{std::move(client_init)}, client_registration{this->client.get_fd(), epoll_init},
-			epoll{epoll_init}, map{map_init}
+	           std::map<int, std::unique_ptr<connection>> &map_init)
+			: client{std::move(client_init)}
+			, client_registration{this->client.get_fd(), epoll_init}
+			, epoll{epoll_init}
+			, map{map_init}
 	{
 		client_registration.set_on_read([this] {
 			request += client.read();

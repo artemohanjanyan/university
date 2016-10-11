@@ -11,12 +11,14 @@ namespace network
 {
 	utils::log log{std::cout};
 
-	file_descriptor::file_descriptor(int fd) noexcept : fd(fd)
+	file_descriptor::file_descriptor(int fd) noexcept
+			: fd(fd)
 	{
 		log(utils::info) << "file_descriptor(" << *this << ")\n";
 	}
 
-	file_descriptor::file_descriptor(file_descriptor &&rhs) noexcept : fd(rhs.fd)
+	file_descriptor::file_descriptor(file_descriptor &&rhs) noexcept
+			: fd(rhs.fd)
 	{
 		rhs.fd = -1;
 	}
@@ -30,7 +32,7 @@ namespace network
 		int error = 0;
 		socklen_t err_len = sizeof error;
 		if (getsockopt(fd, SOL_SOCKET, SO_ERROR, static_cast<void *>(&error), &err_len) == 0)
-			log(utils::info) <<  "last error: " << strerror(error);
+			log(utils::info) << "last error: " << strerror(error);
 		log(utils::info) << "\n";
 
 		close(fd);
@@ -52,7 +54,8 @@ namespace network
 		return fd != -1;
 	}
 
-	base_descriptor_resource::base_descriptor_resource(network::file_descriptor &&fd) noexcept : fd(std::move(fd))
+	base_descriptor_resource::base_descriptor_resource(network::file_descriptor &&fd) noexcept
+			: fd(std::move(fd))
 	{
 	}
 

@@ -9,7 +9,8 @@
 
 namespace network
 {
-	ipv4_address::ipv4_address(uint32_t address) noexcept : address{address}
+	ipv4_address::ipv4_address(uint32_t address) noexcept
+			: address{address}
 	{
 	}
 
@@ -29,8 +30,9 @@ namespace network
 		return inet_ntoa(tmp);
 	}
 
-	ipv4_endpoint::ipv4_endpoint(network::ipv4_address address, uint16_t port_n) noexcept :
-			address{address}, port_n{port_n}
+	ipv4_endpoint::ipv4_endpoint(network::ipv4_address address, uint16_t port_n) noexcept
+			: address{address}
+			, port_n{port_n}
 	{
 	}
 
@@ -107,7 +109,8 @@ namespace network
 		freeaddrinfo(info);
 
 		log(utils::verbose) << "get_hosts returned [ ";
-		for (auto &endpoint : endpoints) {
+		for (auto &endpoint : endpoints)
+		{
 			log(utils::verbose) << to_string(endpoint) << " ";
 		}
 		log(utils::verbose) << "]\n";
@@ -128,16 +131,18 @@ namespace network
 		return std::move(fd);
 	}
 
-	client_socket::client_socket(file_descriptor &&fd) noexcept : base_descriptor_resource{std::move(fd)}
+	client_socket::client_socket(file_descriptor &&fd) noexcept
+			: base_descriptor_resource{std::move(fd)}
 	{
 	}
 
-	client_socket::client_socket(client_socket &&rhs) noexcept : client_socket{std::move(rhs.fd)}
+	client_socket::client_socket(client_socket &&rhs) noexcept
+			: client_socket{std::move(rhs.fd)}
 	{
 	}
 
-	client_socket::client_socket(std::vector<ipv4_endpoint> endpoints) :
-			client_socket{connect(endpoints)}
+	client_socket::client_socket(std::vector<ipv4_endpoint> endpoints)
+			: client_socket{connect(endpoints)}
 	{
 	}
 
@@ -163,16 +168,18 @@ namespace network
 		return static_cast<size_t>(written);
 	}
 
-	server_socket::server_socket(file_descriptor &&fd) : base_descriptor_resource{std::move(fd)}
+	server_socket::server_socket(file_descriptor &&fd)
+			: base_descriptor_resource{std::move(fd)}
 	{
 	}
 
-	server_socket::server_socket(server_socket &&rhs) : server_socket{std::move(rhs.fd)}
+	server_socket::server_socket(server_socket &&rhs)
+			: server_socket{std::move(rhs.fd)}
 	{
 	}
 
-	server_socket::server_socket(ipv4_endpoint endpoint) :
-			server_socket{file_descriptor{check_return_code(::socket(AF_INET, SOCK_STREAM, 0))}}
+	server_socket::server_socket(ipv4_endpoint endpoint)
+			: server_socket{file_descriptor{check_return_code(::socket(AF_INET, SOCK_STREAM, 0))}}
 	{
 		log(utils::verbose) << "starting server at " << to_string(endpoint) << "\n";
 

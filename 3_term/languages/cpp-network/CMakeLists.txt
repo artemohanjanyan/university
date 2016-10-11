@@ -1,6 +1,7 @@
 cmake_minimum_required(VERSION 3.5)
 project(cpp_network)
 
+# Flags
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14 -pthread")
 
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -DCPP_NETWORK_DEBUG\
@@ -10,8 +11,13 @@ set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -DCPP_NETWORK_DEBUG\
 
 set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O3")
 
+# Internal and external libs
 include_directories(.)
 
+#find_package(Boost COMPONENTS system REQUIRED)
+#include_directories(${Boost_INCLUDE_DIR})
+
+# Targets
 set(LIB_FILES network/file_descriptor.cpp network/file_descriptor.h
         network/socket.cpp network/socket.h
         network/network_exception.cpp network/network_exception.h
