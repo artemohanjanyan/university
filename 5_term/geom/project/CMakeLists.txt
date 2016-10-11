@@ -13,4 +13,9 @@ find_package(Boost)
 
 add_subdirectory(googletest)
 
-add_executable(project main.cpp)
+add_executable(project main.cpp geometry.h)
+
+add_executable(project-test test.cpp)
+target_link_libraries(project-test PRIVATE gtest_main)
+enable_testing()
+add_test(test project-test)
