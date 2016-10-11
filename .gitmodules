@@ -1,0 +1,3 @@
+[submodule "5_term/geom/project/googletest"]
+	path = 5_term/geom/project/googletest
+	url = https://github.com/google/googletest.git

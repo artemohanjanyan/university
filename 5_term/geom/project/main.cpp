@@ -1,21 +1,27 @@
-#include <bits/stdc++.h>
+#include <iostream>
+#include <vector>
+#include <map>
+#include <unordered_map>
+#include <unordered_set>
 #include <boost/range/adaptor/indexed.hpp>
+#include <boost/range/algorithm/find_if.hpp>
+#include <glm/glm.hpp>
 
 uint32_t const FAKE_ID = std::numeric_limits<uint32_t>::max();
 
 struct vertex_t
 {
-	int32_t x, y, z;
+    glm::ivec3 point;
 	uint32_t triangle_id;
 };
 
-uint8_t cw(uint8_t i) // Clockwise
+uint8_t ccw(uint8_t i) // Counterclockwise
 {
 	static constexpr std::array<uint8_t, 3> array = {{1, 2, 0}};
 	return array[i];
 }
 
-uint8_t ccw(uint8_t i) // Counterclockwise
+uint8_t cw(uint8_t i) // Clockwise
 {
 	static constexpr std::array<uint8_t, 3> array = {{2, 0, 1}};
 	return array[i];
@@ -39,7 +45,7 @@ struct triangle_t
 
 	edge_t edge(uint8_t i) const
 	{
-		return {vertices[cw(i)], vertices[ccw(i)]};
+        return {vertices[ccw(i)], vertices[cw(i)]};
 	}
 
 	uint8_t vertex_id(uint32_t v) const
@@ -67,9 +73,9 @@ struct triangle_cursor_t
 	uint8_t next(uint8_t edge_id)
 	{
 		triangle_t const &triangle = triangulation_->triangles[triangle_id_];
-		uint32_t vertex_id = triangle.vertices[cw(edge_id)];
+        uint32_t vertex_id = triangle.vertices[ccw(edge_id)];
 		triangle_id_ = triangle.neighbours[edge_id];
-		return cw(triangulation_->triangles[triangle_id_].vertex_id(vertex_id));
+        return ccw(triangulation_->triangles[triangle_id_].vertex_id(vertex_id));
 	}
 
 	uint32_t triangle_id() const
@@ -86,6 +92,65 @@ private:
 	triangulation_t const *triangulation_ = nullptr;
 	uint32_t triangle_id_ = FAKE_ID;
 };
+
+enum turn_t
+{
+    left, right, collinear
+};
+
+template<typename T>
+constexpr T sign(T x)
+{
+    if (x < 0)
+        return -1;
+    if (x > 0)
+        return 1;
+    return 0;
+}
+
+turn_t turn(glm::ivec3 const &a, glm::ivec3 const &b, glm::ivec3 const &c)
+{
+    switch(sign((static_cast<int64_t>(b.x) * a.z - static_cast<int64_t>(a.x) * b.z) *
+                (static_cast<int64_t>(c.y) * a.z - static_cast<int64_t>(a.y) * c.z) -
+                (static_cast<int64_t>(b.y) * a.z - static_cast<int64_t>(a.y) * b.z) *
+                (static_cast<int64_t>(c.x) * a.z - static_cast<int64_t>(a.x) * c.z)))
+    {
+        case 1:
+            return left;
+        case 0:
+            return collinear;
+        case -1:
+            return right;
+        default:
+            throw std::runtime_error("unexpected value");
+    }
+}
+
+bool contains(glm::ivec3 const &point,
+              std::array<uint32_t, 3> const &triangle_vertices,
+              std::vector<vertex_t> const &vertices)
+{
+    assert(turn(vertices[triangle_vertices[0]].point,
+            vertices[triangle_vertices[1]].point,
+            vertices[triangle_vertices[2]].point) != right);
+
+    for (uint8_t i = 0; i != 3; ++i)
+        if (turn(vertices[triangle_vertices[i]].point,
+                 vertices[triangle_vertices[ccw(i)]].point,
+                 point) == right)
+            return false;
+    return true;
+}
+
+uint32_t find(glm::ivec3 const &point, triangulation_t const &triangulation)
+{
+    auto res = boost::find_if(triangulation.triangles, [&point, &triangulation](triangle_t const &triangle)
+    {
+        return contains(point, triangle.vertices, triangulation.vertices);
+    });
+    assert(res != triangulation.triangles.end());
+    return static_cast<uint32_t>(std::distance(triangulation.triangles.begin(), res));
+}
 
 int main(int argc, char *argv[])
 {
@@ -105,10 +170,10 @@ int main(int argc, char *argv[])
 	{
 		int32_t x, y;
 		std::cin >> x >> y >> tmp;
-		triangulation.vertices.push_back({x, y, 30000, FAKE_ID});
+        triangulation.vertices.push_back({{x, y, 30000}, FAKE_ID});
 	}
 	uint32_t const inf_index = static_cast<uint32_t>(triangulation.vertices.size());
-	triangulation.vertices.push_back({0, 0, 0, m});
+    triangulation.vertices.push_back({{0, 0, 0}, m});
 
 	std::map<edge_t, uint32_t> edge_to_triangle;
 	for (uint32_t i = 0; i < m; ++i)
@@ -170,27 +235,32 @@ int main(int argc, char *argv[])
 	}
 	while (v != done);
 
-	std::unordered_set<uint32_t> adjacent_ids;
-	done = triangulation.vertices[v].triangle_id;
-	triangle_cursor_t cursor{triangulation, done};
-	uint8_t edge_start = ccw(cursor.triangle().vertex_id(v));
-	do
-	{
-		adjacent_ids.insert(cursor.triangle_id());
-		edge_start = cw(cursor.next(edge_start));
-	}
-	while (cursor.triangle_id() != done);
+    std::unordered_set<uint32_t> adjacent_ids;
+    done = triangulation.vertices[v].triangle_id;
+    triangle_cursor_t cursor{triangulation, done};
+    uint8_t edge_start = cw(cursor.triangle().vertex_id(v));
+    do
+    {
+        adjacent_ids.insert(cursor.triangle_id());
+        edge_start = ccw(cursor.next(edge_start));
+    }
+    while (cursor.triangle_id() != done);
+
+    uint32_t found = find({-13677 -4094, 30000}, triangulation);
+    //find({60000, 60000, 30000}, triangulation);
 
 	std::cout << "OFF\n";
 	std::cout << triangulation.vertices.size() << " " << triangulation.triangles.size() << " 0\n";
 	for (auto const &vertex : triangulation.vertices)
-		std::cout << vertex.x << " " << vertex.y << " " << vertex.z << "\n";
+        std::cout << vertex.point.x << " " << vertex.point.y << " " << vertex.point.z << "\n";
 	for (auto const &triangle : triangulation.triangles | boost::adaptors::indexed{})
 	{
 		std::cout << "3 ";
 		for (auto vertex : triangle.value().vertices)
 			std::cout << vertex << " ";
-		if (adjacent_ids.count(static_cast<uint32_t>(triangle.index())))
+        if (triangle.index() == found)
+            std::cout << "0 1 0 1";
+        else if (adjacent_ids.count(static_cast<uint32_t>(triangle.index())))
 			std::cout << "1 0 0 1";
 		else
 			std::cout << "0 0 0 1";

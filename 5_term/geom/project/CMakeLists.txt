@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.5)
 project(project)
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14")
+set(CMAKE_CXX_STANDARD 14)
 
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -Wall -Wextra\
         -pedantic -Wshadow -Wformat=2 -Wfloat-equal -Wconversion -Wlogical-op -Wcast-qual -Wcast-align -Wparentheses\
@@ -9,5 +9,8 @@ set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -Wall -Wextra\
 
 set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O3")
 
-set(SOURCE_FILES main.cpp)
-add_executable(project ${SOURCE_FILES})
+find_package(Boost)
+
+add_subdirectory(googletest)
+
+add_executable(project main.cpp)
