@@ -7,6 +7,8 @@
 #include <iostream>
 #include <utils/log.h>
 
+utils::log log{std::cout};
+
 struct connection
 {
 	struct host_data
@@ -43,25 +45,30 @@ struct connection
 		write_buffer.push(request);
 
 		host_write = [this] {
+			log(utils::debug) << "I'll write now\n";
 			write_buffer.pop(host->host.write(write_buffer.top()));
 			if (write_buffer.is_empty())
 				host->host_registration.unset_on_write().update();
+			log(utils::debug) << "I've written\n";
 		};
 
 		client_registration.set_on_read([this] {
 			if (write_buffer.is_empty())
 				host->host_registration.set_on_write(host_write).update();
-			write_buffer.push(host->host.read());
+			write_buffer.push(client.read());
 		}).update();
 
 		host->host_registration.set_on_read([this] {
+			log(utils::debug) << "I'll read soon\n";
 			if (read_buffer.is_empty())
 				client_registration.set_on_write([this] {
 					read_buffer.pop(client.write(read_buffer.top()));
 					if (read_buffer.is_empty())
 						client_registration.unset_on_write().update();
 				}).update();
-			read_buffer.push(client.read());
+			log(utils::debug) << "I'll read now\n";
+			read_buffer.push(host->host.read());
+			log(utils::debug) << "I've read\n";
 		});
 
 		host->host_registration.set_on_write(host_write);
@@ -98,6 +105,8 @@ struct connection
 int main()
 {
 	network::log.print_mask |= utils::verbose;
+	log.print_mask |= utils::verbose;
+	log(utils::debug) << "Debug works\n";
 	network::server_socket server{network::make_local_endpoint(2539)};
 	network::epoll epoll{};
 	network::epoll_registration server_registration{server.get_fd(), epoll};
