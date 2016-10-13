@@ -51,7 +51,7 @@ excluded_middle P = decide
         strange_refl : Reflx strange_eq
         strange_refl x = Inl (Refl {x=x})
 
-        strange_sym : Symm strange_eq
+        strange_sym : Sym strange_eq
         strange_sym x y (Inl r) = Inl $ sym r
         strange_sym x y (Inr r) = Inr r
 
@@ -60,7 +60,6 @@ excluded_middle P = decide
         strange_trans x y z (Inr r) _       = Inr r
         strange_trans x y z _       (Inr t) = Inr t
 
-    -- Дальше я чёт не вник но дописать смог
     extF : (f : Map Strange Discrete ** ((x : Bool) -> strange_eq x (MapF f x)))
     extF = ext_ac {I = Strange} {S = Discrete} strange_eq (\x : Bool => (x ** Inl Refl))
 
