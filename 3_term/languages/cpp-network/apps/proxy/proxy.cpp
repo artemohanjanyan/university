@@ -19,8 +19,7 @@ struct connection
 		host_data(network::client_socket &&host, network::epoll &epoll)
 				: host{std::move(host)}
 				, host_registration{this->host.get_fd(), epoll}
-		{
-		}
+		{}
 	};
 
 	network::client_socket client;

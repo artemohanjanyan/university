@@ -14,18 +14,24 @@ set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O3")
 # Internal and external libs
 include_directories(.)
 
-#find_package(Boost COMPONENTS system REQUIRED)
-#include_directories(${Boost_INCLUDE_DIR})
+find_package(Boost REQUIRED)
+include_directories(${Boost_INCLUDE_DIR})
 
 # Targets
-set(LIB_FILES network/file_descriptor.cpp network/file_descriptor.h
-        network/socket.cpp network/socket.h
-        network/network_exception.cpp network/network_exception.h
-        network/epoll.cpp network/epoll.h
-        utils/string_buffer.cpp utils/string_buffer.h
+set(UTILS_FILES utils/string_buffer.cpp utils/string_buffer.h
         utils/string_view.cpp utils/string_view.h
         utils/executor.cpp utils/executor.h
         utils/log.cpp utils/log.h)
+
+set(NETWORK_FILES network/file_descriptor.cpp network/file_descriptor.h
+        network/socket.cpp network/socket.h
+        network/network_exception.cpp network/network_exception.h
+        network/epoll.cpp network/epoll.h)
+
+set(NETWORK_HTTP_FILES network/http/request.h network/http/request.cpp
+        network/http/request_parser.h network/http/request_parser.cpp)
+
+set(LIB_FILES ${UTILS_FILES} ${NETWORK_FILES} ${NETWORK_HTTP_FILES})
 
 set(RSHD_FILES apps/rshd/rshd.c
         apps/rshd/ptr_set.h apps/rshd/ptr_set.cpp
