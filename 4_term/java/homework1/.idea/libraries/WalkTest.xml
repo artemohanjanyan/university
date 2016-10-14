@@ -1,9 +1,0 @@
-<component name="libraryTable">
-  <library name="WalkTest">
-    <CLASSES>
-      <root url="jar://$PROJECT_DIR$/../java-advanced-2016/artifacts/WalkTest.jar!/" />
-    </CLASSES>
-    <JAVADOC />
-    <SOURCES />
-  </library>
-</component>
