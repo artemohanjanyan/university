@@ -96,5 +96,4 @@ namespace network
 	ipv4_endpoint get_socket_endpoint(file_descriptor const &fd);
 }
 
-
 #endif //CPP_NETWORK_SERVER_SOCKET_H

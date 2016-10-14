@@ -42,5 +42,4 @@ namespace network
 	};
 }
 
-
 #endif //CPP_NETWORK_FILE_DESCRIPTOR_H

@@ -23,5 +23,4 @@ namespace network
 	}
 }
 
-
 #endif //CPP_NETWORK_EXCEPTION_H
