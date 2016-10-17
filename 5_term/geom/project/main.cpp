@@ -13,13 +13,14 @@ uint32_t const FAKE_ID = std::numeric_limits<uint32_t>::max();
 
 struct vertex_t
 {
-    glm::ivec3 point;
+	glm::ivec3 point;
 	uint32_t triangle_id;
 };
 
 struct edge_t : public std::pair<uint32_t, uint32_t>
 {
-	edge_t(uint32_t const &a, uint32_t const &b) : pair(a, b)
+	edge_t(uint32_t const &a, uint32_t const &b)
+			: pair(a, b)
 	{}
 
 	edge_t twin() const
@@ -30,7 +31,7 @@ struct edge_t : public std::pair<uint32_t, uint32_t>
 
 segment_t edge_to_segment(edge_t const &edge, std::vector<vertex_t> const &vertices)
 {
-    return {vertices[edge.first].point, vertices[edge.second].point};
+	return {vertices[edge.first].point, vertices[edge.second].point};
 }
 
 struct triangle_t
@@ -40,7 +41,7 @@ struct triangle_t
 
 	edge_t edge(uint8_t i) const
 	{
-        return {vertices[ccw(i)], vertices[cw(i)]};
+		return {vertices[ccw(i)], vertices[cw(i)]};
 	}
 
 	uint8_t vertex_id(uint32_t v) const
@@ -56,19 +57,19 @@ bool contains(glm::ivec3 const &point,
               std::array<uint32_t, 3> const &triangle_vertices,
               std::vector<vertex_t> const &vertices)
 {
-    return contains(point, {vertices[triangle_vertices[0]].point,
-                            vertices[triangle_vertices[1]].point,
-                            vertices[triangle_vertices[2]].point});
+	return contains(point, {vertices[triangle_vertices[0]].point,
+	                        vertices[triangle_vertices[1]].point,
+	                        vertices[triangle_vertices[2]].point});
 }
 
 uint8_t find_intersected_edge(triangle_t const &triangle, ray_t const &ray,
                               std::vector<vertex_t> const &vertices)
 {
-    assert(contains(ray.begin, triangle, vertices));
-    for (uint8_t i = 0; i < 3; ++i)
-        if (has_intersection(edge_to_segment(triangle.edge(i), vertices), ray))
-            return i;
-    throw std::runtime_error("doesn't intersect");
+	assert(contains(ray.begin, triangle.vertices, vertices));
+	for (uint8_t i = 0; i < 3; ++i)
+		if (has_intersection(edge_to_segment(triangle.edge(i), vertices), ray))
+			return i;
+	throw std::runtime_error("doesn't intersect");
 }
 
 struct triangulation_t
@@ -87,9 +88,9 @@ struct triangle_cursor_t
 	uint8_t next(uint8_t edge_id)
 	{
 		triangle_t const &triangle = triangulation_->triangles[triangle_id_];
-        uint32_t vertex_id = triangle.vertices[ccw(edge_id)];
+		uint32_t vertex_id = triangle.vertices[ccw(edge_id)];
 		triangle_id_ = triangle.neighbours[edge_id];
-        return ccw(triangulation_->triangles[triangle_id_].vertex_id(vertex_id));
+		return ccw(triangulation_->triangles[triangle_id_].vertex_id(vertex_id));
 	}
 
 	uint32_t triangle_id() const
@@ -109,12 +110,11 @@ private:
 
 uint32_t find(glm::ivec3 const &point, triangulation_t const &triangulation)
 {
-    auto res = boost::find_if(triangulation.triangles, [&point, &triangulation](triangle_t const &triangle)
-    {
-        return contains(point, triangle.vertices, triangulation.vertices);
-    });
-    assert(res != triangulation.triangles.end());
-    return static_cast<uint32_t>(std::distance(triangulation.triangles.begin(), res));
+	auto res = boost::find_if(triangulation.triangles, [&point, &triangulation](triangle_t const &triangle) {
+		return contains(point, triangle.vertices, triangulation.vertices);
+	});
+	assert(res != triangulation.triangles.end());
+	return static_cast<uint32_t>(std::distance(triangulation.triangles.begin(), res));
 }
 
 int main(int argc, char *argv[])
@@ -135,10 +135,10 @@ int main(int argc, char *argv[])
 	{
 		int32_t x, y;
 		std::cin >> x >> y >> tmp;
-        triangulation.vertices.push_back({{x, y, 30000}, FAKE_ID});
+		triangulation.vertices.push_back({{x, y, 30000}, FAKE_ID});
 	}
 	uint32_t const inf_index = static_cast<uint32_t>(triangulation.vertices.size());
-    triangulation.vertices.push_back({{0, 0, 0}, m});
+	triangulation.vertices.push_back({{0, 0, 0}, m});
 
 	std::map<edge_t, uint32_t> edge_to_triangle;
 	for (uint32_t i = 0; i < m; ++i)
@@ -200,39 +200,57 @@ int main(int argc, char *argv[])
 	}
 	while (v != done);
 
-    // Обход вершины
-    std::unordered_set<uint32_t> adjacent_ids;
-    done = triangulation.vertices[v].triangle_id;
-    triangle_cursor_t cursor{triangulation, done};
-    uint8_t edge_start = cw(cursor.triangle().vertex_id(v));
-    do
-    {
-        adjacent_ids.insert(cursor.triangle_id());
-        edge_start = ccw(cursor.next(edge_start));
-    }
-    while (cursor.triangle_id() != done);
+	// Traverse adjacent faces
+	std::unordered_set<uint32_t> adjacent_ids;
+	done = triangulation.vertices[v].triangle_id;
+	triangle_cursor_t cursor{triangulation, done};
+	uint8_t edge_start = cw(cursor.triangle().vertex_id(v));
+	do
+	{
+		adjacent_ids.insert(cursor.triangle_id());
+		edge_start = ccw(cursor.next(edge_start));
+	}
+	while (cursor.triangle_id() != done);
 
-    // Find some infinite triangle
-    uint32_t found = find({60000, 60000, 30000}, triangulation);
+	// Find some infinite triangle
+	uint32_t infinite_triangle = find({60000, 60000, 30000}, triangulation);
 
-    // Ray
-    ray_t ray = {{0, 0, 1}, {1, 1, 1}};
-    std::unordered_set<uint32_t> intersected_ids;
-    uint32_t first_triangle_id = find(ray.first, triangulation);
-    find_intersected_edge(triangulation.triangles[first_triangle_id], ray, triangulation.vertices);
+	// Ray
+	ray_t ray = {{0, 0, 1},
+	             {1, 1, 1}};
+	std::unordered_set<uint32_t> intersected_ids;
+	uint32_t first_triangle_id = find(ray.begin, triangulation);
+	cursor = {triangulation, first_triangle_id};
+	edge_start = find_intersected_edge(triangulation.triangles[first_triangle_id], ray, triangulation.vertices);
+	do
+	{
+		intersected_ids.insert(cursor.triangle_id());
+		uint8_t opposite = cursor.next(edge_start);
+		// Assume that opposite vertex doesn't belong to ray
+		if (has_intersection(
+				edge_to_segment(cursor.triangle().edge(cw(opposite)), triangulation.vertices),
+				ray))
+			edge_start = cw(opposite);
+		else
+			edge_start = ccw(opposite);
+	}
+	while (cursor.triangle().vertices[0] != inf_index);
 
 	std::cout << "OFF\n";
 	std::cout << triangulation.vertices.size() << " " << triangulation.triangles.size() << " 0\n";
 	for (auto const &vertex : triangulation.vertices)
-        std::cout << vertex.point.x << " " << vertex.point.y << " " << vertex.point.z << "\n";
+		std::cout << vertex.point.x << " " << vertex.point.y << " " << vertex.point.z << "\n";
 	for (auto const &triangle : triangulation.triangles | boost::adaptors::indexed{})
 	{
 		std::cout << "3 ";
 		for (auto vertex : triangle.value().vertices)
 			std::cout << vertex << " ";
-        if (triangle.index() == found)
-            std::cout << "0 1 0 1";
-        else if (adjacent_ids.count(static_cast<uint32_t>(triangle.index())))
+
+		if (intersected_ids.count(static_cast<uint32_t>(triangle.index())))
+			std::cout << "0 0 1 1";
+		else if (triangle.index() == infinite_triangle)
+			std::cout << "0 1 0 1";
+		else if (adjacent_ids.count(static_cast<uint32_t>(triangle.index())))
 			std::cout << "1 0 0 1";
 		else
 			std::cout << "0 0 0 1";
