@@ -76,4 +76,33 @@ bool has_intersection(segment_t const &segment, ray_t const &ray)
 	       tmp == turn(segment.end, segment.begin, ray.begin);
 }
 
+__int128_t determinant(std::array<std::array<int, 4>, 4> matrix)
+{
+	__int128_t result = 0;
+	std::array<int, 4> permutation = {{0, 1, 2, 3}};
+	int sign = 1;
+	do
+	{
+		__int128_t product = 1;
+		for (auto pair : boost::combine(matrix, permutation))
+			product *= boost::get<0>(pair)[boost::get<1>(pair)];
+		result += product * sign;
+		sign *= -1;
+	}
+	while (boost::next_permutation(permutation));
+	return result;
+}
+
+std::array<int, 4> convert(glm::ivec3 point)
+{
+	if (point.z == 0)
+		return {{0, 0, 1, 0}};
+	return {{point.x, point.y, point.x * point.x + point.y * point.y, 1}};
+};
+
+bool delaunay_criteria(std::array<glm::ivec3, 4> points)
+{
+	return determinant({{convert(points[0]), convert(points[1]), convert(points[2]), convert(points[3])}}) < 0;
+}
+
 #endif // GEOMETRY

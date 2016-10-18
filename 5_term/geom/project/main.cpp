@@ -5,7 +5,8 @@
 #include <unordered_set>
 #include <boost/range/adaptor/indexed.hpp>
 #include <boost/range/algorithm/find_if.hpp>
-#include <boost/algorithm/cxx11/any_of.hpp>
+#include <boost/range/combine.hpp>
+#include <boost/range/algorithm/permutation.hpp>
 #include <glm/glm.hpp>
 
 #include "geometry.h"
@@ -188,6 +189,50 @@ void flip(triangulation_t &triangulation, uint32_t triangle_id, uint8_t edge_id)
 	assert(check_triangle(triangulation, adjacent_id));
 }
 
+void set_neighbour(triangulation_t &triangulation,
+                   std::tuple<uint32_t, uint8_t> triangle,
+                   std::tuple<uint32_t, uint8_t> adjacent)
+{
+	triangulation.triangles[std::get<0>(triangle)].neighbours[std::get<1>(triangle)] = std::get<0>(adjacent);
+	triangulation.triangles[std::get<0>(adjacent)].neighbours[std::get<1>(adjacent)] = std::get<0>(triangle);
+}
+
+void insert(triangulation_t &triangulation, glm::ivec3 const &point)
+{
+	uint32_t containing_triangle_id = find(point, triangulation);
+	uint32_t vertex_id = static_cast<uint32_t>(triangulation.vertices.size());
+	triangulation.vertices.push_back({point, containing_triangle_id});
+
+	triangle_t &containing_triangle = triangulation.triangles[containing_triangle_id];
+
+	triangulation.triangles.push_back(
+			{{{containing_triangle.vertices[1], containing_triangle.vertices[2], vertex_id}}});
+	set_neighbour(triangulation,
+	              std::make_tuple(triangulation.triangles.size() - 1, 2),
+	              mirror_edge(triangulation, containing_triangle_id, 0));
+	triangulation.triangles.push_back(
+			{{{containing_triangle.vertices[2], containing_triangle.vertices[0], vertex_id}}});
+	set_neighbour(triangulation,
+	              std::make_tuple(triangulation.triangles.size() - 1, 2),
+	              mirror_edge(triangulation, containing_triangle_id, 1));
+
+	std::swap(containing_triangle.vertices[2], vertex_id);
+
+	set_neighbour(triangulation,
+	              std::make_tuple(containing_triangle_id, 0),
+	              std::make_tuple(triangulation.triangles.size() - 2, 1));
+	set_neighbour(triangulation,
+	              std::make_tuple(containing_triangle_id, 1),
+	              std::make_tuple(triangulation.triangles.size() - 1, 0));
+	set_neighbour(triangulation,
+	              std::make_tuple(triangulation.triangles.size() - 1, 1),
+	              std::make_tuple(triangulation.triangles.size() - 2, 0));
+
+	assert(check_triangle(triangulation, containing_triangle_id));
+	assert(check_triangle(triangulation, static_cast<uint32_t>(triangulation.triangles.size() - 1)));
+	assert(check_triangle(triangulation, static_cast<uint32_t>(triangulation.triangles.size() - 2)));
+}
+
 int main(int argc, char *argv[])
 {
 	if (argc > 1)
@@ -288,6 +333,8 @@ int main(int argc, char *argv[])
 
 	// Find some infinite triangle
 	uint32_t infinite_triangle = find({60000, 60000, 30000}, triangulation);
+
+	insert(triangulation, {1, 2, 30000});
 
 	// Ray
 	ray_t ray = {{0, 0, 1},
