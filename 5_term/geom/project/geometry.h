@@ -8,7 +8,7 @@ enum turn_t
 	left, right, collinear
 };
 
-template<typename T>
+template <typename T>
 constexpr T sign(T x)
 {
 	if (x < 0)
@@ -20,10 +20,10 @@ constexpr T sign(T x)
 
 turn_t turn(glm::ivec3 const &a, glm::ivec3 const &b, glm::ivec3 const &c)
 {
-	switch(sign((static_cast<int64_t>(b.x) * a.z - static_cast<int64_t>(a.x) * b.z) *
-				(static_cast<int64_t>(c.y) * a.z - static_cast<int64_t>(a.y) * c.z) -
-				(static_cast<int64_t>(b.y) * a.z - static_cast<int64_t>(a.y) * b.z) *
-				(static_cast<int64_t>(c.x) * a.z - static_cast<int64_t>(a.x) * c.z)))
+	switch (sign((static_cast<int64_t>(b.x) * a.z - static_cast<int64_t>(a.x) * b.z) *
+	             (static_cast<int64_t>(c.y) * a.z - static_cast<int64_t>(a.y) * c.z) -
+	             (static_cast<int64_t>(b.y) * a.z - static_cast<int64_t>(a.y) * b.z) *
+	             (static_cast<int64_t>(c.x) * a.z - static_cast<int64_t>(a.x) * c.z)))
 	{
 		case 1:
 			return left;
@@ -49,7 +49,7 @@ uint8_t cw(uint8_t i) // Clockwise
 }
 
 bool contains(glm::ivec3 const &p,
-			  std::array<glm::ivec3, 3> triangle)
+              std::array<glm::ivec3, 3> triangle)
 {
 	assert(turn(triangle[0], triangle[1], triangle[2]) != right);
 
@@ -73,7 +73,7 @@ bool has_intersection(segment_t const &segment, ray_t const &ray)
 {
 	auto tmp = turn(ray.begin, ray.end, segment.begin);
 	return tmp != turn(ray.begin, ray.end, segment.end) &&
-			tmp == turn(segment.end, segment.begin, ray.begin);
+	       tmp == turn(segment.end, segment.begin, ray.begin);
 }
 
 #endif // GEOMETRY

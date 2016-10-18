@@ -5,6 +5,7 @@
 #include <unordered_set>
 #include <boost/range/adaptor/indexed.hpp>
 #include <boost/range/algorithm/find_if.hpp>
+#include <boost/algorithm/cxx11/any_of.hpp>
 #include <glm/glm.hpp>
 
 #include "geometry.h"
@@ -76,7 +77,28 @@ struct triangulation_t
 {
 	std::vector<vertex_t> vertices;
 	std::vector<triangle_t> triangles;
+
+	static constexpr uint32_t infinite_vertex_id = 0;
 };
+
+bool is_infinite(triangulation_t const &triangulation, uint32_t triangle_id)
+{
+	return boost::algorithm::any_of(triangulation.triangles[triangle_id].vertices,
+	                                [](auto x)
+	                                {
+		                                return x == triangulation_t::infinite_vertex_id;
+	                                });
+}
+
+std::tuple<uint32_t, uint8_t> mirror_edge(triangulation_t const &triangulation,
+                                          uint32_t triangle_id,
+                                          uint8_t edge_id)
+{
+	triangle_t const &triangle = triangulation.triangles[triangle_id];
+	uint32_t vertex_id = triangle.vertices[ccw(edge_id)];
+	triangle_id = triangle.neighbours[edge_id];
+	return std::make_tuple(triangle_id, ccw(triangulation.triangles[triangle_id].vertex_id(vertex_id)));
+}
 
 struct triangle_cursor_t
 {
@@ -87,10 +109,9 @@ struct triangle_cursor_t
 
 	uint8_t next(uint8_t edge_id)
 	{
-		triangle_t const &triangle = triangulation_->triangles[triangle_id_];
-		uint32_t vertex_id = triangle.vertices[ccw(edge_id)];
-		triangle_id_ = triangle.neighbours[edge_id];
-		return ccw(triangulation_->triangles[triangle_id_].vertex_id(vertex_id));
+		uint8_t edge;
+		std::tie(triangle_id_, edge) = mirror_edge(*triangulation_, triangle_id_, edge_id);
+		return edge;
 	}
 
 	uint32_t triangle_id() const
@@ -117,6 +138,56 @@ uint32_t find(glm::ivec3 const &point, triangulation_t const &triangulation)
 	return static_cast<uint32_t>(std::distance(triangulation.triangles.begin(), res));
 }
 
+turn_t turn(std::array<uint32_t, 3> triangle_vertices, std::vector<vertex_t> const &vertices)
+{
+	return turn(vertices[triangle_vertices[0]].point,
+	            vertices[triangle_vertices[1]].point,
+	            vertices[triangle_vertices[2]].point);
+}
+
+bool check_triangle(triangulation_t const &triangulation, uint32_t triangle_id)
+{
+	auto const &triangle = triangulation.triangles[triangle_id];
+	if (turn(triangle.vertices, triangulation.vertices) == right)
+		return false;
+
+	for (uint8_t edge_id = 0; edge_id < 3; ++edge_id)
+	{
+		auto mirror = mirror_edge(triangulation, triangle_id, edge_id);
+		if (triangulation.triangles[std::get<0>(mirror)].neighbours[std::get<1>(mirror)] != triangle_id)
+			return false;
+	}
+
+	return true;
+}
+
+void flip(triangulation_t &triangulation, uint32_t triangle_id, uint8_t edge_id)
+{
+	auto &triangle = triangulation.triangles[triangle_id];
+	uint32_t adjacent_id;
+	uint8_t adjacent_edge_id;
+	std::tie(adjacent_id, adjacent_edge_id) = mirror_edge(triangulation, triangle_id, edge_id);
+	auto &adjacent = triangulation.triangles[adjacent_id];
+
+	{
+		auto neighbour1 = mirror_edge(triangulation, triangle_id, cw(edge_id));
+		auto neighbour2 = mirror_edge(triangulation, adjacent_id, cw(adjacent_edge_id));
+		std::swap(triangulation.triangles[std::get<0>(neighbour1)].neighbours[std::get<1>(neighbour1)],
+		          triangulation.triangles[std::get<0>(neighbour2)].neighbours[std::get<1>(neighbour2)]);
+	}
+
+	// Self-documenting code
+	std::swap(triangle.neighbours[edge_id], adjacent.neighbours[cw(adjacent_edge_id)]);
+	std::swap(adjacent.neighbours[adjacent_edge_id], triangle.neighbours[cw(edge_id)]);
+	std::swap(triangle.neighbours[cw(edge_id)], adjacent.neighbours[cw(adjacent_edge_id)]);
+
+	triangle.vertices[ccw(edge_id)] = adjacent.vertices[adjacent_edge_id];
+	adjacent.vertices[ccw(adjacent_edge_id)] = triangle.vertices[edge_id];
+
+	assert(check_triangle(triangulation, triangle_id));
+	assert(check_triangle(triangulation, adjacent_id));
+}
+
 int main(int argc, char *argv[])
 {
 	if (argc > 1)
@@ -131,14 +202,14 @@ int main(int argc, char *argv[])
 
 	uint32_t n, m;
 	std::cin >> n >> m >> tmp;
+	uint32_t const inf_index = 0;
+	triangulation.vertices.push_back({{0, 0, 0}, m});
 	for (uint32_t i = 0; i < n; ++i)
 	{
 		int32_t x, y;
 		std::cin >> x >> y >> tmp;
 		triangulation.vertices.push_back({{x, y, 30000}, FAKE_ID});
 	}
-	uint32_t const inf_index = static_cast<uint32_t>(triangulation.vertices.size());
-	triangulation.vertices.push_back({{0, 0, 0}, m});
 
 	std::map<edge_t, uint32_t> edge_to_triangle;
 	for (uint32_t i = 0; i < m; ++i)
@@ -147,7 +218,10 @@ int main(int argc, char *argv[])
 
 		std::cin >> tmp;
 		for (auto &id : triangle.vertices)
+		{
 			std::cin >> id;
+			++id;
+		}
 		for (auto &id : triangle.vertices)
 			triangulation.vertices[id].triangle_id = i;
 
@@ -220,6 +294,8 @@ int main(int argc, char *argv[])
 	             {1, 1, 1}};
 	std::unordered_set<uint32_t> intersected_ids;
 	uint32_t first_triangle_id = find(ray.begin, triangulation);
+	flip(triangulation, first_triangle_id, 0);
+	first_triangle_id = find(ray.begin, triangulation);
 	cursor = {triangulation, first_triangle_id};
 	edge_start = find_intersected_edge(triangulation.triangles[first_triangle_id], ray, triangulation.vertices);
 	do
