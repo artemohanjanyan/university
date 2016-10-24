@@ -1,0 +1,2 @@
+vertex_handle with triangulation data structure (instead of uint8_t)
+face_handle with triangulation data structure (instead of uint32_t)
