@@ -3,6 +3,9 @@
 
 #include <glm/glm.hpp>
 
+#include <boost/range/combine.hpp>
+#include <boost/range/algorithm/permutation.hpp>
+
 enum turn_t
 {
 	left, right, collinear
@@ -73,24 +76,31 @@ bool has_intersection(segment_t const &segment, ray_t const &ray)
 {
 	auto tmp = turn(ray.begin, ray.end, segment.begin);
 	return tmp != turn(ray.begin, ray.end, segment.end) &&
-	       tmp == turn(segment.end, segment.begin, ray.begin);
+	        tmp == turn(segment.end, segment.begin, ray.begin);
 }
 
-__int128_t determinant(std::array<std::array<int, 4>, 4> matrix)
+template<int n>
+int64_t determinant(std::array<std::array<int, n>, n> const &matrix)
 {
-	__int128_t result = 0;
-	std::array<int, 4> permutation = {{0, 1, 2, 3}};
-	int sign = 1;
+	int64_t det = 0;
+	std::array<int, n> permutation;
+	std::iota(permutation.begin(), permutation.end(), 0);
 	do
 	{
-		__int128_t product = 1;
-		for (auto pair : boost::combine(matrix, permutation))
-			product *= boost::get<0>(pair)[boost::get<1>(pair)];
-		result += product * sign;
-		sign *= -1;
+		int64_t product = 1;
+		for (int i = 0; i < n; ++i)
+			product *= matrix[i][permutation[i]];
+		int inversions = 0;
+		for (int i = 0; i < n; i++)
+			for (int j = i + 1; j < n; j++)
+				if (permutation[i] > permutation[j])
+					inversions++;
+		if (inversions % 2 == 1)
+			product *= -1;
+		det += product;
 	}
-	while (boost::next_permutation(permutation));
-	return result;
+	while (std::next_permutation(permutation.begin(), permutation.end()));
+	return det;
 }
 
 std::array<int, 4> convert(glm::ivec3 point)
@@ -98,11 +108,15 @@ std::array<int, 4> convert(glm::ivec3 point)
 	if (point.z == 0)
 		return {{0, 0, 1, 0}};
 	return {{point.x, point.y, point.x * point.x + point.y * point.y, 1}};
-};
+}
 
-bool delaunay_criteria(std::array<glm::ivec3, 4> points)
+bool need_to_flip(std::array<glm::ivec3, 4> points)
 {
-	return determinant({{convert(points[0]), convert(points[1]), convert(points[2]), convert(points[3])}}) < 0;
+	int64_t det = determinant<4>({{convert(points[0]),
+	                                  convert(points[1]),
+	                                  convert(points[2]),
+	                                  convert(points[3])}});
+	return det > 0;
 }
 
 #endif // GEOMETRY

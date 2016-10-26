@@ -5,8 +5,7 @@
 #include <unordered_set>
 #include <boost/range/adaptor/indexed.hpp>
 #include <boost/range/algorithm/find_if.hpp>
-#include <boost/range/combine.hpp>
-#include <boost/range/algorithm/permutation.hpp>
+#include <boost/algorithm/cxx11/any_of.hpp>
 #include <glm/glm.hpp>
 
 #include "geometry.h"
@@ -197,7 +196,7 @@ void set_neighbour(triangulation_t &triangulation,
 	triangulation.triangles[std::get<0>(adjacent)].neighbours[std::get<1>(adjacent)] = std::get<0>(triangle);
 }
 
-void insert(triangulation_t &triangulation, glm::ivec3 const &point)
+uint32_t insert(triangulation_t &triangulation, glm::ivec3 const &point)
 {
 	uint32_t containing_triangle_id = find(point, triangulation);
 	uint32_t vertex_id = static_cast<uint32_t>(triangulation.vertices.size());
@@ -231,6 +230,14 @@ void insert(triangulation_t &triangulation, glm::ivec3 const &point)
 	assert(check_triangle(triangulation, containing_triangle_id));
 	assert(check_triangle(triangulation, static_cast<uint32_t>(triangulation.triangles.size() - 1)));
 	assert(check_triangle(triangulation, static_cast<uint32_t>(triangulation.triangles.size() - 2)));
+
+	return vertex_id;
+}
+
+void insert_and_flip(triangulation_t &triangulation, glm::ivec3 const &point)
+{
+	uint32_t inserted = insert(triangulation, point);
+	//triangulation.vertices[inserted].triangle_id
 }
 
 int main(int argc, char *argv[])
@@ -253,7 +260,7 @@ int main(int argc, char *argv[])
 	{
 		int32_t x, y;
 		std::cin >> x >> y >> tmp;
-		triangulation.vertices.push_back({{x, y, 30000}, FAKE_ID});
+		triangulation.vertices.push_back({{x, y, 300}, FAKE_ID});
 	}
 
 	std::map<edge_t, uint32_t> edge_to_triangle;
@@ -319,6 +326,23 @@ int main(int argc, char *argv[])
 	}
 	while (v != done);
 
+	// Test need_to_flip
+	for (auto const &triangle : triangulation.triangles | boost::adaptors::indexed{})
+		for (uint8_t i = 0; i < 3; ++i)
+		{
+			uint32_t mirror_index;
+			uint8_t mirror_vertex;
+			std::tie(mirror_index, mirror_vertex) =
+			        mirror_edge(triangulation, static_cast<uint32_t>(triangle.index()), i);
+
+			assert(!need_to_flip({{
+			        triangulation.vertices[triangle.value().vertices[0]].point,
+			        triangulation.vertices[triangle.value().vertices[1]].point,
+			        triangulation.vertices[triangle.value().vertices[2]].point,
+			        triangulation.vertices[triangulation.triangles[mirror_index].vertices[mirror_vertex]].point
+			}}));
+		}
+
 	// Traverse adjacent faces
 	std::unordered_set<uint32_t> adjacent_ids;
 	done = triangulation.vertices[v].triangle_id;
@@ -332,16 +356,13 @@ int main(int argc, char *argv[])
 	while (cursor.triangle_id() != done);
 
 	// Find some infinite triangle
-	uint32_t infinite_triangle = find({60000, 60000, 30000}, triangulation);
-
-	insert(triangulation, {1, 2, 30000});
+	uint32_t infinite_triangle = find({60000, 60000, 300}, triangulation);
 
 	// Ray
 	ray_t ray = {{0, 0, 1},
 	             {1, 1, 1}};
 	std::unordered_set<uint32_t> intersected_ids;
 	uint32_t first_triangle_id = find(ray.begin, triangulation);
-	flip(triangulation, first_triangle_id, 0);
 	first_triangle_id = find(ray.begin, triangulation);
 	cursor = {triangulation, first_triangle_id};
 	edge_start = find_intersected_edge(triangulation.triangles[first_triangle_id], ray, triangulation.vertices);
@@ -359,6 +380,8 @@ int main(int argc, char *argv[])
 	}
 	while (cursor.triangle().vertices[0] != inf_index);
 
+	//insert(triangulation, {1, 2, 300});
+
 	std::cout << "OFF\n";
 	std::cout << triangulation.vertices.size() << " " << triangulation.triangles.size() << " 0\n";
 	for (auto const &vertex : triangulation.vertices)
@@ -369,12 +392,12 @@ int main(int argc, char *argv[])
 		for (auto vertex : triangle.value().vertices)
 			std::cout << vertex << " ";
 
-		if (intersected_ids.count(static_cast<uint32_t>(triangle.index())))
-			std::cout << "0 0 1 1";
-		else if (triangle.index() == infinite_triangle)
+		if (triangle.index() == infinite_triangle)
 			std::cout << "0 1 0 1";
 		else if (adjacent_ids.count(static_cast<uint32_t>(triangle.index())))
 			std::cout << "1 0 0 1";
+		else if (intersected_ids.count(static_cast<uint32_t>(triangle.index())))
+			std::cout << "0 0 1 1";
 		else
 			std::cout << "0 0 0 1";
 		std::cout << "\n";
