@@ -121,8 +121,9 @@ class SheetsResultsProvider(val service: Sheets,
 //                        .contains(group.toString())) 1
 //                else 2
         return values.subList(1, values.size).mapNotNull {
-            if (it.size > 1 && it[1].toString().isNotEmpty() ||
+            if ((it.size > 1 && it[1].toString().isNotEmpty() ||
                     it.size > 2 && it[2].toString().isNotEmpty())
+                    && it[0].toString() != "")
                 it[0].toString().toInt()
             else
                 null
