@@ -10,6 +10,8 @@ char starting_rule;
 
 bool d[MAX_N][MAX_W][MAX_W];
 
+bool processed[MAX_N][MAX_N];
+
 bool is_small(int c)
 {
 	return c < 0;
@@ -113,9 +115,13 @@ void remove_chain()
 		for (int j = 0; j < static_cast<int>(graph[i].size()); ++j)
 		{
 			auto const &rhs = graph[i][j];
-			if (rhs.size() == 1 && !is_small(rhs[0]) && rhs[0] != i)
-				for (auto const &rhs2 : graph[rhs[0]])
+			int rhs_i = rhs[0];
+			if (rhs.size() == 1 && !is_small(rhs_i) && rhs_i != i && !processed[i][rhs_i])
+			{
+				for (auto const &rhs2 : graph[rhs_i])
 					graph[i].push_back(rhs2);
+				processed[i][rhs_i] = true;
+			}
 		}
 	for (int i = 0; i < current_n; ++i)
 		for (auto rhs_it = graph[i].begin(); rhs_it != graph[i].end(); )
@@ -262,7 +268,7 @@ int main()
 	//print_graph();
 	remove_chain();
 	//print_graph();
-	//remove_useless();
+	remove_useless();
 	//print_graph();
 	remove_several_nonterm();
 	//print_graph();
