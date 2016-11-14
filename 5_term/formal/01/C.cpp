@@ -64,7 +64,7 @@ int main()
 	statuses[n] = PROCESSED | NOT_ZERO;
 
 	dfs(0);
-	if (statuses[0] & INFINITE)
+	if ((statuses[0] & INFINITE) && (statuses[0] & NOT_ZERO))
 		cout << "-1\n";
 	else
 		cout << results[0] << "\n";

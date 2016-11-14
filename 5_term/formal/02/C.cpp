@@ -12,7 +12,7 @@ unordered_map<int, vector<int>> reverse_graph[MAX_N];
 void build_reverse()
 {
 	for (int i = 0; i <= n; ++i)
-		for (int c = 0; c < 26; ++c)
+		for (int c = 0; c < ALPH; ++c)
 			reverse_graph[graph[i][c]][c].push_back(i);
 }
 
@@ -20,7 +20,7 @@ bool reachable[MAX_N];
 void find_reachable(int v = 1)
 {
 	reachable[v] = true;
-	for (int c = 0; c < 26; ++c)
+	for (int c = 0; c < ALPH; ++c)
 		if (!reachable[graph[v][c]])
 			find_reachable(graph[v][c]);
 }
@@ -41,7 +41,7 @@ void build_table()
 	{
 		auto next = q.front();
 		q.pop();
-		for (int c = 0; c < 26; ++c)
+		for (int c = 0; c < ALPH; ++c)
 			for (int prev_first : reverse_graph[next.first][c])
 				for (int prev_second : reverse_graph[next.second][c])
 					if (!non_equivalent[prev_first][prev_second])
@@ -79,7 +79,7 @@ void build_minimal_graph()
 		if (reachable[i] && components[i] != 0)
 		{
 			minimal_is_term[components[i]] = is_term[i];
-			for (int c = 0; c < 26; ++c)
+			for (int c = 0; c < ALPH; ++c)
 				minimal_graph[components[i]][c] = components[graph[i][c]];
 		}
 }
@@ -116,7 +116,7 @@ int main()
 	{
 		if (minimal_is_term[i])
 			++minimal_k;
-		for (int c = 0; c < 26; ++c)
+		for (int c = 0; c < ALPH; ++c)
 			if (minimal_graph[i][c] != 0)
 				++minimal_m;
 	}
@@ -126,7 +126,7 @@ int main()
 			cout << i << " ";
 	cout << "\n";
 	for (int i = 1; i <= minimal_n; ++i)
-		for (int c = 0; c < 26; ++c)
+		for (int c = 0; c < ALPH; ++c)
 			if (minimal_graph[i][c] != 0)
 				cout << i << " " << minimal_graph[i][c] << " " << static_cast<char>(c + 'a') << "\n";
 
