@@ -9,52 +9,52 @@ namespace network
 {
 	namespace http
 	{
-		enum request_type
+		enum class request_type
 		{
 			get, post
 		};
 
-
 		class request_line
 		{
-			request_type method;
-			std::string request_uri;
-			std::string http_version;
+			request_type type_;
+			std::string uri_;
+			std::string http_version_;
 
 		public:
 			// TODO perfect forwarding? const qualifiers etc
-			request_line(request_type method, std::string const &request_uri, std::string const &http_version);
+			request_line(request_type type_, std::string const &uri_, std::string const &http_version);
 
-			request_type get_method() const noexcept;
+			request_type type() const noexcept;
 
-			std::string const &get_request_uri() const noexcept;
+			std::string const &uri() const noexcept;
 
-			std::string const &get_http_version() const noexcept;
+			std::string const &http_version() const noexcept;
 
-			friend std::string to_string(request_line const &request_line);
+			friend std::string to_string(request_line const &request_line_);
 		};
-
 
 		class request
 		{
-			request_line request_line_;
-			std::unordered_map<std::string, std::string> headers;
+			request_line line_;
+			std::unordered_map<std::string, std::string> headers_;
 
 		public:
 			// TODO perfect forwarding? const qualifiers etc
-			request(request_line const &request_line_, std::unordered_map<std::string, std::string> const &headers);
+			request(request_line const &request_line_,
+			        std::unordered_map<std::string, std::string> const &headers_);
 
-			request_line const &get_request_line() const noexcept;
+			request_line const &line() const noexcept;
 
-			std::unordered_map<std::string, std::string> const &get_headers() const noexcept;
+			std::unordered_map<std::string, std::string> const &headers() const noexcept;
 
 			friend std::string to_string(request const &request_);
 		};
 
-
 		std::string to_string(request_type request_type_);
 
-		std::string to_string(request_line const &request_line);
+		request_type request_type_from_string(std::string type_str);
+
+		std::string to_string(request_line const &request_line_);
 
 		std::string to_string(request const &request_);
 	}
