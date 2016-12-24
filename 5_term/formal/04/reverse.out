@@ -1,0 +1,56 @@
+start: s
+accept: accept
+reject: reject
+blank: _
+
+s    0 -> pre1 0 <
+s    1 -> pre1 1 <
+pre1 _ -> pre2 ^ >
+pre2 0 -> pre2 0 >
+pre2 1 -> pre2 1 >
+pre2 _ -> cp   $ <
+
+cp   0 -> cp0  # >
+cp   1 -> cp1  # >
+cp   # -> cp   # <
+cp   ^ -> mv$  ^ >
+cp0  # -> cp0  # >
+cp0  $ -> cp0  $ >
+cp0  0 -> cp0  0 >
+cp0  1 -> cp0  1 >
+cp0  _ -> cp$  0 <
+cp1  # -> cp1  # >
+cp1  $ -> cp1  $ >
+cp1  0 -> cp1  0 >
+cp1  1 -> cp1  1 >
+cp1  _ -> cp$  1 <
+cp$  0 -> cp$  0 <
+cp$  1 -> cp$  1 <
+cp$  $ -> cp   $ <
+
+mv$  # -> mv$  # >
+mv$  $ -> mv   $ >
+mv   # -> mv   # >
+mv   0 -> mv0$ # <
+mv   1 -> mv1$ # <
+mv   _ -> clr  _ <
+mv0$ # -> mv0$ # <
+mv0$ $ -> mv0  $ <
+mv1$ # -> mv1$ # <
+mv1$ $ -> mv1  $ <
+mv0  # -> mv0  # <
+mv0  ^ -> mv0w ^ >
+mv0  0 -> mv0w 0 >
+mv0  1 -> mv0w 1 >
+mv0w # -> mv$  0 >
+mv1  # -> mv1  # <
+mv1  ^ -> mv1w ^ >
+mv1  0 -> mv1w 0 >
+mv1  1 -> mv1w 1 >
+mv1w # -> mv$  1 >
+
+clr  # -> clr  _ <
+clr  $ -> clr  _ <
+clr  0 -> clr  0 <
+clr  1 -> clr  1 <
+clr  ^ -> accept _ >
