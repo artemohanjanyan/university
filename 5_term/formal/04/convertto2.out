@@ -1,0 +1,69 @@
+start: init
+accept: accept
+reject: reject
+blank: _
+
+init   0 -> init   0 >
+init   1 -> init   1 >
+init   2 -> init   2 >
+init   _ -> init0  | >
+init0  _ -> conv   0 <
+
+conv   | -> sub1   | <
+conv   0 -> conv   0 <
+conv   1 -> conv   1 <
+conv   2 -> conv   2 <
+
+sub1   1 -> subd   0 >
+sub1   2 -> subd   1 >
+sub1   0 -> sub1   2 <
+sub1   _ -> convd  _ >
+
+subd   0 -> subd   0 >
+subd   1 -> subd   1 >
+subd   2 -> subd   2 >
+
+subd   | -> add1   | >
+
+add1   _ -> conv   1 <
+add1   0 -> conv   1 <
+add1   1 -> add1   0 >
+
+convd  0 -> convd  _ >
+convd  1 -> convd  _ >
+convd  2 -> convd  _ >
+convd  | -> put$   | >
+
+put$   0 -> put$   0 >
+put$   1 -> put$   1 >
+put$   _ -> find|  $ <
+find|  0 -> find|  0 <
+find|  1 -> find|  1 <
+find|  | -> rev    | >
+
+rev    _ -> rev    _ >
+rev    0 -> found0 _ <
+rev    1 -> found1 _ <
+rev    $ -> clean  _ <
+
+found0 _ -> found0 _ <
+found0 | -> put0   | <
+put0   0 -> put0   0 <
+put0   1 -> put0   1 <
+put0   _ -> putd   0 >
+
+found1 _ -> found1 _ <
+found1 | -> put1   | <
+put1   0 -> put1   0 <
+put1   1 -> put1   1 <
+put1   _ -> putd   1 >
+
+putd   0 -> putd   0 >
+putd   1 -> putd   1 >
+putd   | -> rev    | >
+
+clean  _ -> clean  _ <
+clean  | -> toSt   _ <
+toSt   0 -> toSt   0 <
+toSt   1 -> toSt   1 <
+toSt   _ -> accept _ >
