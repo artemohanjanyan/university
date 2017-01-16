@@ -12,8 +12,6 @@ import java.util.concurrent.atomic.AtomicReferenceArray;
  * See also "Practical lock-freedom" by Keir Fraser.
  * See {@link #acquire(int, Op)} method.
  *
- * <p>:TODO: This implementation has to be completed, so that it is thread-safe and lock-free.
- *
  * @author Оганджанян
  */
 public class BankImpl implements Bank {
@@ -64,7 +62,7 @@ public class BankImpl implements Bank {
      */
     @Override
     public long getTotalAmount() {
-        /**
+        /*
          * This operation requires atomic read of all accounts, thus it creates an operation descriptor.
          * Operation's invokeOperation method acquires all accounts, computes the total amount, and releases
          * all accounts. This method returns the result.
@@ -110,18 +108,19 @@ public class BankImpl implements Bank {
      */
     @Override
     public long withdraw(int index, long amount) {
-        // todo: write withdraw operation using deposit as an example
-        /*
-         * Basically, implementation of this method must perform the logic of the following code "atomically":
-         */
         if (amount <= 0)
             throw new IllegalArgumentException("Invalid amount: " + amount);
-        Account account = accounts.get(index);
-        if (account.amount - amount < 0)
-            throw new IllegalStateException("Underflow");
-        Account updated = new Account(account.amount - amount);
-        accounts.set(index, updated);
-        return updated.amount;
+
+        while (true) {
+            Account account = accounts.get(index);
+            if (!account.invokeOperation()) {
+                if (account.amount - amount < 0)
+                    throw new IllegalStateException("Underflow");
+                Account updated = new Account(account.amount - amount);
+                if (accounts.compareAndSet(index, account, updated))
+                    return updated.amount;
+            }
+        }
     }
 
     /**
@@ -136,7 +135,7 @@ public class BankImpl implements Bank {
             throw new IllegalArgumentException("fromIndex == toIndex");
         if (amount > MAX_AMOUNT)
             throw new IllegalStateException("Underflow/overflow");
-        /**
+        /*
          * This operation requires atomic read of two accounts, thus it creates an operation descriptor.
          * Operation's invokeOperation method acquires both accounts, computes the result of operation
          * (if a form of error message), and releases both accounts. This method throws the exception with
@@ -148,7 +147,6 @@ public class BankImpl implements Bank {
             throw new IllegalStateException(op.errorMessage);
     }
 
-
     /**
      * This is an implementation of a restricted form of Harris DCSS operation:
      * It atomically checks that op.completed is false and replaces accounts[index] with AcquiredAccount instance
@@ -156,7 +154,6 @@ public class BankImpl implements Bank {
      * This method returns null if op.completed is true.
      */
     private AcquiredAccount acquire(int index, Op op) {
-        // todo: write the implementation of this method with the following logic:
         /*
          * This method must loop trying to replace accounts[index] with an instance of
          *     new AcquiredAccount(<old-amount>, op) until that successfully happens and return the
@@ -169,16 +166,27 @@ public class BankImpl implements Bank {
          * DCSS operation with descriptors for DCSS operation as explained in Harris CASN work. A simple
          * lock-free compareAndSet loop suffices here if op.completed is checked after the accounts[index]
          * is read.
-         *
-         * Basically, implementation of this method must perform the logic of the following code "atomically":
          */
 
-        if (op.completed)
-            return null;
-        Account account = accounts.get(index);
-        AcquiredAccount acquiredAccount = new AcquiredAccount(account.amount, op);
-        accounts.set(index, acquiredAccount);
-        return acquiredAccount;
+        while (true) {
+            Account account = accounts.get(index);
+            if (op.completed) {
+                return null;
+            }
+
+            if (account instanceof AcquiredAccount) {
+                AcquiredAccount acquiredAccount = (AcquiredAccount) account;
+                if ((acquiredAccount).op == op) {
+                    return acquiredAccount;
+                }
+                acquiredAccount.invokeOperation();
+            } else {
+                AcquiredAccount acquiredAccount = new AcquiredAccount(account.amount, op);
+                if (accounts.compareAndSet(index, account, acquiredAccount)) {
+                    return acquiredAccount;
+                }
+            }
+        }
     }
 
     /**
@@ -316,7 +324,6 @@ public class BankImpl implements Bank {
 
         @Override
         void invokeOperation() {
-            // todo: write implementation for this method, use TotalAmountOp as an example
             /*
              * In the implementation of this operation only two accounts (with fromIndex and toIndex) needs
              * to be acquired. Unlike TotalAmountOp, this operation has its own result in errorMessage string
@@ -325,15 +332,34 @@ public class BankImpl implements Bank {
              *
              * Basically, implementation of this method must perform the logic of the following code "atomically":
              */
-            Account from = accounts.get(fromIndex);
-            Account to = accounts.get(toIndex);
-            if (amount > from.amount)
-                errorMessage = "Underflow";
-            else if (to.amount + amount > MAX_AMOUNT)
-                errorMessage = "Overflow";
-            else {
-                accounts.set(fromIndex, new Account(from.amount - amount));
-                accounts.set(toIndex, new Account(to.amount + amount));
+
+            AcquiredAccount from, to;
+            if (fromIndex < toIndex) {
+                from = acquire(fromIndex, this);
+                to = acquire(toIndex, this);
+            } else {
+                to = acquire(toIndex, this);
+                from = acquire(fromIndex, this);
+            }
+
+            if (from != null && to != null) {
+                if (amount > from.amount)
+                    errorMessage = "Underflow";
+                else if (to.amount + amount > MAX_AMOUNT)
+                    errorMessage = "Overflow";
+                else {
+                    from.newAmount = from.amount - amount;
+                    to.newAmount = to.amount + amount;
+                }
+                this.completed = true;
+            }
+
+            if (fromIndex < toIndex) {
+                release(toIndex, this);
+                release(fromIndex, this);
+            } else {
+                release(fromIndex, this);
+                release(toIndex, this);
             }
         }
     }
