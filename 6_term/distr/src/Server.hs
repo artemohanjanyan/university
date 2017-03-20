@@ -29,6 +29,8 @@ import Control.Concurrent (Chan, newChan, readChan, writeChan, forkIO)
 
 import qualified Data.Map.Strict as Map
 
+import Text.Megaparsec.Error (parseErrorPretty)
+
 
 configFile :: String
 configFile = "process.cfg"
@@ -153,6 +155,6 @@ cmdLoop :: Chan Event -> IO ()
 cmdLoop chan = do
     cmdStr <- getLine
     case parseCmd cmdStr of
-        Left  _   -> putStrLn "Incorrect command"
+        Left  e   -> putStr $ parseErrorPretty e
         Right cmd -> writeChan chan (EventCmd cmd)
     cmdLoop chan

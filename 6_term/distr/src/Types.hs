@@ -28,7 +28,7 @@ import Control.Monad.State.Lazy
 import Control.Applicative ((*>))
 import Text.Megaparsec hiding (State)
 import Text.Megaparsec.String
-import Text.Megaparsec.Lexer (integer)
+import Text.Megaparsec.Lexer (integer, signed)
 
 
 type ConfigLine = (Int, SockAddr)
@@ -77,11 +77,10 @@ cmdParser = do
     string "send to:"
     to <- integer <?> "process id"
     string " msg:"
-    sign <- (string "-" *> pure (0 -)) <|> pure id
-    msg <- integer <?> "message"
+    msg <- signed (pure ()) integer <?> "int"
     pure $ Cmd
         { cmdTo = (fromIntegral to)
-        , cmdInt = (fromIntegral $ sign msg)
+        , cmdInt = (fromIntegral msg)
         }
 
 parseCmd :: String -> Either (ParseError Char Dec) Cmd
