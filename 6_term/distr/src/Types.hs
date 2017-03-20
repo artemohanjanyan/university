@@ -1,13 +1,34 @@
-module Types where
+{-# LANGUAGE DeriveGeneric #-}
+{-# OPTIONS_GHC -fno-warn-unused-do-bind #-}
+
+module Types
+    ( ConfigLine
+    , Config
+    , parseConfig
+
+    , LamportClock
+    , lamportSend
+    , lamportReceive
+
+    , Cmd(..)
+    , parseCmd
+    , Msg(..)
+    , SendMsg(..)
+    , ReceivedMsg(..)
+    ) where
 
 
 import Network.Socket
 
+import Data.Binary (Binary)
+import GHC.Generics (Generic)
+
 import Control.Monad.State.Lazy
 
+import Control.Applicative ((*>))
 import Text.Megaparsec hiding (State)
 import Text.Megaparsec.String
-import Text.Megaparsec.Lexer (signed, integer)
+import Text.Megaparsec.Lexer (integer)
 
 
 type ConfigLine = (Int, SockAddr)
@@ -56,26 +77,33 @@ cmdParser = do
     string "send to:"
     to <- integer <?> "process id"
     string " msg:"
+    sign <- (string "-" *> pure (0 -)) <|> pure id
     msg <- integer <?> "message"
     pure $ Cmd
         { cmdTo = (fromIntegral to)
-        , cmdInt = (fromIntegral msg)
+        , cmdInt = (fromIntegral $ sign msg)
         }
+
+parseCmd :: String -> Either (ParseError Char Dec) Cmd
+parseCmd = parse cmdParser ""
 
 data Msg = Msg
     { msgInt :: Int
     , msgClock :: Int
-    }
+    } deriving (Generic)
+instance Binary Msg
 
 data SendMsg = SendMsg
     { sendMsg :: Msg
     , sendTo :: Int
-    }
+    } deriving (Generic)
+instance Binary SendMsg
 
 data ReceivedMsg = ReceivedMsg
     { receivedMsg :: Msg
     , receivedFrom :: Int
-    }
+    } deriving (Generic)
+instance Binary ReceivedMsg
 
 instance Show ReceivedMsg where
     show (ReceivedMsg (Msg msg clock) from) =
