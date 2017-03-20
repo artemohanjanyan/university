@@ -3,33 +3,33 @@ module Server
     ) where
 
 
-import Types
+import           Types
 
 
-import System.Environment (getArgs)
-import System.Exit (exitFailure)
-import Text.Read (readMaybe)
+import           System.Environment             (getArgs)
+import           System.Exit                    (exitFailure)
+import           Text.Read                      (readMaybe)
 
-import Network.Socket (Socket, SockAddr,
-                       Family(AF_INET), SocketType(Stream), SocketOption(ReuseAddr),
-                       sOMAXCONN, socket, bind, listen, accept,
-                       connect, close, setSocketOption)
-import Network.Socket.ByteString.Lazy (recv, sendAll)
-import Data.Binary (encode, decode)
-import qualified Data.ByteString.Lazy as BS
+import           Data.Binary                    (decode, encode)
+import qualified Data.ByteString.Lazy           as BS
+import           Network.Socket                 (Family (AF_INET), SockAddr, Socket,
+                                                 SocketOption (ReuseAddr), SocketType (Stream),
+                                                 accept, bind, close, connect, listen, sOMAXCONN,
+                                                 setSocketOption, socket)
+import           Network.Socket.ByteString.Lazy (recv, sendAll)
 
-import Control.Exception (handle, SomeException(..))
+import           Control.Exception              (SomeException (..), handle)
 
-import Control.Applicative ((<*), (*>))
-import Control.Monad (when)
-import Control.Monad.Fix (fix)
-import Control.Monad.State.Lazy (StateT, lift, runStateT, get, put, modify)
+import           Control.Applicative            ((*>), (<*))
+import           Control.Monad                  (when)
+import           Control.Monad.Fix              (fix)
+import           Control.Monad.State.Lazy       (StateT, get, lift, modify, put, runStateT)
 
-import Control.Concurrent (Chan, newChan, readChan, writeChan, forkIO)
+import           Control.Concurrent             (Chan, forkIO, newChan, readChan, writeChan)
 
-import qualified Data.Map.Strict as Map
+import qualified Data.Map.Strict                as Map
 
-import Text.Megaparsec.Error (parseErrorPretty)
+import           Text.Megaparsec.Error          (parseErrorPretty)
 
 
 configFile :: String
