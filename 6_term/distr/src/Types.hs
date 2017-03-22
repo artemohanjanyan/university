@@ -25,7 +25,6 @@ import           GHC.Generics             (Generic)
 
 import           Control.Monad.State.Lazy
 
-import           Control.Applicative      ((*>))
 import           Text.Megaparsec          hiding (State)
 import           Text.Megaparsec.Lexer    (integer, signed)
 import           Text.Megaparsec.String
