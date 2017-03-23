@@ -18,17 +18,16 @@ module Types
     ) where
 
 
-import Network.Socket
+import           Network.Socket
 
-import Data.Binary (Binary)
-import GHC.Generics (Generic)
+import           Data.Binary              (Binary)
+import           GHC.Generics             (Generic)
 
-import Control.Monad.State.Lazy
+import           Control.Monad.State.Lazy
 
-import Control.Applicative ((*>))
-import Text.Megaparsec hiding (State)
-import Text.Megaparsec.String
-import Text.Megaparsec.Lexer (integer)
+import           Text.Megaparsec          hiding (State)
+import           Text.Megaparsec.Lexer    (integer, signed)
+import           Text.Megaparsec.String
 
 
 type ConfigLine = (Int, SockAddr)
@@ -68,7 +67,7 @@ lamportReceive received = do
     pure new
 
 data Cmd = Cmd
-    { cmdTo :: Int
+    { cmdTo  :: Int
     , cmdInt :: Int
     }
 
@@ -77,30 +76,29 @@ cmdParser = do
     string "send to:"
     to <- integer <?> "process id"
     string " msg:"
-    sign <- (string "-" *> pure (0 -)) <|> pure id
-    msg <- integer <?> "message"
+    msg <- signed (pure ()) integer <?> "int"
     pure $ Cmd
         { cmdTo = (fromIntegral to)
-        , cmdInt = (fromIntegral $ sign msg)
+        , cmdInt = (fromIntegral msg)
         }
 
 parseCmd :: String -> Either (ParseError Char Dec) Cmd
 parseCmd = parse cmdParser ""
 
 data Msg = Msg
-    { msgInt :: Int
+    { msgInt   :: Int
     , msgClock :: Int
     } deriving (Generic)
 instance Binary Msg
 
 data SendMsg = SendMsg
     { sendMsg :: Msg
-    , sendTo :: Int
+    , sendTo  :: Int
     } deriving (Generic)
 instance Binary SendMsg
 
 data ReceivedMsg = ReceivedMsg
-    { receivedMsg :: Msg
+    { receivedMsg  :: Msg
     , receivedFrom :: Int
     } deriving (Generic)
 instance Binary ReceivedMsg

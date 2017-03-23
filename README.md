@@ -14,3 +14,10 @@ Computer technologies department, ITMO University, 2014-now.
 - Type Theory couse. [Type inference](https://github.com/artemohanjanyan/university/tree/master/4_term/types/hw) for simply typed lambda calculus and [course notes](https://github.com/artemohanjanyan/tt-conspect) in LaTeX (in Russian) worth many sleepless nights spent on them.
 - [Repository for Operating Systems course](https://github.com/artemohanjanyan/os) starring rshd server in (almost) pure C.
 - [Java technologies](https://github.com/artemohanjanyan/university/tree/master/4_term/java). Deeper Java course with homeworks covering different parts of Java API, including concurrency and reflection API.
+
+### 5 term
+- [Computational geometry](https://github.com/artemohanjanyan/university/tree/distr/5_term/geom). Working with Delaunay triangulation in C++.
+- [Multithreading](https://github.com/artemohanjanyan/university/tree/distr/5_term/geom). Blocking and non-blocking bank implementations.
+
+### 6 term
+- [Distributed systems](https://github.com/artemohanjanyan/university/tree/distr/6_term/distr). Implemented in Haskell.
