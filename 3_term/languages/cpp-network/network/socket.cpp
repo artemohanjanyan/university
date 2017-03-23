@@ -115,7 +115,7 @@ namespace network
 		}
 		log(utils::verbose) << "]\n";
 
-		return std::move(endpoints);
+		return endpoints;
 	}
 
 	file_descriptor client_socket::connect(std::vector<ipv4_endpoint> endpoints)
@@ -128,7 +128,7 @@ namespace network
 		address.sin_port = endpoints.front().get_port_n();
 		check_return_code(
 				::connect(fd.get_raw_fd(), reinterpret_cast<sockaddr const *>(&address), sizeof address));
-		return std::move(fd);
+		return fd;
 	}
 
 	client_socket::client_socket(file_descriptor &&fd) noexcept
@@ -155,7 +155,7 @@ namespace network
 #ifdef CPP_NETWORK_DEBUG
 		log(utils::verbose) << "read " << std::to_string(string.size()) << " bytes from " << fd << "\n";
 #endif
-		return std::move(string);
+		return string;
 	}
 
 	size_t client_socket::write(utils::string_view const &str)
@@ -205,7 +205,7 @@ namespace network
 		check_return_code(new_fd);
 		client_socket accepted{file_descriptor{new_fd}};
 		log(utils::verbose) << "accepted " << accepted.get_fd() << "\n";
-		return std::move(accepted);
+		return accepted;
 	}
 
 	ipv4_endpoint get_socket_endpoint(file_descriptor const &fd)

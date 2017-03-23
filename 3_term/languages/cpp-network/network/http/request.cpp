@@ -1,4 +1,5 @@
 #include "request.h"
+#include "request_parser.h"
 
 #include <sstream>
 
@@ -53,8 +54,8 @@ namespace network
 					return "GET";
 				case request_type::post:
 					return "POST";
-				default:
-					throw std::runtime_error{"bad request type"};
+				default: // to suppress CLion and gcc warnings at the same time
+					throw std::runtime_error{"unknown enum value"};
 			}
 		}
 
@@ -64,7 +65,7 @@ namespace network
 				return request_type::get;
 			else if (type_str == "POST")
 				return request_type::post;
-			throw std::runtime_error{"bad request type"};
+			throw parse_exception{"bad request type"};
 		}
 
 		std::string to_string(request_line const &request_line_)
@@ -76,7 +77,7 @@ namespace network
 
 		std::string to_string(request const &request_)
 		{
-			std::stringstream buffer(to_string(request_.line_));
+			std::stringstream buffer{to_string(request_.line_)};
 			for (auto const &header : request_.headers_)
 				buffer << header.first << ": " << header.second << "\r\n";
 			buffer << "\r\n";

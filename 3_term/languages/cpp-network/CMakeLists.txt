@@ -33,11 +33,7 @@ set(NETWORK_HTTP_FILES network/http/request.h network/http/request.cpp
 
 set(LIB_FILES ${UTILS_FILES} ${NETWORK_FILES} ${NETWORK_HTTP_FILES})
 
-set(RSHD_FILES apps/rshd/rshd.c
-        apps/rshd/ptr_set.h apps/rshd/ptr_set.cpp
-        apps/rshd/string_buffer.h apps/rshd/string_buffer.cpp)
-add_executable(rshd ${RSHD_FILES})
-
+# Executables
 add_executable(echo_single apps/echo/echo_single.cpp ${LIB_FILES})
 add_executable(echo_epoll apps/echo/echo_epoll.cpp ${LIB_FILES})
 

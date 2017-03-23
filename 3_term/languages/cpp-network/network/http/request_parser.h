@@ -5,7 +5,8 @@
 
 #include <string>
 #include <functional>
-#include <vector>
+#include <deque>
+#include <memory>
 
 namespace network
 {
@@ -33,29 +34,32 @@ namespace network
 			void unset_chunk_consumer();
 		};
 
+		const std::string SPACE = " ";
+		const std::string COLON = ": ";
+		const std::string CRLF = "\r\n";
+		const std::string REQUEST_TAIL = CRLF + CRLF;
+		const std::string CHUNK_HEADER_NAME = "Transfer-Encoding";
+
+		std::string
+		advance_until(std::deque<char>::const_iterator &it,
+		              std::deque<char>::const_iterator end,
+		              std::deque<char> const &stop);
+
 		class request_parser
 		{
+			class scanner;
+			class request_scanner;
+			class chunk_scanner;
+
 			request_parser_registration registration_;
 
-			static const std::vector<char> SPACE;
-			static const std::vector<char> COLON;
-			static const std::vector<char> CRLF;
-			static const std::vector<char> REQUEST_TAIL;
+			std::deque<char> buffer_;
+			std::deque<char>::const_iterator last_scanned_it_;
 
-			std::vector<char> buffer_;
-			std::vector<char>::const_iterator last_scanned_it_;
+			std::unique_ptr<scanner> scanner_;
 
-			std::vector<char>::const_iterator
-			read_until(std::vector<char>::const_iterator begin,
-			           std::vector<char>::const_iterator end,
-			           std::vector<char> const &stop);
-
-			std::string
-			advance_until(std::vector<char>::const_iterator &it,
-			              std::vector<char>::const_iterator end,
-			              std::vector<char> const &stop);
-
-			bool scan_buffer();
+			bool try_detect(std::string const &stop);
+			void shrink_buffer();
 
 		public:
 			request_parser();
@@ -63,6 +67,37 @@ namespace network
 			void register_consumer(request_parser_registration const &registration_);
 
 			void parse(std::string str);
+		};
+
+		class request_parser::scanner
+		{
+		public:
+			request_parser *request_parser_;
+
+			scanner(request_parser *request_parser_);
+
+			virtual ~scanner()
+			{}
+
+			virtual std::pair<bool, std::unique_ptr<scanner>> scan() = 0;
+		};
+
+		class request_parser::request_scanner : public request_parser::scanner
+		{
+		public:
+			request_scanner(request_parser *request_parser_);
+
+			std::pair<bool, std::unique_ptr<scanner>> scan() override;
+		};
+
+		class request_parser::chunk_scanner : public request_parser::scanner
+		{
+			size_t chunk_size;
+
+		public:
+			chunk_scanner(request_parser *request_parser_);
+
+			std::pair<bool, std::unique_ptr<scanner>> scan() override;
 		};
 
 		class parse_exception : public std::runtime_error

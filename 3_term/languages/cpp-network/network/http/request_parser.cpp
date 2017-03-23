@@ -28,94 +28,24 @@ namespace network
 			this->chunk_consumer_ = nullptr;
 		}
 
-		const std::vector<char> request_parser::SPACE{' '};
-		const std::vector<char> request_parser::COLON{':'};
-		const std::vector<char> request_parser::CRLF{'\r', '\n'};
-		const std::vector<char> request_parser::REQUEST_TAIL{'\r', '\n', '\r', '\n'};
-
-		std::vector<char>::const_iterator
-		request_parser::read_until(std::vector<char>::const_iterator begin,
-		                           std::vector<char>::const_iterator end,
-		                           std::vector<char> const &stop)
-		{
-			auto it = std::search(begin, end, stop.begin(), stop.end());
-			if (it == end)
-				throw parse_exception{"bad request"};
-			else
-				return it;
-		}
-
 		std::string
-		request_parser::advance_until(std::vector<char>::const_iterator &it,
-		                              std::vector<char>::const_iterator end,
-		                              std::vector<char> const &stop)
+		advance_until(std::deque<char>::const_iterator &it,
+                      std::deque<char>::const_iterator end,
+                      std::string const &stop)
 		{
-			auto str_end = read_until(it, end, SPACE);
+			auto str_end = std::search(it, end, stop.begin(), stop.end());
 			if (str_end == end)
 				throw parse_exception{"bad request"};
 			std::string str = std::string(it, str_end);
 			it = str_end;
 			std::advance(it, stop.size());
-			return std::move(str);
-		}
-
-		// TODO add support for chunked
-		bool request_parser::scan_buffer()
-		{
-			auto tail_it = std::search(last_scanned_it_, std::vector<char>::const_iterator{buffer_.end()},
-			                           REQUEST_TAIL.begin(), REQUEST_TAIL.end());
-			if (tail_it == buffer_.end())
-			{
-				last_scanned_it_ = buffer_.end();
-				std::advance(last_scanned_it_, 1 - static_cast<ptrdiff_t>(REQUEST_TAIL.size()));
-				return false;
-			}
-
-			tail_it += REQUEST_TAIL.size();
-			std::vector<char>::const_iterator it = buffer_.begin();
-
-			request_type type;
-			std::string uri;
-			std::string http_version;
-			{
-				std::string type_str = advance_until(it, tail_it, SPACE);
-				try
-				{
-					type = request_type_from_string(type_str);
-				}
-				catch (std::runtime_error &e)
-				{
-					throw parse_exception{"bad request"};
-				}
-
-				uri = advance_until(it, tail_it, SPACE);
-
-				http_version = advance_until(it, tail_it, CRLF);
-			}
-			request_line line{type, std::move(uri), std::move(http_version)};
-
-			std::unordered_map<std::string, std::string> headers;
-			auto loop_condition = [&]() -> bool
-			{
-				auto tmp_it = it;
-				std::advance(tmp_it, CRLF.size());
-				tmp_it = std::min(tmp_it, tail_it);
-				return !std::equal(it, tmp_it, CRLF.begin(), CRLF.end());
-			};
-			while (loop_condition())
-			{
-				std::string header_name = advance_until(it, tail_it, COLON);
-				std::string header_value = advance_until(it, tail_it, CRLF);
-				headers[header_name] = header_value;
-			}
-
-			registration_.request_consumer_({std::move(line), std::move(headers)});
-			return true;
+			return str;
 		}
 
 		request_parser::request_parser()
 				: buffer_{}
 				, last_scanned_it_{buffer_.end()}
+				, scanner_{std::make_unique<request_scanner>(this)}
 		{}
 
 		void request_parser::register_consumer(request_parser_registration const &registration_)
@@ -125,15 +55,131 @@ namespace network
 
 		void request_parser::parse(std::string str)
 		{
-			ptrdiff_t it_i = last_scanned_it_ - buffer_.begin();
 			for (char c : str)
 				buffer_.push_back(c);
-			last_scanned_it_ = buffer_.begin() + it_i;
-			while (!scan_buffer());
+			decltype(scanner_->scan()) ret;
+			while (ret = scanner_->scan(), ret.first)
+				if (ret.second != nullptr)
+					scanner_ = std::move(ret.second);
+		}
+
+		bool request_parser::try_detect(std::string const &stop)
+		{
+			auto tail_it = std::search(last_scanned_it_, buffer_.cend(),
+			                           stop.begin(), stop.end());
+			if (tail_it == buffer_.end())
+			{
+				last_scanned_it_ = buffer_.end();
+				std::advance(last_scanned_it_,
+				             1 - static_cast<ptrdiff_t>(stop.size()));
+				return false;
+			}
+			last_scanned_it_ = tail_it + stop.size();
+			return true;
+		}
+
+		void request_parser::shrink_buffer()
+		{
+			while (last_scanned_it_ != buffer_.cbegin())
+				buffer_.pop_front();
 		}
 
 		parse_exception::parse_exception(std::string msg)
 				: runtime_error(msg)
 		{}
+
+		request_parser::scanner::scanner(request_parser *request_parser_)
+				: request_parser_{request_parser_}
+		{}
+
+		request_parser::request_scanner::request_scanner(request_parser *request_parser_)
+				: scanner(request_parser_)
+		{}
+
+		std::pair<bool, std::unique_ptr<request_parser::scanner>> request_parser::request_scanner::scan()
+		{
+			if (!request_parser_->try_detect(REQUEST_TAIL))
+				return {false, nullptr};
+
+			auto tail_it = request_parser_->last_scanned_it_;
+			decltype(auto) it = request_parser_->buffer_.cbegin();
+
+			std::string type_str = advance_until(it, tail_it, SPACE);
+			request_type type = request_type_from_string(type_str);
+			std::string uri = advance_until(it, tail_it, SPACE);
+			std::string http_version = advance_until(it, tail_it, CRLF);
+			request_line line{type, std::move(uri), std::move(http_version)};
+
+			std::unordered_map<std::string, std::string> headers;
+			auto has_header = [&]() -> bool
+			{
+				auto tmp_it = it;
+				std::advance(tmp_it, CRLF.size());
+				tmp_it = std::min(tmp_it, tail_it);
+				return !std::equal(it, tmp_it, CRLF.begin(), CRLF.end());
+			};
+			while (has_header())
+			{
+				std::string header_name = advance_until(it, tail_it, COLON);
+				std::string header_value = advance_until(it, tail_it, CRLF);
+				headers[header_name] = header_value;
+			}
+
+			std::unique_ptr<request_parser::scanner> chunk_scanner{};
+			if (headers.count(CHUNK_HEADER_NAME))
+				chunk_scanner = std::make_unique<request_parser::chunk_scanner>(request_parser_);
+
+			request_parser_->registration_.request_consumer_({std::move(line), std::move(headers)});
+			request_parser_->shrink_buffer();
+
+			return {true, std::move(chunk_scanner)};
+		}
+
+		request_parser::chunk_scanner::chunk_scanner(request_parser *request_parser_)
+				: scanner(request_parser_)
+		{}
+
+		std::pair<bool, std::unique_ptr<request_parser::scanner>> request_parser::chunk_scanner::scan()
+		{
+			if (chunk_size == 0)
+			{
+				if (!request_parser_->try_detect(CRLF))
+					return {false, nullptr};
+
+				auto it = request_parser_->buffer_.cbegin();
+				while (isxdigit(*it))
+					++it;
+				chunk_size = static_cast<size_t>(
+						std::stoi(std::string{request_parser_->buffer_.cbegin(), it}, nullptr, 16));
+
+				if (advance_until(it, request_parser_->buffer_.end(), CRLF) != "")
+					throw parse_exception{"Chunk size not followed by CRLF"};
+
+				chunk_size += it - request_parser_->buffer_.cbegin();
+				chunk_size += CRLF.size();
+
+				return {true, nullptr};
+			}
+			else if (request_parser_->buffer_.size() >= chunk_size)
+			{
+				request_parser_->last_scanned_it_ = request_parser_->buffer_.cbegin() + chunk_size;
+				if (!std::equal(request_parser_->last_scanned_it_ - CRLF.size(),
+				                request_parser_->last_scanned_it_,
+				                CRLF.cbegin(), CRLF.cend()))
+					throw parse_exception{"Chunk not followed by CRLF"};
+
+				request_parser_->registration_.chunk_consumer_(std::string{
+						request_parser_->buffer_.cbegin(), request_parser_->last_scanned_it_});
+				request_parser_->shrink_buffer();
+
+				if (chunk_size == 1 + 2 * CRLF.size())
+					return {true, std::make_unique<request_parser::request_scanner>(request_parser_)};
+
+				chunk_size = 0;
+				return {true, nullptr};
+			}
+			else
+				return {false, nullptr};
+		}
 	}
 }
