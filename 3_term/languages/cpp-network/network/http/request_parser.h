@@ -25,13 +25,9 @@ namespace network
 			chunk_consumer chunk_consumer_;
 
 		public:
-			void set_request_consumer(request_consumer const &request_consumer_);
+			request_parser_registration &set_request_consumer(request_consumer const &request_consumer_);
 
-			void set_chunk_consumer(chunk_consumer const &chunk_consumer_);
-
-			void unset_request_consumer();
-
-			void unset_chunk_consumer();
+			request_parser_registration &set_chunk_consumer(chunk_consumer const &chunk_consumer_);
 		};
 
 		const std::string SPACE = " ";

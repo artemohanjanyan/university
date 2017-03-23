@@ -47,7 +47,7 @@ struct connection
 		host_write = [this] {
 			write_buffer.pop(host->host.write(write_buffer.top()));
 			if (write_buffer.is_empty())
-				host->host_registration.unset_on_write().update();
+				host->host_registration.set_on_write(nullptr).update();
 		};
 
 		client_registration.set_on_read([this] {
@@ -61,7 +61,7 @@ struct connection
 				client_registration.set_on_write([this] {
 					read_buffer.pop(client.write(read_buffer.top()));
 					if (read_buffer.is_empty())
-						client_registration.unset_on_write().update();
+						client_registration.set_on_write(nullptr).update();
 				}).update();
 			read_buffer.push(host->host.read());
 		});

@@ -30,14 +30,6 @@ namespace network
 
 		epoll_registration &set_cleanup(callback cleanup);
 
-		epoll_registration &unset_on_read();
-
-		epoll_registration &unset_on_write();
-
-		epoll_registration &unset_on_close();
-
-		epoll_registration &unset_cleanup();
-
 		void update();
 	};
 

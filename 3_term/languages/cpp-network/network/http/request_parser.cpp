@@ -8,24 +8,18 @@ namespace network
 {
 	namespace http
 	{
-		void request_parser_registration::set_request_consumer(request_consumer const &request_consumer_)
+		request_parser_registration &
+		request_parser_registration::set_request_consumer(request_consumer const &request_consumer_)
 		{
 			this->request_consumer_ = request_consumer_;
+			return *this;
 		}
 
-		void request_parser_registration::set_chunk_consumer(chunk_consumer const &chunk_consumer_)
+		request_parser_registration &
+		request_parser_registration::set_chunk_consumer(chunk_consumer const &chunk_consumer_)
 		{
 			this->chunk_consumer_ = chunk_consumer_;
-		}
-
-		void request_parser_registration::unset_request_consumer()
-		{
-			this->request_consumer_ = nullptr;
-		}
-
-		void request_parser_registration::unset_chunk_consumer()
-		{
-			this->chunk_consumer_ = nullptr;
+			return *this;
 		}
 
 		std::string

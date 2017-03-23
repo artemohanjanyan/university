@@ -26,7 +26,7 @@ public:
 					size_t written = client.write(string_buffer.top());
 					string_buffer.pop(written);
 					if (string_buffer.is_empty())
-						client_registration.unset_on_write().update();
+						client_registration.set_on_write(nullptr).update();
 				}).update();
 			string_buffer.push(msg);
 		});

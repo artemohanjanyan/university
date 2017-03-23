@@ -42,30 +42,6 @@ namespace network
 		return *this;
 	}
 
-	epoll_registration &epoll_registration::unset_on_read()
-	{
-		this->on_read = nullptr;
-		return *this;
-	}
-
-	epoll_registration &epoll_registration::unset_on_write()
-	{
-		this->on_write = nullptr;
-		return *this;
-	}
-
-	epoll_registration &epoll_registration::unset_on_close()
-	{
-		this->on_close = nullptr;
-		return *this;
-	}
-
-	epoll_registration &epoll_registration::unset_cleanup()
-	{
-		this->cleanup = nullptr;
-		return *this;
-	}
-
 	void epoll_registration::update()
 	{
 		ep->update(*this);
