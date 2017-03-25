@@ -31,7 +31,7 @@ struct connection
 		network::epoll_registration host_registration_;
 		std::string host_name_;
 
-		host_data(network::client_socket &&host, std::string host_name, connection *super);
+		host_data(network::client_socket &&host, std::string host_name, connection *outer);
 	};
 
 	network::client_socket client_;
@@ -92,31 +92,31 @@ struct connection
 	}
 };
 
-connection::host_data::host_data(network::client_socket &&host, std::string host_name, connection *super)
+connection::host_data::host_data(network::client_socket &&host, std::string host_name, connection *outer)
 		: host_{std::move(host)}
-		, host_registration_{&host_.get_fd(), &super->epoll_}
+		, host_registration_{&host_.get_fd(), &outer->epoll_}
 		, host_name_{std::move(host_name)}
 {
-	host_registration_.set_on_read([this, super] {
-		push_buffer(&super->read_buffer_, &super->client_, &super->client_registration_);
-		super->read_buffer_.push(host_.read());
+	host_registration_.set_on_read([this, outer] {
+		push_buffer(&outer->read_buffer_, &outer->client_, &outer->client_registration_);
+		outer->read_buffer_.push(host_.read());
 	});
 
-	host_registration_.set_on_close([this, super] {
-		super->epoll_.schedule_cleanup(super->client_registration_);
+	host_registration_.set_on_close([this, outer] {
+		outer->epoll_.schedule_cleanup(outer->client_registration_);
 	});
 
-	host_registration_.set_cleanup([this, super] {
-		super->map_.erase(super->client_.get_fd().get_raw_fd());
+	host_registration_.set_cleanup([this, outer] {
+		outer->map_.erase(outer->client_.get_fd().get_raw_fd());
 	});
 
-	super->epoll_.add(host_registration_);
+	outer->epoll_.add(host_registration_);
 }
 
 int main()
 {
-	network::log.print_mask |= utils::verbose;
-	log.print_mask |= utils::verbose;
+//	network::log.print_mask |= utils::verbose;
+//	log.print_mask |= utils::verbose;
 	log(utils::debug) << "Debug works\n";
 	network::server_socket server{network::make_local_endpoint(2539)};
 	network::epoll epoll{};

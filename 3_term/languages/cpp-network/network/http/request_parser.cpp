@@ -27,7 +27,7 @@ namespace network
                       std::deque<char>::const_iterator end,
                       std::string const &stop)
 		{
-			auto str_end = std::search(it, end, stop.begin(), stop.end());
+			auto str_end = std::search(it, end, stop.cbegin(), stop.cend());
 			if (str_end == end)
 				throw parse_exception{"bad request"};
 			std::string str = std::string(it, str_end);
@@ -38,7 +38,7 @@ namespace network
 
 		request_parser::request_parser()
 				: buffer_{}
-				, last_scanned_it_{buffer_.cbegin()}
+				, last_scanned_i_{0}
 				, scanner_{std::make_unique<request_scanner>(this)}
 		{}
 
@@ -49,11 +49,8 @@ namespace network
 
 		void request_parser::parse(std::string const &str)
 		{
-			bool is_empty = buffer_.empty();
 			for (char c : str)
 				buffer_.push_back(c);
-			if (is_empty)
-				last_scanned_it_ = buffer_.begin();
 			decltype(scanner_->scan()) ret;
 			while (ret = scanner_->scan(), ret.first)
 				if (ret.second != nullptr)
@@ -62,23 +59,24 @@ namespace network
 
 		bool request_parser::try_detect(std::string const &stop)
 		{
-			auto tail_it = std::search(last_scanned_it_, buffer_.cend(),
-			                           stop.begin(), stop.end());
+			auto tail_it = std::search(buffer_.cbegin() + last_scanned_i_, buffer_.cend(),
+			                           stop.cbegin(), stop.cend());
 			if (tail_it == buffer_.end())
 			{
-				last_scanned_it_ = buffer_.end();
-				last_scanned_it_ -= std::min(static_cast<ptrdiff_t>(stop.size()) - 1,
-				                             static_cast<ptrdiff_t>(buffer_.size()));
+				last_scanned_i_ = buffer_.size() -
+						std::min(static_cast<ptrdiff_t>(stop.size()) - 1,
+						         static_cast<ptrdiff_t>(buffer_.size()));
 				return false;
 			}
-			last_scanned_it_ = tail_it + stop.size();
+			last_scanned_i_ = (tail_it - buffer_.cbegin()) + stop.size();
 			return true;
 		}
 
 		void request_parser::shrink_buffer()
 		{
-			while (last_scanned_it_ != buffer_.cbegin())
+			for (size_t i = 0; i < last_scanned_i_; ++i)
 				buffer_.pop_front();
+			last_scanned_i_ = 0;
 		}
 
 		parse_exception::parse_exception(std::string msg)
@@ -98,7 +96,7 @@ namespace network
 			if (!request_parser_->try_detect(REQUEST_TAIL))
 				return {false, nullptr};
 
-			auto tail_it = request_parser_->last_scanned_it_;
+			auto tail_it = request_parser_->buffer_.cbegin() + request_parser_->last_scanned_i_;
 			decltype(auto) it = request_parser_->buffer_.cbegin();
 
 			std::string type_str = advance_until(it, tail_it, SPACE);
@@ -112,7 +110,7 @@ namespace network
 			{
 				auto tmp_it = it + CRLF.size();
 				tmp_it = std::min(tmp_it, tail_it);
-				return !std::equal(it, tmp_it, CRLF.begin(), CRLF.end());
+				return !std::equal(it, tmp_it, CRLF.cbegin(), CRLF.cend());
 			};
 			while (has_header())
 			{
@@ -158,14 +156,15 @@ namespace network
 			}
 			else if (request_parser_->buffer_.size() >= chunk_size)
 			{
-				request_parser_->last_scanned_it_ = request_parser_->buffer_.cbegin() + chunk_size;
-				if (!std::equal(request_parser_->last_scanned_it_ - CRLF.size(),
-				                request_parser_->last_scanned_it_,
+				request_parser_->last_scanned_i_ = chunk_size;
+				if (!std::equal(request_parser_->buffer_.cbegin() + (request_parser_->last_scanned_i_ - CRLF.size()),
+				                request_parser_->buffer_.cbegin() + request_parser_->last_scanned_i_,
 				                CRLF.cbegin(), CRLF.cend()))
 					throw parse_exception{"Chunk not followed by CRLF"};
 
 				request_parser_->registration_->chunk_consumer_(std::string{
-						request_parser_->buffer_.cbegin(), request_parser_->last_scanned_it_});
+						request_parser_->buffer_.cbegin(),
+						request_parser_->buffer_.cbegin() + request_parser_->last_scanned_i_});
 				request_parser_->shrink_buffer();
 
 				if (chunk_size == 1 + 2 * CRLF.size())

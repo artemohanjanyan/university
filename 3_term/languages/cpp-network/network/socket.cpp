@@ -147,9 +147,11 @@ namespace network
 		ssize_t read_n = ::recv(fd.get_raw_fd(), buf.begin(), buf.size(), MSG_NOSIGNAL);
 		check_return_code(read_n);
 		std::string string{buf.begin(), static_cast<size_t>(read_n)};
-#ifdef CPP_NETWORK_DEBUG
+
+		#ifdef CPP_NETWORK_SOCKET_DEBUG
 		log(utils::verbose) << "read " << std::to_string(string.size()) << " bytes from " << fd << "\n";
-#endif
+		#endif
+
 		return string;
 	}
 
@@ -157,9 +159,11 @@ namespace network
 	{
 		ssize_t written = ::send(fd.get_raw_fd(), str.begin(), str.size(), MSG_NOSIGNAL);
 		check_return_code(written);
-#ifdef CPP_NETWORK_DEBUG
+
+		#ifdef CPP_NETWORK_SOCKET_DEBUG
 		log(utils::verbose) << "written " << std::to_string(written) << " bytes to " << fd << "\n";
-#endif
+		#endif
+
 		return static_cast<size_t>(written);
 	}
 

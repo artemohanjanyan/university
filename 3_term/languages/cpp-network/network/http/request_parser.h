@@ -50,7 +50,7 @@ namespace network
 			request_parser_registration const *registration_;
 
 			std::deque<char> buffer_;
-			std::deque<char>::const_iterator last_scanned_it_;
+			size_t last_scanned_i_;
 
 			std::unique_ptr<scanner> scanner_;
 

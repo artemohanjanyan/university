@@ -56,8 +56,7 @@ namespace network
 
 	base_descriptor_resource::base_descriptor_resource(network::file_descriptor &&fd) noexcept
 			: fd(std::move(fd))
-	{
-	}
+	{}
 
 	file_descriptor const &base_descriptor_resource::get_fd() const noexcept
 	{

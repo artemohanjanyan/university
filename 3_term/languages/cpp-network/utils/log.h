@@ -40,9 +40,9 @@ namespace utils
 		log &operator()(log_level level);
 
 		log_level print_mask = error | warning | info
-#ifdef CPP_NETWORK_DEBUG
+		#ifndef NDEBUG
 		| debug
-#endif
+		#endif
 		| user;
 	};
 }

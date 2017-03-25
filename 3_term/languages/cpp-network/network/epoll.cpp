@@ -113,17 +113,23 @@ namespace network
 				{
 					if (events[event_i].events & EPOLLIN)
 					{
+						#ifdef CPP_NETWORK_SOCKET_DEBUG
 						log(utils::verbose) << "can read from " << *registration->fd << "\n";
+						#endif
 						registration->on_read();
 					}
 					if (events[event_i].events & EPOLLOUT)
 					{
+						#ifdef CPP_NETWORK_SOCKET_DEBUG
 						log(utils::verbose) << "can write to " << *registration->fd << "\n";
+						#endif
 						registration->on_write();
 					}
 					if (events[event_i].events & ~(EPOLLIN | EPOLLOUT))
 					{
+						#ifdef CPP_NETWORK_SOCKET_DEBUG
 						log(utils::verbose) << "closed on " << *registration->fd << "\n";
+						#endif
 						registration->on_close();
 					}
 				}
