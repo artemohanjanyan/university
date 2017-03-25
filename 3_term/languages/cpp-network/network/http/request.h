@@ -21,8 +21,7 @@ namespace network
 			std::string http_version_;
 
 		public:
-			// TODO perfect forwarding? const qualifiers etc
-			request_line(request_type type_, std::string const &uri_, std::string const &http_version);
+			request_line(request_type type_, std::string uri_, std::string http_version);
 
 			request_type type() const noexcept;
 
@@ -39,9 +38,8 @@ namespace network
 			std::unordered_map<std::string, std::string> headers_;
 
 		public:
-			// TODO perfect forwarding? const qualifiers etc
-			request(request_line const &request_line_,
-			        std::unordered_map<std::string, std::string> const &headers_);
+			request(request_line request_line_,
+			        std::unordered_map<std::string, std::string> headers_);
 
 			request_line const &line() const noexcept;
 

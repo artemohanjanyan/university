@@ -47,7 +47,7 @@ namespace network
 			class request_scanner;
 			class chunk_scanner;
 
-			request_parser_registration registration_;
+			request_parser_registration const *registration_;
 
 			std::deque<char> buffer_;
 			std::deque<char>::const_iterator last_scanned_it_;
@@ -60,9 +60,9 @@ namespace network
 		public:
 			request_parser();
 
-			void register_consumer(request_parser_registration const &registration_);
+			void register_consumer(request_parser_registration const *registration_);
 
-			void parse(std::string str);
+			void parse(std::string const &str);
 		};
 
 		class request_parser::scanner

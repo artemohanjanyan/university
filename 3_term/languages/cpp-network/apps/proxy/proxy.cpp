@@ -1,5 +1,7 @@
 #include <network/socket.h>
 #include <network/epoll.h>
+#include <network/http/request.h>
+#include <network/http/request_parser.h>
 #include <utils/string_buffer.h>
 #include <utils/log.h>
 
@@ -9,95 +11,107 @@
 
 utils::log log{std::cout};
 
+void push_buffer(utils::string_buffer *buffer,
+                 network::client_socket *dst,
+                 network::epoll_registration *dst_registration)
+{
+	if (buffer->is_empty())
+		dst_registration->set_on_write([buffer, dst, dst_registration] {
+			buffer->pop(dst->write(buffer->top()));
+			if (buffer->is_empty())
+				dst_registration->set_on_write(nullptr).update();
+		}).update();
+}
+
 struct connection
 {
 	struct host_data
 	{
-		network::client_socket host;
-		network::epoll_registration host_registration;
+		network::client_socket host_;
+		network::epoll_registration host_registration_;
+		std::string host_name_;
 
-		host_data(network::client_socket &&host, network::epoll &epoll)
-				: host{std::move(host)}
-				, host_registration{this->host.get_fd(), epoll}
-		{}
+		host_data(network::client_socket &&host, std::string host_name, connection *super);
 	};
 
-	network::client_socket client;
-	network::epoll_registration client_registration;
-	std::string request;
+	network::client_socket client_;
+	network::epoll_registration client_registration_;
+	network::http::request_parser parser_;
+	network::http::request_parser_registration parser_registration_;
 
-	std::unique_ptr<host_data> host;
-	utils::string_buffer write_buffer;
-	utils::string_buffer read_buffer;
+	std::unique_ptr<host_data> host_;
+	utils::string_buffer write_buffer_;
+	utils::string_buffer read_buffer_;
 
-	network::epoll &epoll;
-	std::map<int, std::unique_ptr<connection>> &map;
+	network::epoll &epoll_;
+	std::map<int, std::unique_ptr<connection>> &map_;
 
-	network::callback host_write;
-
-	void setup_exchange()
-	{
-		size_t pos1 = request.find("ost: ");
-		size_t pos2 = request.find("\r\n", pos1);
-		std::string host_name = request.substr(pos1 + 5, pos2 - pos1 - 5);
-
-		host = std::make_unique<host_data>(network::client_socket{network::get_hosts(host_name)}, epoll);
-		write_buffer.push(request);
-
-		host_write = [this] {
-			write_buffer.pop(host->host.write(write_buffer.top()));
-			if (write_buffer.is_empty())
-				host->host_registration.set_on_write(nullptr).update();
-		};
-
-		client_registration.set_on_read([this] {
-			if (write_buffer.is_empty())
-				host->host_registration.set_on_write(host_write).update();
-			write_buffer.push(client.read());
-		}).update();
-
-		host->host_registration.set_on_read([this] {
-			if (read_buffer.is_empty())
-				client_registration.set_on_write([this] {
-					read_buffer.pop(client.write(read_buffer.top()));
-					if (read_buffer.is_empty())
-						client_registration.set_on_write(nullptr).update();
-				}).update();
-			read_buffer.push(host->host.read());
-		});
-
-		host->host_registration.set_on_write(host_write);
-
-		host->host_registration.set_on_close([this] {
-			epoll.schedule_cleanup(client_registration);
-		});
-
-		host->host_registration.set_cleanup([this] {
-			map.erase(client.get_fd().get_raw_fd());
-		});
-
-		epoll.add(host->host_registration);
-	}
+	network::callback host_write_;
 
 	connection(network::client_socket &&client_init,
 	           network::epoll &epoll_init,
 	           std::map<int, std::unique_ptr<connection>> &map_init)
-			: client{std::move(client_init)}
-			, client_registration{this->client.get_fd(), epoll_init}
-			, epoll{epoll_init}
-			, map{map_init}
+			: client_{std::move(client_init)}
+			, client_registration_{&this->client_.get_fd(), &epoll_init}
+			, parser_{}
+			, parser_registration_{}
+			, epoll_{epoll_init}
+			, map_{map_init}
 	{
-		client_registration.set_on_read([this] {
-			request += client.read();
-			if (request.find("\r\n\r\n") != std::string::npos)
-				setup_exchange();
+		client_registration_.set_on_read([this] {
+			parser_.parse(client_.read());
 		});
 
-		client_registration.set_cleanup([this] {
-			map.erase(client.get_fd().get_raw_fd());
+		parser_.register_consumer(&parser_registration_);
+
+		parser_registration_.set_request_consumer([this](network::http::request request) {
+			std::string new_host_name = request.headers().at("Host");
+			if (host_ == nullptr || host_->host_name_ != new_host_name)
+			{
+				decltype(auto) hosts = network::get_hosts(new_host_name);
+				host_ = std::make_unique<host_data>(
+						network::client_socket{std::move(hosts)},
+						std::move(new_host_name),
+						this);
+				write_buffer_ = {};
+				read_buffer_ = {};
+			}
+			push_buffer(&write_buffer_, &host_->host_, &host_->host_registration_);
+			log(utils::verbose) << to_string(request);
+			write_buffer_.push(to_string(request));
+		});
+
+		parser_registration_.set_chunk_consumer([this](std::string chunk) {
+			log(utils::verbose) << chunk;
+			write_buffer_.push(std::move(chunk));
+		});
+
+		client_registration_.set_cleanup([this] {
+			map_.erase(client_.get_fd().get_raw_fd());
 		});
 	}
 };
+
+connection::host_data::host_data(network::client_socket &&host, std::string host_name, connection *super)
+		: host_{std::move(host)}
+		, host_registration_{&host_.get_fd(), &super->epoll_}
+		, host_name_{std::move(host_name)}
+{
+	host_registration_.set_on_read([this, super] {
+		push_buffer(&super->read_buffer_, &super->client_, &super->client_registration_);
+		super->read_buffer_.push(host_.read());
+	});
+
+	host_registration_.set_on_close([this, super] {
+		super->epoll_.schedule_cleanup(super->client_registration_);
+	});
+
+	host_registration_.set_cleanup([this, super] {
+		super->map_.erase(super->client_.get_fd().get_raw_fd());
+	});
+
+	super->epoll_.add(host_registration_);
+}
 
 int main()
 {
@@ -106,14 +120,13 @@ int main()
 	log(utils::debug) << "Debug works\n";
 	network::server_socket server{network::make_local_endpoint(2539)};
 	network::epoll epoll{};
-	network::epoll_registration server_registration{server.get_fd(), epoll};
+	network::epoll_registration server_registration{&server.get_fd(), &epoll};
 	std::map<int, std::unique_ptr<connection>> map;
 
 	server_registration.set_on_read([&] {
 		std::unique_ptr<connection> conn = std::make_unique<connection>(server.accept(), epoll, map);
-		connection *raw_conn = conn.get();
-		epoll.add(conn->client_registration);
-		map.insert(std::make_pair(raw_conn->client.get_fd().get_raw_fd(), std::move(conn)));
+		epoll.add(conn->client_registration_);
+		map.insert(std::make_pair(conn->client_.get_fd().get_raw_fd(), std::move(conn)));
 	});
 
 	server_registration.set_cleanup([&] {

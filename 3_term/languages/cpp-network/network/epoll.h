@@ -20,7 +20,9 @@ namespace network
 		epoll *ep;
 
 	public:
-		explicit epoll_registration(file_descriptor const &fd, epoll &ep) noexcept;
+		epoll_registration(file_descriptor const *fd, epoll *ep) noexcept;
+
+		~epoll_registration();
 
 		epoll_registration &set_on_read(callback on_read);
 

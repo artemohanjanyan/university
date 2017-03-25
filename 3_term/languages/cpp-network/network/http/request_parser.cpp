@@ -32,25 +32,28 @@ namespace network
 				throw parse_exception{"bad request"};
 			std::string str = std::string(it, str_end);
 			it = str_end;
-			std::advance(it, stop.size());
+			it += stop.size();
 			return str;
 		}
 
 		request_parser::request_parser()
 				: buffer_{}
-				, last_scanned_it_{buffer_.end()}
+				, last_scanned_it_{buffer_.cbegin()}
 				, scanner_{std::make_unique<request_scanner>(this)}
 		{}
 
-		void request_parser::register_consumer(request_parser_registration const &registration_)
+		void request_parser::register_consumer(request_parser_registration const *registration_)
 		{
 			this->registration_ = registration_;
 		}
 
-		void request_parser::parse(std::string str)
+		void request_parser::parse(std::string const &str)
 		{
+			bool is_empty = buffer_.empty();
 			for (char c : str)
 				buffer_.push_back(c);
+			if (is_empty)
+				last_scanned_it_ = buffer_.begin();
 			decltype(scanner_->scan()) ret;
 			while (ret = scanner_->scan(), ret.first)
 				if (ret.second != nullptr)
@@ -64,8 +67,8 @@ namespace network
 			if (tail_it == buffer_.end())
 			{
 				last_scanned_it_ = buffer_.end();
-				std::advance(last_scanned_it_,
-				             1 - static_cast<ptrdiff_t>(stop.size()));
+				last_scanned_it_ -= std::min(static_cast<ptrdiff_t>(stop.size()) - 1,
+				                             static_cast<ptrdiff_t>(buffer_.size()));
 				return false;
 			}
 			last_scanned_it_ = tail_it + stop.size();
@@ -107,8 +110,7 @@ namespace network
 			std::unordered_map<std::string, std::string> headers;
 			auto has_header = [&]() -> bool
 			{
-				auto tmp_it = it;
-				std::advance(tmp_it, CRLF.size());
+				auto tmp_it = it + CRLF.size();
 				tmp_it = std::min(tmp_it, tail_it);
 				return !std::equal(it, tmp_it, CRLF.begin(), CRLF.end());
 			};
@@ -123,7 +125,7 @@ namespace network
 			if (headers.count(CHUNK_HEADER_NAME))
 				chunk_scanner = std::make_unique<request_parser::chunk_scanner>(request_parser_);
 
-			request_parser_->registration_.request_consumer_({std::move(line), std::move(headers)});
+			request_parser_->registration_->request_consumer_({std::move(line), std::move(headers)});
 			request_parser_->shrink_buffer();
 
 			return {true, std::move(chunk_scanner)};
@@ -162,7 +164,7 @@ namespace network
 				                CRLF.cbegin(), CRLF.cend()))
 					throw parse_exception{"Chunk not followed by CRLF"};
 
-				request_parser_->registration_.chunk_consumer_(std::string{
+				request_parser_->registration_->chunk_consumer_(std::string{
 						request_parser_->buffer_.cbegin(), request_parser_->last_scanned_it_});
 				request_parser_->shrink_buffer();
 

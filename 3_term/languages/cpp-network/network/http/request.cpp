@@ -8,11 +8,11 @@ namespace network
 	namespace http
 	{
 		request_line::request_line(request_type type_,
-		                           std::string const &uri_,
-		                           std::string const &http_version)
-				: type_(type_)
-				, uri_(uri_)
-				, http_version_(http_version)
+		                           std::string uri_,
+		                           std::string http_version)
+				: type_{type_}
+				, uri_{std::move(uri_)}
+				, http_version_{std::move(http_version)}
 		{}
 
 		request_type request_line::type() const noexcept
@@ -30,10 +30,10 @@ namespace network
 			return http_version_;
 		}
 
-		request::request(request_line const &request_line_,
-		                 std::unordered_map<std::string, std::string> const &headers_)
-				: line_(request_line_)
-				, headers_(headers_)
+		request::request(request_line request_line_,
+		                 std::unordered_map<std::string, std::string> headers_)
+				: line_{std::move(request_line_)}
+				, headers_{std::move(headers_)}
 		{}
 
 		request_line const &request::line() const noexcept
@@ -77,7 +77,8 @@ namespace network
 
 		std::string to_string(request const &request_)
 		{
-			std::stringstream buffer{to_string(request_.line_)};
+			std::stringstream buffer;
+			buffer << to_string(request_.line_);
 			for (auto const &header : request_.headers_)
 				buffer << header.first << ": " << header.second << "\r\n";
 			buffer << "\r\n";

@@ -9,13 +9,18 @@
 
 namespace network
 {
-	epoll_registration::epoll_registration(file_descriptor const &fd, epoll &ep) noexcept
-			:
-			fd{&fd}, ep{&ep}
+	epoll_registration::epoll_registration(file_descriptor const *fd, epoll *ep) noexcept
+			: fd{fd}
+			, ep{ep}
 	{
 		on_close = [this] {
 			this->ep->schedule_cleanup(*this);
 		};
+	}
+
+	epoll_registration::~epoll_registration()
+	{
+		ep->remove(*this);
 	}
 
 	epoll_registration &epoll_registration::set_on_read(callback on_read)
@@ -134,7 +139,6 @@ namespace network
 				if (registration->cleanup != nullptr)
 					try
 					{
-						this->remove(*registration);
 						registration->cleanup();
 					}
 					catch (std::exception &exception)

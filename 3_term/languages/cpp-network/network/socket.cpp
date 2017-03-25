@@ -11,8 +11,7 @@ namespace network
 {
 	ipv4_address::ipv4_address(uint32_t address) noexcept
 			: address{address}
-	{
-	}
+	{}
 
 	uint32_t network::ipv4_address::get_raw_address() const noexcept
 	{
@@ -33,8 +32,7 @@ namespace network
 	ipv4_endpoint::ipv4_endpoint(network::ipv4_address address, uint16_t port_n) noexcept
 			: address{address}
 			, port_n{port_n}
-	{
-	}
+	{}
 
 	ipv4_address ipv4_endpoint::get_address() const noexcept
 	{
@@ -76,7 +74,7 @@ namespace network
 		return to_string(endpoint.get_address()) + ":" + std::to_string(endpoint.get_port_h());
 	}
 
-	std::vector<ipv4_endpoint> get_hosts(std::string name)
+	std::vector<ipv4_endpoint> get_hosts(std::string const &name)
 	{
 		log(utils::verbose) << "getting hosts of " << name << "\n";
 
@@ -118,7 +116,7 @@ namespace network
 		return endpoints;
 	}
 
-	file_descriptor client_socket::connect(std::vector<ipv4_endpoint> endpoints)
+	file_descriptor client_socket::connect(std::vector<ipv4_endpoint> const &endpoints)
 	{
 		log(utils::verbose) << "connecting to " << to_string(endpoints.front()) << "...\n";
 		file_descriptor fd{check_return_code(::socket(AF_INET, SOCK_STREAM, 0))};
@@ -133,18 +131,15 @@ namespace network
 
 	client_socket::client_socket(file_descriptor &&fd) noexcept
 			: base_descriptor_resource{std::move(fd)}
-	{
-	}
+	{}
 
 	client_socket::client_socket(client_socket &&rhs) noexcept
 			: client_socket{std::move(rhs.fd)}
-	{
-	}
+	{}
 
-	client_socket::client_socket(std::vector<ipv4_endpoint> endpoints)
+	client_socket::client_socket(std::vector<ipv4_endpoint> const &endpoints)
 			: client_socket{connect(endpoints)}
-	{
-	}
+	{}
 
 	std::string client_socket::read()
 	{
@@ -170,13 +165,11 @@ namespace network
 
 	server_socket::server_socket(file_descriptor &&fd)
 			: base_descriptor_resource{std::move(fd)}
-	{
-	}
+	{}
 
 	server_socket::server_socket(server_socket &&rhs)
 			: server_socket{std::move(rhs.fd)}
-	{
-	}
+	{}
 
 	server_socket::server_socket(ipv4_endpoint endpoint)
 			: server_socket{file_descriptor{check_return_code(::socket(AF_INET, SOCK_STREAM, 0))}}
