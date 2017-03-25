@@ -1,11 +1,11 @@
 #include "socket.h"
 #include "network_exception.h"
+#include "utils/log.h"
 
 #include <arpa/inet.h>
+#include <netdb.h>
 
 #include <array>
-#include <netdb.h>
-#include <utils/log.h>
 
 namespace network
 {

@@ -1,11 +1,11 @@
 #include "epoll.h"
 #include "network_exception.h"
+#include "utils/log.h"
 
 #include <sys/epoll.h>
 
 #include <forward_list>
 #include <iostream>
-#include <utils/log.h>
 
 namespace network
 {

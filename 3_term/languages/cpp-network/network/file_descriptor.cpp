@@ -1,11 +1,11 @@
 #include "file_descriptor.h"
 #include "network_exception.h"
+#include "utils/log.h"
 
 #include <sys/socket.h>
 #include <unistd.h>
 
 #include <iostream>
-#include <utils/log.h>
 
 namespace network
 {

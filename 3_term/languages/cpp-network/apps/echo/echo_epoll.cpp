@@ -2,11 +2,11 @@
 #include "network/epoll.h"
 #include "network/network_exception.h"
 #include "utils/string_buffer.h"
+#include "utils/log.h"
 
 #include <map>
 #include <memory>
 #include <iostream>
-#include <utils/log.h>
 
 class connection
 {

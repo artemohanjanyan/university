@@ -1,8 +1,9 @@
 #ifndef CPP_NETWORK_LOG_H
 #define CPP_NETWORK_LOG_H
 
+#include "network/file_descriptor.h"
+
 #include <string>
-#include <network/file_descriptor.h>
 
 namespace utils
 {

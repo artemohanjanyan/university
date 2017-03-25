@@ -1,9 +1,10 @@
 #ifndef CPP_NETWORK_EPOLL_H
 #define CPP_NETWORK_EPOLL_H
 
+#include "file_descriptor.h"
+
 #include <functional>
 #include <set>
-#include "file_descriptor.h"
 
 namespace network
 {
