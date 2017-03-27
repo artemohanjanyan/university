@@ -4,6 +4,7 @@
 
 #include <sys/socket.h>
 #include <unistd.h>
+#include <fcntl.h>
 
 #include <iostream>
 
@@ -15,6 +16,11 @@ namespace network
 			: fd(fd)
 	{
 		log(utils::info) << "file_descriptor(" << *this << ")\n";
+		int flags;
+		check_return_code(
+				flags = fcntl(fd, F_GETFL, 0));
+		check_return_code(
+				fcntl(fd, F_SETFL, flags | O_NONBLOCK));
 	}
 
 	file_descriptor::file_descriptor(file_descriptor &&rhs) noexcept

@@ -74,6 +74,8 @@ namespace network
 
 		client_socket(std::vector<ipv4_endpoint> const &endpoints);
 
+		void assert_availability();
+
 		std::string read();
 
 		size_t write(utils::string_view const &str);

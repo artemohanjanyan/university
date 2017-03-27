@@ -4,6 +4,7 @@
 
 #include <arpa/inet.h>
 #include <netdb.h>
+#include <fcntl.h>
 
 #include <array>
 
@@ -124,8 +125,9 @@ namespace network
 		address.sin_family = AF_INET;
 		address.sin_addr.s_addr = endpoints.front().get_address().get_raw_address();
 		address.sin_port = endpoints.front().get_port_n();
-		check_return_code(
-				::connect(fd.get_raw_fd(), reinterpret_cast<sockaddr const *>(&address), sizeof address));
+		int const code = ::connect(fd.get_raw_fd(), reinterpret_cast<sockaddr const *>(&address), sizeof address);
+		if (errno != EINPROGRESS)
+			check_return_code(code);
 		return fd;
 	}
 
@@ -140,6 +142,17 @@ namespace network
 	client_socket::client_socket(std::vector<ipv4_endpoint> const &endpoints)
 			: client_socket{connect(endpoints)}
 	{}
+
+	void client_socket::assert_availability()
+	{
+		log(utils::verbose) << "asserting availability of " << fd << "\n";
+		int error = 0;
+		socklen_t err_len = sizeof error;
+		check_return_code(
+				getsockopt(fd.get_raw_fd(), SOL_SOCKET, SO_ERROR, static_cast<void *>(&error), &err_len));
+		if (error != 0)
+			throw network_exception(strerror(errno));
+	}
 
 	std::string client_socket::read()
 	{

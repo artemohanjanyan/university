@@ -35,7 +35,7 @@ namespace utils
 				conditional.wait(lock);
 			T front = std::move(queue.front());
 			queue.pop();
-			return std::move(front);
+			return front;
 		}
 	};
 

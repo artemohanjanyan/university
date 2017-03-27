@@ -28,11 +28,11 @@ namespace network { namespace http
 		request_parser_registration &set_chunk_consumer(chunk_consumer const &chunk_consumer_);
 	};
 
-	const std::string SPACE = " ";
-	const std::string COLON = ": ";
-	const std::string CRLF = "\r\n";
-	const std::string REQUEST_TAIL = CRLF + CRLF;
-	const std::string CHUNK_HEADER_NAME = "Transfer-Encoding";
+	std::string const SPACE = " ";
+	std::string const COLON = ": ";
+	std::string const CRLF = "\r\n";
+	std::string const REQUEST_TAIL = CRLF + CRLF;
+	std::string const CHUNK_HEADER_NAME = "Transfer-Encoding";
 
 	std::string
 	advance_until(std::deque<char>::const_iterator &it,

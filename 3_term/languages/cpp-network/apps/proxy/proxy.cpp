@@ -11,16 +11,23 @@
 
 utils::log log{std::cout};
 
-void push_buffer(utils::string_buffer *buffer,
-                 network::client_socket *dst,
-                 network::epoll_registration *dst_registration)
+void start_buffer(utils::string_buffer *buffer,
+                  network::client_socket *dst,
+                  network::epoll_registration *dst_registration)
+{
+	dst_registration->set_on_write([buffer, dst, dst_registration] {
+		buffer->pop(dst->write(buffer->top()));
+		if (buffer->is_empty())
+			dst_registration->set_on_write(nullptr).update();
+	}).update();
+}
+
+void restart_buffer(utils::string_buffer *buffer,
+                    network::client_socket *dst,
+                    network::epoll_registration *dst_registration)
 {
 	if (buffer->is_empty())
-		dst_registration->set_on_write([buffer, dst, dst_registration] {
-			buffer->pop(dst->write(buffer->top()));
-			if (buffer->is_empty())
-				dst_registration->set_on_write(nullptr).update();
-		}).update();
+		start_buffer(buffer, dst, dst_registration);
 }
 
 struct connection
@@ -45,8 +52,6 @@ struct connection
 
 	network::epoll &epoll_;
 	std::map<int, std::unique_ptr<connection>> &map_;
-
-	network::callback host_write_;
 
 	connection(network::client_socket &&client_init,
 	           network::epoll &epoll_init,
@@ -75,8 +80,16 @@ struct connection
 						this);
 				write_buffer_ = {};
 				read_buffer_ = {};
+				host_->host_registration_.set_on_write([this] {
+					host_->host_.assert_availability();
+					if (write_buffer_.is_empty())
+						host_->host_registration_.set_on_write(nullptr).update();
+					else
+						start_buffer(&write_buffer_, &host_->host_, &host_->host_registration_);
+				}).update();
 			}
-			push_buffer(&write_buffer_, &host_->host_, &host_->host_registration_);
+			else
+				restart_buffer(&write_buffer_, &host_->host_, &host_->host_registration_);
 			log(utils::verbose) << to_string(request);
 			write_buffer_.push(to_string(request));
 		});
@@ -98,7 +111,7 @@ connection::host_data::host_data(network::client_socket &&host, std::string host
 		, host_name_{std::move(host_name)}
 {
 	host_registration_.set_on_read([this, outer] {
-		push_buffer(&outer->read_buffer_, &outer->client_, &outer->client_registration_);
+		restart_buffer(&outer->read_buffer_, &outer->client_, &outer->client_registration_);
 		outer->read_buffer_.push(host_.read());
 	});
 
@@ -115,8 +128,8 @@ connection::host_data::host_data(network::client_socket &&host, std::string host
 
 int main()
 {
-//	network::log.print_mask |= utils::verbose;
-//	log.print_mask |= utils::verbose;
+	network::log.print_mask |= utils::verbose;
+	log.print_mask |= utils::verbose;
 	log(utils::debug) << "Debug works\n";
 	network::server_socket server{network::make_local_endpoint(2539)};
 	network::epoll epoll{};

@@ -63,7 +63,7 @@ namespace network { namespace http
 			return request_type::get;
 		else if (type_str == "POST")
 			return request_type::post;
-		throw parse_exception{"bad request type"};
+		throw parse_exception{"bad request type \"" + type_str + "\""};
 	}
 
 	std::string to_string(request_line const &request_line_)
