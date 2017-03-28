@@ -12,7 +12,17 @@ namespace network
 {
 	utils::log log{std::cout};
 
-	file_descriptor::file_descriptor(int fd) noexcept
+	file_descriptor::file_descriptor() noexcept
+	{}
+
+	file_descriptor make_blocking_fd(int fd) noexcept
+	{
+		file_descriptor descriptor{};
+		descriptor.fd = fd;
+		return std::move(descriptor);
+	}
+
+	file_descriptor::file_descriptor(int fd)
 			: fd(fd)
 	{
 		log(utils::info) << "file_descriptor(" << *this << ")\n";

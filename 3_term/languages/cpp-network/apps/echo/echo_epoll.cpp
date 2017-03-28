@@ -19,21 +19,22 @@ public:
 	           network::epoll &epoll, std::map<int, std::unique_ptr<connection>> &map) :
 			client_{std::move(client_init)}, client_registration_{&this->client_.get_fd(), &epoll}
 	{
-		client_registration_.set_on_read([this] {
-			std::string msg = client_.read();
-			if (string_buffer.is_empty())
-				client_registration_.set_on_write([this] {
-					size_t written = client_.write(string_buffer.top());
-					string_buffer.pop(written);
+		client_registration_
+				.set_on_read([this] {
+					std::string msg = client_.read();
 					if (string_buffer.is_empty())
-						client_registration_.set_on_write(nullptr).update();
-				}).update();
-			string_buffer.push(msg);
-		});
-
-		client_registration_.set_cleanup([this, &map] {
-			map.erase(this->client_.get_fd().get_raw_fd());
-		});
+						client_registration_.set_on_write([this] {
+							size_t written = client_.write(string_buffer.top());
+							string_buffer.pop(written);
+							if (string_buffer.is_empty())
+								client_registration_.set_on_write(nullptr).update();
+						}).update();
+					string_buffer.push(msg);
+				})
+				.set_cleanup([this, &map] {
+					map.erase(this->client_.get_fd().get_raw_fd());
+				})
+				.update();
 	}
 };
 
@@ -46,18 +47,17 @@ int main()
 	network::epoll_registration server_registration{&server.get_fd(), &epoll};
 	std::map<int, std::unique_ptr<connection>> map;
 
-	server_registration.set_on_read([&] {
-		std::unique_ptr<connection> unique_conn = std::make_unique<connection>(server.accept(), epoll, map);
-		connection *conn = unique_conn.get();
-		epoll.add(conn->client_registration_);
-		map.insert(std::make_pair(unique_conn->client_.get_fd().get_raw_fd(), std::move(unique_conn)));
-	});
+	server_registration
+			.set_on_read([&] {
+				std::unique_ptr<connection> unique_conn =
+						std::make_unique<connection>(server.accept(), epoll, map);
+				map.insert(std::make_pair(unique_conn->client_.get_fd().get_raw_fd(), std::move(unique_conn)));
+			})
+			.set_cleanup([&] {
+				epoll.soft_stop();
+			})
+			.update();
 
-	server_registration.set_cleanup([&] {
-		epoll.soft_stop();
-	});
-
-	epoll.add(server_registration);
 	std::cout << to_string(get_socket_endpoint(server.get_fd())) << "\n";
 	epoll.run();
 

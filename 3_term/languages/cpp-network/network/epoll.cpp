@@ -16,6 +16,7 @@ namespace network
 		on_close = [this] {
 			this->ep->schedule_cleanup(*this);
 		};
+		ep->add(*this);
 	}
 
 	epoll_registration::~epoll_registration()
