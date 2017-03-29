@@ -26,8 +26,6 @@ namespace network { namespace http
 		std::string const &uri() const noexcept;
 
 		std::string const &http_version() const noexcept;
-
-		friend std::string to_string(request_line const &request_line_);
 	};
 
 	class request
@@ -42,17 +40,20 @@ namespace network { namespace http
 		request_line const &line() const noexcept;
 
 		std::unordered_map<std::string, std::string> const &headers() const noexcept;
-
-		friend std::string to_string(request const &request_);
 	};
 
 	std::string to_string(request_type request_type_);
 
 	request_type request_type_from_string(std::string type_str);
 
+	// TODO report bug
 	std::string to_string(request_line const &request_line_);
 
+	std::string to_string(request_line const &request_line, std::string host);
+
 	std::string to_string(request const &request_);
+
+	std::string to_string(request const &request, std::string const &host);
 }}
 
 #endif //CPP_NETWORK_REQUEST_H

@@ -2,6 +2,7 @@
 #include "request_parser.h"
 
 #include <sstream>
+#include <algorithm>
 
 namespace network { namespace http
 {
@@ -68,16 +69,37 @@ namespace network { namespace http
 
 	std::string to_string(request_line const &request_line_)
 	{
-		return to_string(request_line_.type_) + " "
-		       + request_line_.uri_ + " "
-		       + request_line_.http_version_ + "\r\n";
+		return to_string(request_line_.type()) + " "
+		       + request_line_.uri() + " "
+		       + request_line_.http_version() + "\r\n";
+	}
+
+	std::string to_string(request_line const &request_line, std::string host)
+	{
+		host = "http://" + host;
+		std::string uri = request_line.uri();
+		if (std::equal(host.begin(), host.end(), uri.begin()))
+			uri = uri.substr(host.size());
+		return to_string(request_line.type()) + " "
+		       + uri + " "
+		       + request_line.http_version() + "\r\n";
 	}
 
 	std::string to_string(request const &request_)
 	{
 		std::stringstream buffer;
-		buffer << to_string(request_.line_);
-		for (auto const &header : request_.headers_)
+		buffer << to_string(request_.line());
+		for (auto const &header : request_.headers())
+			buffer << header.first << ": " << header.second << "\r\n";
+		buffer << "\r\n";
+		return buffer.str();
+	}
+
+	std::string to_string(request const &request, std::string const &host)
+	{
+		std::stringstream buffer;
+		buffer << to_string(request.line(), host);
+		for (auto const &header : request.headers())
 			buffer << header.first << ": " << header.second << "\r\n";
 		buffer << "\r\n";
 		return buffer.str();

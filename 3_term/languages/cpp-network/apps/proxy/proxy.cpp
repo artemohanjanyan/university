@@ -69,7 +69,7 @@ struct connection
 					else
 						forward_buffer_if_empty(&write_buffer_, &host_->host_, &host_->host_registration_);
 					log(utils::verbose) << to_string(request);
-					write_buffer_.push(to_string(request));
+					write_buffer_.push(to_string(request, host_->host_name_));
 				})
 				.set_chunk_consumer([this](std::string chunk) {
 					log(utils::verbose) << chunk;
