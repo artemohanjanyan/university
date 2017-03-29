@@ -1,8 +1,8 @@
 #include "network/socket.h"
 #include "network/epoll.h"
+#include "network/epoll_utils.h"
 #include "network/http/request.h"
 #include "network/http/request_parser.h"
-#include "utils/string_buffer.h"
 #include "utils/log.h"
 
 #include <memory>
@@ -10,25 +10,6 @@
 #include <iostream>
 
 utils::log log{std::cout};
-
-void start_buffer(utils::string_buffer *buffer,
-                  network::client_socket *dst,
-                  network::epoll_registration *dst_registration)
-{
-	dst_registration->set_on_write([buffer, dst, dst_registration] {
-		buffer->pop(dst->write(buffer->top()));
-		if (buffer->is_empty())
-			dst_registration->set_on_write(nullptr).update();
-	}).update();
-}
-
-void restart_buffer(utils::string_buffer *buffer,
-                    network::client_socket *dst,
-                    network::epoll_registration *dst_registration)
-{
-	if (buffer->is_empty())
-		start_buffer(buffer, dst, dst_registration);
-}
 
 struct connection
 {
@@ -77,16 +58,16 @@ struct connection
 								this);
 						write_buffer_ = {};
 						read_buffer_ = {};
-						host_->host_registration_.set_on_write([this] {
-							host_->host_.assert_availability();
+
+						network::do_on_connect(&host_->host_, &host_->host_registration_, [this] {
 							if (write_buffer_.is_empty())
 								host_->host_registration_.set_on_write(nullptr).update();
 							else
-								start_buffer(&write_buffer_, &host_->host_, &host_->host_registration_);
-						}).update();
+								forward_buffer(&write_buffer_, &host_->host_, &host_->host_registration_);
+						});
 					}
 					else
-						restart_buffer(&write_buffer_, &host_->host_, &host_->host_registration_);
+						forward_buffer_if_empty(&write_buffer_, &host_->host_, &host_->host_registration_);
 					log(utils::verbose) << to_string(request);
 					write_buffer_.push(to_string(request));
 				})
@@ -113,7 +94,7 @@ connection::host_data::host_data(network::client_socket &&host, std::string host
 {
 	host_registration_
 			.set_on_read([this, outer] {
-				restart_buffer(&outer->read_buffer_, &outer->client_, &outer->client_registration_);
+				forward_buffer_if_empty(&outer->read_buffer_, &outer->client_, &outer->client_registration_);
 				outer->read_buffer_.push(host_.read());
 			})
 			.set_on_close([this, outer] {
@@ -138,7 +119,8 @@ int main()
 	server_registration
 			.set_on_read([&] {
 				std::unique_ptr<connection> conn = std::make_unique<connection>(server.accept(), epoll, map);
-				map.insert(std::make_pair(conn->client_.get_fd().get_raw_fd(), std::move(conn)));
+				connection *raw_conn = conn.get();
+				map.insert(std::make_pair(raw_conn->client_.get_fd().get_raw_fd(), std::move(conn)));
 			})
 			.set_cleanup([&] {
 				epoll.soft_stop();
