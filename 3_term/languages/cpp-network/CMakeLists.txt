@@ -28,7 +28,7 @@ set(NETWORK_FILES network/file_descriptor.cpp network/file_descriptor.h
         network/socket.cpp network/socket.h
         network/network_exception.cpp network/network_exception.h
         network/epoll.cpp network/epoll.h
-        network/epoll_utils.cpp network/epoll_utils.h)
+        network/epoll_utils.cpp network/epoll_utils.h network/eventfd.cpp network/eventfd.h)
 
 set(NETWORK_HTTP_FILES network/http/request.h network/http/request.cpp
         network/http/request_parser.h network/http/request_parser.cpp)

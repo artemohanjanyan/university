@@ -180,11 +180,11 @@ namespace network
 		return static_cast<size_t>(written);
 	}
 
-	server_socket::server_socket(file_descriptor &&fd)
+	server_socket::server_socket(file_descriptor &&fd) noexcept
 			: base_descriptor_resource{std::move(fd)}
 	{}
 
-	server_socket::server_socket(server_socket &&rhs)
+	server_socket::server_socket(server_socket &&rhs) noexcept
 			: server_socket{std::move(rhs.fd)}
 	{}
 

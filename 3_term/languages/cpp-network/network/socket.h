@@ -85,9 +85,9 @@ namespace network
 	class server_socket : public base_descriptor_resource
 	{
 	public:
-		server_socket(file_descriptor &&fd);
+		server_socket(file_descriptor &&fd) noexcept;
 
-		server_socket(server_socket &&rhs);
+		server_socket(server_socket &&rhs) noexcept;
 
 		server_socket(ipv4_endpoint endpoint);
 
