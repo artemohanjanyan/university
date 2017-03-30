@@ -117,30 +117,12 @@ namespace network
 		return endpoints;
 	}
 
-	file_descriptor client_socket::connect(std::vector<ipv4_endpoint> const &endpoints)
-	{
-		log(utils::verbose) << "connecting to " << to_string(endpoints.front()) << "...\n";
-		file_descriptor fd{check_return_code(::socket(AF_INET, SOCK_STREAM, 0))};
-		sockaddr_in address;
-		address.sin_family = AF_INET;
-		address.sin_addr.s_addr = endpoints.front().get_address().get_raw_address();
-		address.sin_port = endpoints.front().get_port_n();
-		int const code = ::connect(fd.get_raw_fd(), reinterpret_cast<sockaddr const *>(&address), sizeof address);
-		if (errno != EINPROGRESS)
-			check_return_code(code);
-		return fd;
-	}
-
 	client_socket::client_socket(file_descriptor &&fd) noexcept
 			: base_descriptor_resource{std::move(fd)}
 	{}
 
 	client_socket::client_socket(client_socket &&rhs) noexcept
 			: client_socket{std::move(rhs.fd)}
-	{}
-
-	client_socket::client_socket(std::vector<ipv4_endpoint> const &endpoints)
-			: client_socket{connect(endpoints)}
 	{}
 
 	void client_socket::assert_availability()
@@ -178,6 +160,22 @@ namespace network
 		#endif
 
 		return static_cast<size_t>(written);
+	}
+
+	file_descriptor connect(std::vector<ipv4_endpoint> const &endpoints, bool non_blocking)
+	{
+		log(utils::verbose) << "connecting to " << to_string(endpoints.front()) << "...\n";
+		file_descriptor fd{check_return_code(::socket(AF_INET, SOCK_STREAM, 0))};
+		if (non_blocking)
+			make_non_blocking(fd);
+		sockaddr_in address;
+		address.sin_family = AF_INET;
+		address.sin_addr.s_addr = endpoints.front().get_address().get_raw_address();
+		address.sin_port = endpoints.front().get_port_n();
+		int const code = ::connect(fd.get_raw_fd(), reinterpret_cast<sockaddr const *>(&address), sizeof address);
+		if (errno != EINPROGRESS)
+			check_return_code(code);
+		return fd;
 	}
 
 	server_socket::server_socket(file_descriptor &&fd) noexcept

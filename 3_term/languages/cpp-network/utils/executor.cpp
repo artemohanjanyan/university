@@ -14,7 +14,7 @@ namespace utils
 
 	void executor::push_task(task elem)
 	{
-		queue.push(elem);
+		queue.push(std::move(elem));
 	}
 
 	void executor::soft_stop()

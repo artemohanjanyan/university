@@ -3,6 +3,7 @@
 
 #include <sstream>
 #include <algorithm>
+#include <iostream>
 
 namespace network { namespace http
 {
@@ -78,7 +79,7 @@ namespace network { namespace http
 	{
 		host = "http://" + host;
 		std::string uri = request_line.uri();
-		if (std::equal(host.begin(), host.end(), uri.begin()))
+		if (uri.size() >= host.size() && std::equal(host.begin(), host.end(), uri.begin()))
 			uri = uri.substr(host.size());
 		return to_string(request_line.type()) + " "
 		       + uri + " "

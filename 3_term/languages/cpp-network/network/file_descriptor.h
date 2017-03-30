@@ -14,10 +14,6 @@ namespace network
 	{
 		int fd;
 
-		file_descriptor() noexcept;
-
-		friend file_descriptor make_blocking_fd(int fd) noexcept;
-
 	public:
 		explicit file_descriptor(int fd);
 
@@ -34,7 +30,7 @@ namespace network
 		bool is_set() const noexcept;
 	};
 
-	file_descriptor make_blocking_fd(int fd) noexcept;
+	void make_non_blocking(file_descriptor const &fd);
 
 	class base_descriptor_resource
 	{

@@ -12,25 +12,10 @@ namespace network
 {
 	utils::log log{std::cout};
 
-	file_descriptor::file_descriptor() noexcept
-	{}
-
-	file_descriptor make_blocking_fd(int fd) noexcept
-	{
-		file_descriptor descriptor{};
-		descriptor.fd = fd;
-		return std::move(descriptor);
-	}
-
 	file_descriptor::file_descriptor(int fd)
 			: fd(fd)
 	{
 		log(utils::info) << "file_descriptor(" << *this << ")\n";
-		int flags;
-		check_return_code(
-				flags = fcntl(fd, F_GETFL, 0));
-		check_return_code(
-				fcntl(fd, F_SETFL, flags | O_NONBLOCK));
 	}
 
 	file_descriptor::file_descriptor(file_descriptor &&rhs) noexcept
@@ -68,6 +53,15 @@ namespace network
 	bool file_descriptor::is_set() const noexcept
 	{
 		return fd != -1;
+	}
+
+	void make_non_blocking(file_descriptor const &fd)
+	{
+		int flags;
+		check_return_code(
+				flags = fcntl(fd.get_raw_fd(), F_GETFL, 0));
+		check_return_code(
+				fcntl(fd.get_raw_fd(), F_SETFL, flags | O_NONBLOCK));
 	}
 
 	base_descriptor_resource::base_descriptor_resource(network::file_descriptor &&fd) noexcept

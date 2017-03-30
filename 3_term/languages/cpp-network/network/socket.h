@@ -65,14 +65,10 @@ namespace network
 
 	class client_socket : public base_descriptor_resource
 	{
-		static file_descriptor connect(std::vector<ipv4_endpoint> const &endpoints);
-
 	public:
 		client_socket(file_descriptor &&fd) noexcept;
 
 		client_socket(client_socket &&rhs) noexcept;
-
-		client_socket(std::vector<ipv4_endpoint> const &endpoints);
 
 		void assert_availability();
 
@@ -80,6 +76,8 @@ namespace network
 
 		size_t write(utils::string_view const &str);
 	};
+
+	file_descriptor connect(std::vector<ipv4_endpoint> const &endpoints, bool non_blocking);
 
 
 	class server_socket : public base_descriptor_resource

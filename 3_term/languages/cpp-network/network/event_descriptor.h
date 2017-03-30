@@ -7,12 +7,12 @@
 
 namespace network
 {
-	class eventfd : public base_descriptor_resource
+	class event_descriptor : public base_descriptor_resource
 	{
 	public:
-		eventfd();
+		event_descriptor();
 
-		eventfd(eventfd &&rhs) noexcept;
+		event_descriptor(event_descriptor &&rhs) noexcept;
 
 		uint64_t read();
 
