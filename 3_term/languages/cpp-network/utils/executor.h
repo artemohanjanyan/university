@@ -13,7 +13,7 @@ namespace utils
 	using task = std::function<void()>;
 
 	template <typename T>
-	class blocking_queue
+	class blocking_synchronous_queue
 	{
 		std::queue<T> queue;
 		std::mutex mutex;
@@ -39,9 +39,31 @@ namespace utils
 		}
 	};
 
+	template <typename T>
+	class blocking_queue
+	{
+		std::queue<T> queue;
+		std::mutex mutex;
+
+	public:
+		void push(T elem)
+		{
+			std::lock_guard<std::mutex> lock(mutex);
+			queue.push(std::move(elem));
+		}
+
+		T pop()
+		{
+			std::unique_lock<std::mutex> lock(mutex);
+			T front = std::move(queue.front());
+			queue.pop();
+			return front;
+		}
+	};
+
 	class executor
 	{
-		blocking_queue<task> queue;
+		blocking_synchronous_queue<task> queue;
 		std::atomic<bool> is_running;
 		std::vector<std::thread> threads;
 
