@@ -7,11 +7,11 @@
 
 namespace network { namespace http
 {
-	request_line::request_line(request_type type_,
-	                           std::string uri_,
+	request_line::request_line(request_type type,
+	                           std::string uri,
 	                           std::string http_version)
-			: type_{type_}
-			, uri_{std::move(uri_)}
+			: type_{type}
+			, uri_{std::move(uri)}
 			, http_version_{std::move(http_version)}
 	{}
 
@@ -30,10 +30,10 @@ namespace network { namespace http
 		return http_version_;
 	}
 
-	request::request(request_line request_line_,
-	                 std::unordered_map<std::string, std::string> headers_)
-			: line_{std::move(request_line_)}
-			, headers_{std::move(headers_)}
+	request::request(request_line request_line,
+	                 std::unordered_map<std::string, std::string> headers)
+			: line_{std::move(request_line)}
+			, headers_{std::move(headers)}
 	{}
 
 	request_line const &request::line() const noexcept

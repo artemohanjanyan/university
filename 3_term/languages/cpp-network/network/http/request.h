@@ -19,7 +19,7 @@ namespace network { namespace http
 		std::string http_version_;
 
 	public:
-		request_line(request_type type_, std::string uri_, std::string http_version);
+		request_line(request_type type, std::string uri, std::string http_version);
 
 		request_type type() const noexcept;
 
@@ -34,8 +34,8 @@ namespace network { namespace http
 		std::unordered_map<std::string, std::string> headers_;
 
 	public:
-		request(request_line request_line_,
-		        std::unordered_map<std::string, std::string> headers_);
+		request(request_line request_line,
+		        std::unordered_map<std::string, std::string> headers);
 
 		request_line const &line() const noexcept;
 
