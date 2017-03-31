@@ -4,7 +4,6 @@
 
 #include <arpa/inet.h>
 #include <netdb.h>
-#include <fcntl.h>
 
 #include <array>
 
@@ -77,7 +76,7 @@ namespace network
 
 	std::vector<ipv4_endpoint> get_hosts(std::string const &name)
 	{
-		log(utils::verbose) << "getting hosts of " << name << "\n";
+		log(utils::info) << "getting hosts of " << name << "\n";
 
 		addrinfo hints;
 		addrinfo *info;
@@ -107,12 +106,12 @@ namespace network
 
 		freeaddrinfo(info);
 
-		log(utils::verbose) << "get_hosts returned [ ";
+		log(utils::info) << "get_hosts returned [ ";
 		for (auto &endpoint : endpoints)
 		{
-			log(utils::verbose) << to_string(endpoint) << " ";
+			log(utils::info) << to_string(endpoint) << " ";
 		}
-		log(utils::verbose) << "]\n";
+		log(utils::info) << "]\n";
 
 		return endpoints;
 	}
@@ -127,7 +126,7 @@ namespace network
 
 	void client_socket::assert_availability()
 	{
-		log(utils::verbose) << "asserting availability of " << fd << "\n";
+		log(utils::info) << "asserting availability of " << fd << "\n";
 		int error = 0;
 		socklen_t err_len = sizeof error;
 		check_return_code(
@@ -164,7 +163,7 @@ namespace network
 
 	file_descriptor connect(std::vector<ipv4_endpoint> const &endpoints, bool non_blocking)
 	{
-		log(utils::verbose) << "connecting to " << to_string(endpoints.front()) << "...\n";
+		log(utils::info) << "connecting to " << to_string(endpoints.front()) << "...\n";
 		file_descriptor fd{check_return_code(::socket(AF_INET, SOCK_STREAM, 0))};
 		if (non_blocking)
 			make_non_blocking(fd);
@@ -189,7 +188,7 @@ namespace network
 	server_socket::server_socket(ipv4_endpoint endpoint)
 			: server_socket{file_descriptor{check_return_code(::socket(AF_INET, SOCK_STREAM, 0))}}
 	{
-		log(utils::verbose) << "starting server at " << to_string(endpoint) << "\n";
+		log(utils::info) << "starting server at " << to_string(endpoint) << "\n";
 
 		int enable = 1;
 		setsockopt(fd.get_raw_fd(), SOL_SOCKET, SO_REUSEPORT, &enable, sizeof enable);
@@ -208,11 +207,10 @@ namespace network
 
 	client_socket server_socket::accept()
 	{
-		log(utils::verbose) << "accepting at " << fd << "...\n";
+		log(utils::info) << "accepting at " << fd << "...\n";
 		int new_fd = ::accept(fd.get_raw_fd(), nullptr, nullptr);
 		check_return_code(new_fd);
 		client_socket accepted{file_descriptor{new_fd}};
-		log(utils::verbose) << "accepted " << accepted.get_fd() << "\n";
 		return accepted;
 	}
 

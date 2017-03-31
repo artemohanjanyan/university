@@ -125,7 +125,7 @@ host_data::host_data(network::client_socket &&host, std::string host_name, conne
 				conn->server_->epoll_.schedule_cleanup(conn->client_registration_);
 			})
 			.set_cleanup([this, conn] {
-				log(utils::error) << "strange host cleanup\n";
+				log(utils::warning) << "strange host cleanup\n";
 				conn->server_->map_.erase(conn->client_.get_fd().get_raw_fd());
 			})
 			.update();
