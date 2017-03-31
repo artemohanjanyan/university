@@ -23,9 +23,9 @@ namespace network { namespace http
 		chunk_consumer chunk_consumer_;
 
 	public:
-		request_parser_registration &set_request_consumer(request_consumer const &request_consumer_);
+		request_parser_registration &set_request_consumer(request_consumer const &new_request_consumer);
 
-		request_parser_registration &set_chunk_consumer(chunk_consumer const &chunk_consumer_);
+		request_parser_registration &set_chunk_consumer(chunk_consumer const &new_chunk_consumer);
 	};
 
 	std::string const SPACE = " ";
@@ -61,7 +61,7 @@ namespace network { namespace http
 	public:
 		request_parser();
 
-		void register_consumer(request_parser_registration const *registration_);
+		void register_consumer(request_parser_registration const *registration);
 
 		void parse(std::string const &str);
 	};
@@ -71,7 +71,7 @@ namespace network { namespace http
 	public:
 		request_parser *request_parser_;
 
-		scanner(request_parser *request_parser_);
+		scanner(request_parser *request_parser);
 
 		virtual ~scanner()
 		{}
@@ -82,7 +82,7 @@ namespace network { namespace http
 	class request_parser::request_scanner : public request_parser::scanner
 	{
 	public:
-		request_scanner(request_parser *request_parser_);
+		request_scanner(request_parser *request_parser);
 
 		std::pair<bool, std::unique_ptr<scanner>> scan() override;
 	};
@@ -92,7 +92,7 @@ namespace network { namespace http
 		size_t chunk_size;
 
 	public:
-		chunk_scanner(request_parser *request_parser_);
+		chunk_scanner(request_parser *request_parser);
 
 		std::pair<bool, std::unique_ptr<scanner>> scan() override;
 	};
