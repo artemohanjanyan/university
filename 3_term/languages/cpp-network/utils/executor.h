@@ -18,6 +18,7 @@ namespace utils
 		std::queue<T> queue;
 		std::mutex mutex;
 		std::condition_variable conditional;
+		std::atomic<bool> is_interrupted{false};
 
 	public:
 		void push(T elem)
@@ -33,9 +34,17 @@ namespace utils
 			std::unique_lock<std::mutex> lock(mutex);
 			while (queue.empty())
 				conditional.wait(lock);
+			if (is_interrupted)
+				throw std::runtime_error{"interrupted"};
 			T front = std::move(queue.front());
 			queue.pop();
 			return front;
+		}
+
+		void interrupt()
+		{
+			is_interrupted = true;
+			conditional.notify_all();
 		}
 	};
 

@@ -30,7 +30,7 @@ set(NETWORK_FILES network/file_descriptor.cpp network/file_descriptor.h
         network/epoll.cpp network/epoll.h
         network/epoll_utils.cpp network/epoll_utils.h
         network/event_descriptor.cpp network/event_descriptor.h
-        network/network.h)
+        network/network.h network/timer_descriptor.cpp network/timer_descriptor.h)
 
 set(NETWORK_HTTP_FILES network/http/request.cpp network/http/request.h
         network/http/request_parser.cpp network/http/request_parser.h
@@ -43,7 +43,6 @@ set(LIB_FILES ${UTILS_FILES} ${NETWORK_FILES} ${NETWORK_HTTP_FILES})
 add_executable(echo_single apps/echo/echo_single.cpp ${LIB_FILES})
 add_executable(echo_epoll apps/echo/echo_epoll.cpp ${LIB_FILES})
 
-add_executable(request_printer apps/proxy/testing/request_printer.cpp ${LIB_FILES})
-add_executable(ip_echo apps/proxy/testing/ip_echo.cpp ${LIB_FILES})
+add_executable(request_printer apps/misc/request_printer.cpp ${LIB_FILES})
 
 add_executable(proxy apps/proxy/proxy.cpp ${LIB_FILES})

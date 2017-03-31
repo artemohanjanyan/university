@@ -20,6 +20,7 @@ namespace utils
 	void executor::soft_stop()
 	{
 		is_running = false;
+		queue.interrupt();
 	}
 
 	executor::~executor()

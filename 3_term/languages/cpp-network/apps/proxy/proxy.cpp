@@ -2,8 +2,11 @@
 #include "network/http/http.h"
 #include "utils/log.h"
 
-#include <map>
 #include <iostream>
+#include <map>
+#include <list>
+
+using namespace std::chrono_literals;
 
 utils::log log{std::cout};
 
@@ -11,6 +14,8 @@ struct connection;
 
 struct proxy_server
 {
+	std::chrono::seconds const IDLENESS_TIMEOUT = 15s;
+
 	network::server_socket server_;
 	network::epoll epoll_;
 	network::epoll_registration server_registration_;
@@ -21,7 +26,16 @@ struct proxy_server
 	std::map<std::string, std::set<connection *>> host_to_conn_;
 	network::http::resolver resolver_;
 
+	network::timer_descriptor timer_;
+	network::epoll_registration timer_registration_;
+	using timeout_list = std::list<std::pair<std::chrono::system_clock::time_point, connection *>>;
+	timeout_list connection_timeouts_;
+
 	proxy_server(network::ipv4_endpoint endpoint, size_t thread_n);
+
+	void push_timeout(connection *connection);
+
+	void update_timeout();
 
 	void run();
 };
@@ -48,15 +62,17 @@ struct connection
 	utils::string_buffer write_buffer_;
 	utils::string_buffer read_buffer_;
 
-	std::string waiting_host_name;
+	std::string waiting_host_name_;
+
+	proxy_server::timeout_list::iterator timeout_it_;
 
 	void enqueue_resolving(std::string new_host_name)
 	{
 		log(utils::info) << "enqueue resolving of " << new_host_name << "\n";
 
-		if (waiting_host_name != "")
-			server_->host_to_conn_.at(waiting_host_name).erase(this);
-		waiting_host_name = new_host_name;
+		if (waiting_host_name_ != "")
+			server_->host_to_conn_.at(waiting_host_name_).erase(this);
+		waiting_host_name_ = new_host_name;
 
 		write_buffer_ = {};
 		read_buffer_ = {};
@@ -67,6 +83,17 @@ struct connection
 			server_->resolver_.enqueue_host(new_host_name);
 		}
 		server_->host_to_conn_[new_host_name].insert(this);
+	}
+
+	void erase_timeout()
+	{
+		server_->connection_timeouts_.erase(this->timeout_it_);
+	}
+
+	void push_timeout()
+	{
+		server_->push_timeout(this);
+		timeout_it_ = std::prev(server_->connection_timeouts_.end());
 	}
 
 	connection(proxy_server *server,
@@ -96,18 +123,24 @@ struct connection
 
 		client_registration_
 				.set_on_read([this] {
+					erase_timeout();
+					push_timeout();
 					parser_.parse(client_.read());
 				})
 				.set_cleanup([this] {
 					server_->map_.erase(client_.get_fd().get_raw_fd());
 				})
 				.update();
+
+		push_timeout();
 	}
 
 	~connection()
 	{
-		if (waiting_host_name != "")
-			server_->host_to_conn_.at(waiting_host_name).erase(this);
+		if (waiting_host_name_ != "")
+			server_->host_to_conn_.at(waiting_host_name_).erase(this);
+		erase_timeout();
+		server_->update_timeout();
 	}
 };
 
@@ -118,6 +151,8 @@ host_data::host_data(network::client_socket &&host, std::string host_name, conne
 {
 	host_registration_
 			.set_on_read([this, conn] {
+				conn->erase_timeout();
+				conn->push_timeout();
 				forward_buffer_if_empty(&conn->read_buffer_, &conn->client_, &conn->client_registration_);
 				conn->read_buffer_.push(host_.read());
 			})
@@ -148,9 +183,14 @@ proxy_server::proxy_server(network::ipv4_endpoint endpoint, size_t thread_n)
 		, event_registration_{&event_descriptor_->get_fd(), &epoll_}
 		, host_to_conn_{}
 		, resolver_{thread_n, event_descriptor_.get()}
+
+		, timer_{}
+		, timer_registration_{&timer_.get_fd(), &epoll_}
+		, connection_timeouts_{}
 {
 	make_non_blocking(server_.get_fd());
 	make_non_blocking(event_descriptor_->get_fd());
+	make_non_blocking(timer_.get_fd());
 
 	server_registration_
 			.set_on_read([this] {
@@ -173,7 +213,7 @@ proxy_server::proxy_server(network::ipv4_endpoint endpoint, size_t thread_n)
 					log(utils::info) << "\tresolved address for " << result.first << "\n";
 					for (connection *conn : host_to_conn_.at(result.first))
 					{
-						conn->waiting_host_name = "";
+						conn->waiting_host_name_ = "";
 
 						auto connect_task = [result, conn] {
 							conn->host_ = std::make_unique<host_data>(
@@ -194,6 +234,43 @@ proxy_server::proxy_server(network::ipv4_endpoint endpoint, size_t thread_n)
 				}
 			})
 			.update();
+
+	timer_registration_
+			.set_on_read([this] {
+				timer_.get_count();
+				std::chrono::system_clock::time_point now = std::chrono::system_clock::now();
+				if (connection_timeouts_.size() > 0 && connection_timeouts_.front().first <= now)
+					for (auto &p : connection_timeouts_)
+						if (connection_timeouts_.front().first <= now)
+							epoll_.schedule_cleanup(p.second->client_registration_);
+						else
+							break;
+				else
+					update_timeout();
+			})
+			.update();
+}
+
+void proxy_server::push_timeout(connection *connection)
+{
+	connection_timeouts_.emplace_back(std::chrono::system_clock::now() + IDLENESS_TIMEOUT, connection);
+	update_timeout();
+}
+
+void proxy_server::update_timeout()
+{
+	log(utils::info) << std::to_string(connection_timeouts_.size()) << " active connection(s)\n";
+	if (!connection_timeouts_.empty())
+	{
+		std::chrono::seconds duration = std::chrono::duration_cast<std::chrono::seconds>(
+				connection_timeouts_.front().first - std::chrono::system_clock::now());
+		if (duration < 1s)
+			duration = 1s;
+		log(utils::info) << "waiting for another " << std::to_string(duration.count()) << " seconds\n";
+		timer_.set_time(duration);
+	}
+	else
+		timer_.set_time({});
 }
 
 void proxy_server::run()
