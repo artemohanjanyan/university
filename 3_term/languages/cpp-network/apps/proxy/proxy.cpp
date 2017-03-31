@@ -1,9 +1,5 @@
-#include "network/socket.h"
-#include "network/epoll.h"
-#include "network/epoll_utils.h"
-#include "network/http/request.h"
-#include "network/http/request_parser.h"
-#include "network/http/resolver.h"
+#include "network/network.h"
+#include "network/http/http.h"
 #include "utils/log.h"
 
 #include <map>
