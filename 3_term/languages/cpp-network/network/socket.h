@@ -62,6 +62,7 @@ namespace network
 
 	std::vector<ipv4_endpoint> get_hosts(std::string const &host_name);
 
+	size_t const BUFFER_SIZE = 8192;
 
 	class client_socket : public base_descriptor_resource
 	{

@@ -3,8 +3,8 @@
 #include "network/epoll_utils.h"
 #include "network/http/request.h"
 #include "network/http/request_parser.h"
+#include "network/http/resolver.h"
 #include "utils/log.h"
-#include "network/event_descriptor.h"
 
 #include <map>
 #include <iostream>
@@ -22,9 +22,10 @@ struct proxy_server
 
 	std::unique_ptr<network::event_descriptor> event_descriptor_;
 	network::epoll_registration event_registration_;
-	std::map<std::string, connection *> host_to_conn_;
+	std::map<std::string, std::set<connection *>> host_to_conn_;
+	network::http::resolver resolver_;
 
-	proxy_server(network::ipv4_endpoint endpoint);
+	proxy_server(network::ipv4_endpoint endpoint, size_t thread_n);
 
 	void run();
 };
@@ -51,23 +52,25 @@ struct connection
 	utils::string_buffer write_buffer_;
 	utils::string_buffer read_buffer_;
 
-	void connect_to_host(std::string new_host_name)
-	{
-		auto connect_task = [this, new_host_name{std::move(new_host_name)}] {
-			std::vector<network::ipv4_endpoint> hosts = network::get_hosts(new_host_name);
-			host_ = std::make_unique<host_data>(
-					network::client_socket{network::connect(hosts, true)},
-					std::move(new_host_name),
-					this);
-		};
+	std::string waiting_host_name;
 
-		if (host_ == nullptr)
-			connect_task();
-		else
+	void enqueue_resolving(std::string new_host_name)
+	{
+		log(utils::info) << "enqueue resolving of " << new_host_name << "\n";
+
+		if (waiting_host_name != "")
+			server_->host_to_conn_.at(waiting_host_name).erase(this);
+		waiting_host_name = new_host_name;
+
+		write_buffer_ = {};
+		read_buffer_ = {};
+
+		if (!server_->host_to_conn_.count(new_host_name))
 		{
-			host_->host_registration_.set_cleanup(connect_task);
-			server_->epoll_.schedule_cleanup(host_->host_registration_);
+			log(utils::info) << "\tadd " << new_host_name << " to resolver\n";
+			server_->resolver_.enqueue_host(new_host_name);
 		}
+		server_->host_to_conn_[new_host_name].insert(this);
 	}
 
 	connection(proxy_server *server,
@@ -84,15 +87,11 @@ struct connection
 				.set_request_consumer([this] (network::http::request request) {
 					std::string new_host_name = request.headers().at("Host");
 					if (host_ == nullptr || host_->host_name_ != new_host_name)
-					{
-						write_buffer_ = {};
-						read_buffer_ = {};
-						connect_to_host(std::move(new_host_name));
-					}
+						enqueue_resolving(new_host_name);
 					else
 						forward_buffer_if_empty(&write_buffer_, &host_->host_, &host_->host_registration_);
 					log(utils::verbose) << to_string(request);
-					write_buffer_.push(to_string(request, host_->host_name_));
+					write_buffer_.push(to_string(request, new_host_name));
 				})
 				.set_chunk_consumer([this] (std::string chunk) {
 					log(utils::verbose) << chunk;
@@ -107,6 +106,12 @@ struct connection
 					server_->map_.erase(client_.get_fd().get_raw_fd());
 				})
 				.update();
+	}
+
+	~connection()
+	{
+		if (waiting_host_name != "")
+			server_->host_to_conn_.at(waiting_host_name).erase(this);
 	}
 };
 
@@ -124,7 +129,7 @@ host_data::host_data(network::client_socket &&host, std::string host_name, conne
 				conn->server_->epoll_.schedule_cleanup(conn->client_registration_);
 			})
 			.set_cleanup([this, conn] {
-				log(utils::error) << "Strange host cleanup\n";
+				log(utils::error) << "strange host cleanup\n";
 				conn->server_->map_.erase(conn->client_.get_fd().get_raw_fd());
 			})
 			.update();
@@ -137,7 +142,7 @@ host_data::host_data(network::client_socket &&host, std::string host_name, conne
 	});
 }
 
-proxy_server::proxy_server(network::ipv4_endpoint endpoint)
+proxy_server::proxy_server(network::ipv4_endpoint endpoint, size_t thread_n)
 		: server_{endpoint}
 		, epoll_{}
 		, server_registration_{&server_.get_fd(), &epoll_}
@@ -146,6 +151,7 @@ proxy_server::proxy_server(network::ipv4_endpoint endpoint)
 		, event_descriptor_{std::make_unique<network::event_descriptor>()}
 		, event_registration_{&event_descriptor_->get_fd(), &epoll_}
 		, host_to_conn_{}
+		, resolver_{thread_n, event_descriptor_.get()}
 {
 	make_non_blocking(server_.get_fd());
 	make_non_blocking(event_descriptor_->get_fd());
@@ -163,7 +169,33 @@ proxy_server::proxy_server(network::ipv4_endpoint endpoint)
 
 	event_registration_
 			.set_on_read([this] {
-				// TODO
+				size_t resolved_n = event_descriptor_->read();
+				log(utils::info) << "read " << std::to_string(resolved_n) << " resolved addresses\n";
+				for (size_t i = 0; i < resolved_n; ++i)
+				{
+					auto result = resolver_.dequeue_result();
+					log(utils::info) << "\tresolved address for " << result.first << "\n";
+					for (connection *conn : host_to_conn_.at(result.first))
+					{
+						conn->waiting_host_name = "";
+
+						auto connect_task = [result, conn] {
+							conn->host_ = std::make_unique<host_data>(
+									network::client_socket{network::connect(result.second, true)},
+									result.first,
+									conn);
+						};
+
+						if (conn->host_ == nullptr)
+							connect_task();
+						else
+						{
+							conn->host_->host_registration_.set_cleanup(connect_task);
+							epoll_.schedule_cleanup(conn->host_->host_registration_);
+						}
+					}
+					host_to_conn_.erase(result.first);
+				}
 			})
 			.update();
 }
@@ -176,10 +208,10 @@ void proxy_server::run()
 int main()
 {
 	network::log.print_mask |= utils::verbose;
-	log.print_mask |= utils::verbose;
-	log(utils::debug) << "Debug works\n";
+//	log.print_mask |= utils::verbose;
+	log(utils::debug) << "debug works\n";
 
-	proxy_server server{network::make_local_endpoint(2539)};
+	proxy_server server{network::make_local_endpoint(2539), 3};
 	server.run();
 
 	return 0;

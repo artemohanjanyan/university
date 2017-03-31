@@ -138,7 +138,7 @@ namespace network
 
 	std::string client_socket::read()
 	{
-		std::array<char, 1024> buf;
+		std::array<char, BUFFER_SIZE> buf;
 		ssize_t read_n = ::recv(fd.get_raw_fd(), buf.begin(), buf.size(), MSG_NOSIGNAL);
 		check_return_code(read_n);
 		std::string string{buf.begin(), static_cast<size_t>(read_n)};
