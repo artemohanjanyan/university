@@ -15,66 +15,65 @@ namespace utils
 	template <typename T>
 	class blocking_synchronous_queue
 	{
-		std::queue<T> queue;
-		std::mutex mutex;
-		std::condition_variable conditional;
-		std::atomic<bool> is_interrupted{false};
+		std::queue<T> queue_;
+		std::mutex mutex_;
+		std::condition_variable conditional_;
+		std::atomic<bool> is_interrupted_{false};
 
 	public:
 		void push(T elem)
 		{
-			std::lock_guard<std::mutex> lock(mutex);
-			queue.push(std::move(elem));
-			if (queue.size() == 1)
-				conditional.notify_one();
+			std::lock_guard<std::mutex> lock(mutex_);
+			queue_.push(std::move(elem));
+			if (queue_.size() == 1)
+				conditional_.notify_one();
 		}
 
 		T pop()
 		{
-			std::unique_lock<std::mutex> lock(mutex);
-			while (queue.empty())
-				conditional.wait(lock);
-			if (is_interrupted)
+			std::unique_lock<std::mutex> lock(mutex_);
+			while (queue_.empty())
+				conditional_.wait(lock);
+			if (is_interrupted_)
 				throw std::runtime_error{"interrupted"};
-			T front = std::move(queue.front());
-			queue.pop();
+			T front = std::move(queue_.front());
+			queue_.pop();
 			return front;
 		}
 
 		void interrupt()
 		{
-			is_interrupted = true;
-			conditional.notify_all();
+			is_interrupted_ = true;
+			conditional_.notify_all();
 		}
 	};
 
 	template <typename T>
 	class blocking_queue
 	{
-		std::queue<T> queue;
-		std::mutex mutex;
+		std::queue<T> queue_;
+		std::mutex mutex_;
 
 	public:
 		void push(T elem)
 		{
-			std::lock_guard<std::mutex> lock(mutex);
-			queue.push(std::move(elem));
+			std::lock_guard<std::mutex> lock(mutex_);
+			queue_.push(std::move(elem));
 		}
 
 		T pop()
 		{
-			std::unique_lock<std::mutex> lock(mutex);
-			T front = std::move(queue.front());
-			queue.pop();
+			std::unique_lock<std::mutex> lock(mutex_);
+			T front = std::move(queue_.front());
+			queue_.pop();
 			return front;
 		}
 	};
 
 	class executor
 	{
-		blocking_synchronous_queue<task> queue;
-		std::atomic<bool> is_running;
-		std::vector<std::thread> threads;
+		blocking_synchronous_queue<task> queue_;
+		std::vector<std::thread> threads_;
 
 	public:
 		executor(size_t n);

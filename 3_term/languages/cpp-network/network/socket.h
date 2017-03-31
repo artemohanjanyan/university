@@ -13,7 +13,7 @@ namespace network
 {
 	class ipv4_address
 	{
-		uint32_t address;
+		uint32_t address_;
 
 	public:
 		ipv4_address(uint32_t address) noexcept;
@@ -28,8 +28,8 @@ namespace network
 
 	class ipv4_endpoint
 	{
-		ipv4_address address;
-		uint16_t port_n;
+		ipv4_address address_;
+		uint16_t port_n_;
 
 		ipv4_endpoint(ipv4_address address, uint16_t port_n) noexcept;
 

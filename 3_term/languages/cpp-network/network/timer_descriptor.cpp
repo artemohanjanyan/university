@@ -12,14 +12,14 @@ namespace network
 	{}
 
 	timer_descriptor::timer_descriptor(timer_descriptor &&rhs) noexcept
-			: base_descriptor_resource{std::move(rhs.fd)}
+			: base_descriptor_resource{std::move(rhs.fd_)}
 	{}
 
 	uint64_t timer_descriptor::get_count()
 	{
-		log(utils::info) << "get count from " << std::to_string(fd.get_raw_fd()) << "\n";
+		log(utils::info) << "get count from " << std::to_string(fd_.get_raw_fd()) << "\n";
 		uint64_t expiration_n;
-		ssize_t read_n = check_return_code(::read(fd.get_raw_fd(), &expiration_n, sizeof(uint64_t)));
+		ssize_t read_n = check_return_code(::read(fd_.get_raw_fd(), &expiration_n, sizeof(uint64_t)));
 		if (read_n != sizeof(uint64_t))
 			throw network_exception{"incomplete read from timer"};
 		return expiration_n;
@@ -27,9 +27,9 @@ namespace network
 
 	void timer_descriptor::set_time(std::chrono::seconds const &duration)
 	{
-		log(utils::info) << "set time on " << std::to_string(fd.get_raw_fd()) << "\n";
+		log(utils::info) << "set time on " << std::to_string(fd_.get_raw_fd()) << "\n";
 		itimerspec new_value = {}, old_value = {};
 		new_value.it_value.tv_sec = duration.count();
-		check_return_code(timerfd_settime(fd.get_raw_fd(), 0, &new_value, &old_value));
+		check_return_code(timerfd_settime(fd_.get_raw_fd(), 0, &new_value, &old_value));
 	}
 }

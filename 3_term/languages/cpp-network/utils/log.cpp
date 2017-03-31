@@ -34,13 +34,13 @@ namespace utils
 	}
 
 	log::log(std::ostream &stream) noexcept
-			: stream(stream)
+			: stream_(stream)
 	{}
 
 	log &log::operator<<(std::string const &msg)
 	{
-		if (print_mask & current_level)
-			stream << get_style(current_level) << msg << reset_style;
+		if (print_mask & current_level_)
+			stream_ << get_style(current_level_) << msg << reset_style;
 		return *this;
 	}
 
@@ -51,7 +51,7 @@ namespace utils
 
 	log &log::operator()(log_level level)
 	{
-		current_level = level;
+		current_level_ = level;
 		return *this;
 	}
 }

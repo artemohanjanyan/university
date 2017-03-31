@@ -10,20 +10,20 @@ namespace network
 	{}
 
 	event_descriptor::event_descriptor(event_descriptor &&rhs) noexcept
-		: base_descriptor_resource{std::move(rhs.fd)}
+		: base_descriptor_resource{std::move(rhs.fd_)}
 	{}
 
 	uint64_t event_descriptor::read()
 	{
 		uint64_t value;
 		check_return_code(
-				eventfd_read(fd.get_raw_fd(), &value));
+				eventfd_read(fd_.get_raw_fd(), &value));
 		return value;
 	}
 
 	void event_descriptor::write(uint64_t value)
 	{
 		check_return_code(
-				eventfd_write(fd.get_raw_fd(), value));
+				eventfd_write(fd_.get_raw_fd(), value));
 	}
 }

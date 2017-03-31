@@ -3,22 +3,22 @@
 namespace utils
 {
 	string_view::string_view(char const *begin, char const *end) noexcept
-			: begin_ptr{begin}
-			, end_ptr{end}
+			: begin_ptr_{begin}
+			, end_ptr_{end}
 	{}
 
 	string_view::string_view(std::string::const_iterator begin, std::string::const_iterator end) noexcept
-			: begin_ptr{&*begin}
-			, end_ptr{&*end}
+			: begin_ptr_{&*begin}
+			, end_ptr_{&*end}
 	{}
 
 	string_view::string_view(char const *str) noexcept
-			: begin_ptr{str}
+			: begin_ptr_{str}
 	{
 		for (auto it = str; ; ++it)
 			if (*it == 0)
 			{
-				end_ptr = it;
+				end_ptr_ = it;
 				break;
 			}
 	}
@@ -29,21 +29,21 @@ namespace utils
 
 	char const *string_view::begin() const noexcept
 	{
-		return begin_ptr;
+		return begin_ptr_;
 	}
 
 	char const *string_view::end() const noexcept
 	{
-		return end_ptr;
+		return end_ptr_;
 	}
 
 	size_t string_view::size() const noexcept
 	{
-		return end_ptr - begin_ptr;
+		return end_ptr_ - begin_ptr_;
 	}
 
 	char string_view::operator[](size_t i) const noexcept
 	{
-		return begin_ptr[i];
+		return begin_ptr_[i];
 	}
 }

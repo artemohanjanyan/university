@@ -9,7 +9,7 @@ namespace utils
 {
 	class string_view
 	{
-		char const *begin_ptr, *end_ptr;
+		char const *begin_ptr_, *end_ptr_;
 
 	public:
 		string_view(char const *begin, char const *end) noexcept;

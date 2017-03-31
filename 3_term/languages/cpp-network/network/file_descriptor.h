@@ -12,7 +12,7 @@ namespace network
 
 	class file_descriptor
 	{
-		int fd;
+		int fd_;
 
 	public:
 		explicit file_descriptor(int fd);
@@ -35,7 +35,7 @@ namespace network
 	class base_descriptor_resource
 	{
 	protected:
-		file_descriptor fd;
+		file_descriptor fd_;
 
 	public:
 		base_descriptor_resource(file_descriptor &&fd) noexcept;

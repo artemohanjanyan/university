@@ -28,8 +28,8 @@ namespace utils
 
 		static char const *get_style(log_level level);
 
-		std::ostream &stream;
-		log_level current_level;
+		std::ostream &stream_;
+		log_level current_level_;
 
 	public:
 		log(std::ostream &stream) noexcept;
