@@ -1,22 +1,21 @@
 #include "socket.h"
 #include "network_exception.h"
+#include "utils/log.h"
 
 #include <arpa/inet.h>
+#include <netdb.h>
 
 #include <array>
-#include <netdb.h>
-#include <utils/log.h>
 
 namespace network
 {
 	ipv4_address::ipv4_address(uint32_t address) noexcept
-			: address{address}
-	{
-	}
+			: address_{address}
+	{}
 
 	uint32_t network::ipv4_address::get_raw_address() const noexcept
 	{
-		return address;
+		return address_;
 	}
 
 	ipv4_address make_address_any() noexcept
@@ -31,24 +30,23 @@ namespace network
 	}
 
 	ipv4_endpoint::ipv4_endpoint(network::ipv4_address address, uint16_t port_n) noexcept
-			: address{address}
-			, port_n{port_n}
-	{
-	}
+			: address_{address}
+			, port_n_{port_n}
+	{}
 
 	ipv4_address ipv4_endpoint::get_address() const noexcept
 	{
-		return address;
+		return address_;
 	}
 
 	uint16_t ipv4_endpoint::get_port_n() const noexcept
 	{
-		return port_n;
+		return port_n_;
 	}
 
 	uint16_t ipv4_endpoint::get_port_h() const noexcept
 	{
-		return ntohs(port_n);
+		return ntohs(port_n_);
 	}
 
 	ipv4_endpoint make_ipv4_endpoint_h(ipv4_address address, uint16_t port_h) noexcept
@@ -76,9 +74,9 @@ namespace network
 		return to_string(endpoint.get_address()) + ":" + std::to_string(endpoint.get_port_h());
 	}
 
-	std::vector<ipv4_endpoint> get_hosts(std::string name)
+	std::vector<ipv4_endpoint> get_hosts(std::string const &name)
 	{
-		log(utils::verbose) << "getting hosts of " << name << "\n";
+		log(utils::info) << "getting hosts of " << name << "\n";
 
 		addrinfo hints;
 		addrinfo *info;
@@ -108,83 +106,92 @@ namespace network
 
 		freeaddrinfo(info);
 
-		log(utils::verbose) << "get_hosts returned [ ";
+		log(utils::info) << "get_hosts returned [ ";
 		for (auto &endpoint : endpoints)
 		{
-			log(utils::verbose) << to_string(endpoint) << " ";
+			log(utils::info) << to_string(endpoint) << " ";
 		}
-		log(utils::verbose) << "]\n";
+		log(utils::info) << "]\n";
 
-		return std::move(endpoints);
-	}
-
-	file_descriptor client_socket::connect(std::vector<ipv4_endpoint> endpoints)
-	{
-		log(utils::verbose) << "connecting to " << to_string(endpoints.front()) << "...\n";
-		file_descriptor fd{check_return_code(::socket(AF_INET, SOCK_STREAM, 0))};
-		sockaddr_in address;
-		address.sin_family = AF_INET;
-		address.sin_addr.s_addr = endpoints.front().get_address().get_raw_address();
-		address.sin_port = endpoints.front().get_port_n();
-		check_return_code(
-				::connect(fd.get_raw_fd(), reinterpret_cast<sockaddr const *>(&address), sizeof address));
-		return std::move(fd);
+		return endpoints;
 	}
 
 	client_socket::client_socket(file_descriptor &&fd) noexcept
 			: base_descriptor_resource{std::move(fd)}
-	{
-	}
+	{}
 
 	client_socket::client_socket(client_socket &&rhs) noexcept
-			: client_socket{std::move(rhs.fd)}
-	{
-	}
+			: client_socket{std::move(rhs.fd_)}
+	{}
 
-	client_socket::client_socket(std::vector<ipv4_endpoint> endpoints)
-			: client_socket{connect(endpoints)}
+	void client_socket::assert_availability()
 	{
+		log(utils::info) << "asserting availability of " << fd_ << "\n";
+		int error = 0;
+		socklen_t err_len = sizeof error;
+		check_return_code(
+				getsockopt(fd_.get_raw_fd(), SOL_SOCKET, SO_ERROR, static_cast<void *>(&error), &err_len));
+		if (error != 0)
+			throw network_exception(strerror(errno));
 	}
 
 	std::string client_socket::read()
 	{
-		std::array<char, 1024> buf;
-		ssize_t read_n = ::recv(fd.get_raw_fd(), buf.begin(), buf.size(), MSG_NOSIGNAL);
+		std::array<char, BUFFER_SIZE> buf;
+		ssize_t read_n = ::recv(fd_.get_raw_fd(), buf.begin(), buf.size(), MSG_NOSIGNAL);
 		check_return_code(read_n);
 		std::string string{buf.begin(), static_cast<size_t>(read_n)};
-#ifdef CPP_NETWORK_DEBUG
-		log(utils::verbose) << "read " << std::to_string(string.size()) << " bytes from " << fd << "\n";
-#endif
-		return std::move(string);
+
+		#ifdef CPP_NETWORK_SOCKET_DEBUG
+		log(utils::verbose) << "read " << std::to_string(string.size()) << " bytes from " << fd_ << "\n";
+		#endif
+
+		return string;
 	}
 
 	size_t client_socket::write(utils::string_view const &str)
 	{
-		ssize_t written = ::send(fd.get_raw_fd(), str.begin(), str.size(), MSG_NOSIGNAL);
+		ssize_t written = ::send(fd_.get_raw_fd(), str.begin(), str.size(), MSG_NOSIGNAL);
 		check_return_code(written);
-#ifdef CPP_NETWORK_DEBUG
-		log(utils::verbose) << "written " << std::to_string(written) << " bytes to " << fd << "\n";
-#endif
+
+		#ifdef CPP_NETWORK_SOCKET_DEBUG
+		log(utils::verbose) << "written " << std::to_string(written) << " bytes to " << fd_ << "\n";
+		#endif
+
 		return static_cast<size_t>(written);
 	}
 
-	server_socket::server_socket(file_descriptor &&fd)
-			: base_descriptor_resource{std::move(fd)}
+	file_descriptor connect(std::vector<ipv4_endpoint> const &endpoints, bool non_blocking)
 	{
+		log(utils::info) << "connecting to " << to_string(endpoints.front()) << "...\n";
+		file_descriptor fd{check_return_code(::socket(AF_INET, SOCK_STREAM, 0))};
+		if (non_blocking)
+			make_non_blocking(fd);
+		sockaddr_in address;
+		address.sin_family = AF_INET;
+		address.sin_addr.s_addr = endpoints.front().get_address().get_raw_address();
+		address.sin_port = endpoints.front().get_port_n();
+		int const code = ::connect(fd.get_raw_fd(), reinterpret_cast<sockaddr const *>(&address), sizeof address);
+		if (errno != EINPROGRESS)
+			check_return_code(code);
+		return fd;
 	}
 
-	server_socket::server_socket(server_socket &&rhs)
-			: server_socket{std::move(rhs.fd)}
-	{
-	}
+	server_socket::server_socket(file_descriptor &&fd) noexcept
+			: base_descriptor_resource{std::move(fd)}
+	{}
+
+	server_socket::server_socket(server_socket &&rhs) noexcept
+			: server_socket{std::move(rhs.fd_)}
+	{}
 
 	server_socket::server_socket(ipv4_endpoint endpoint)
 			: server_socket{file_descriptor{check_return_code(::socket(AF_INET, SOCK_STREAM, 0))}}
 	{
-		log(utils::verbose) << "starting server at " << to_string(endpoint) << "\n";
+		log(utils::info) << "starting server at " << to_string(endpoint) << "\n";
 
 		int enable = 1;
-		setsockopt(fd.get_raw_fd(), SOL_SOCKET, SO_REUSEPORT, &enable, sizeof enable);
+		setsockopt(fd_.get_raw_fd(), SOL_SOCKET, SO_REUSEPORT, &enable, sizeof enable);
 
 		struct sockaddr_in address;
 		address.sin_family = AF_INET;
@@ -192,20 +199,19 @@ namespace network
 		address.sin_port = endpoint.get_port_n();
 
 		check_return_code(
-				bind(fd.get_raw_fd(), reinterpret_cast<sockaddr *>(&address), sizeof address));
+				bind(fd_.get_raw_fd(), reinterpret_cast<sockaddr *>(&address), sizeof address));
 
 		check_return_code(
-				listen(fd.get_raw_fd(), SOMAXCONN));
+				listen(fd_.get_raw_fd(), SOMAXCONN));
 	}
 
 	client_socket server_socket::accept()
 	{
-		log(utils::verbose) << "accepting at " << fd << "...\n";
-		int new_fd = ::accept(fd.get_raw_fd(), nullptr, nullptr);
+		log(utils::info) << "accepting at " << fd_ << "...\n";
+		int new_fd = ::accept(fd_.get_raw_fd(), nullptr, nullptr);
 		check_return_code(new_fd);
 		client_socket accepted{file_descriptor{new_fd}};
-		log(utils::verbose) << "accepted " << accepted.get_fd() << "\n";
-		return std::move(accepted);
+		return accepted;
 	}
 
 	ipv4_endpoint get_socket_endpoint(file_descriptor const &fd)

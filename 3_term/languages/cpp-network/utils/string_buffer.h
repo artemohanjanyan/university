@@ -10,8 +10,8 @@ namespace utils
 {
 	class string_buffer
 	{
-		std::queue<std::string> queue{};
-		size_t read_n = 0;
+		std::queue<std::string> queue_{};
+		size_t read_n_ = 0;
 
 	public:
 		string_view top() const noexcept;

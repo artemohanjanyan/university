@@ -13,7 +13,7 @@ namespace network
 {
 	class ipv4_address
 	{
-		uint32_t address;
+		uint32_t address_;
 
 	public:
 		ipv4_address(uint32_t address) noexcept;
@@ -28,8 +28,8 @@ namespace network
 
 	class ipv4_endpoint
 	{
-		ipv4_address address;
-		uint16_t port_n;
+		ipv4_address address_;
+		uint16_t port_n_;
 
 		ipv4_endpoint(ipv4_address address, uint16_t port_n) noexcept;
 
@@ -60,32 +60,33 @@ namespace network
 	std::string to_string(ipv4_endpoint endpoint);
 
 
-	std::vector<ipv4_endpoint> get_hosts(std::string host_name);
+	std::vector<ipv4_endpoint> get_hosts(std::string const &host_name);
 
+	size_t const BUFFER_SIZE = 8192;
 
 	class client_socket : public base_descriptor_resource
 	{
-		static file_descriptor connect(std::vector<ipv4_endpoint> endpoints);
-
 	public:
 		client_socket(file_descriptor &&fd) noexcept;
 
 		client_socket(client_socket &&rhs) noexcept;
 
-		client_socket(std::vector<ipv4_endpoint> endpoints);
+		void assert_availability();
 
 		std::string read();
 
 		size_t write(utils::string_view const &str);
 	};
 
+	file_descriptor connect(std::vector<ipv4_endpoint> const &endpoints, bool non_blocking);
+
 
 	class server_socket : public base_descriptor_resource
 	{
 	public:
-		server_socket(file_descriptor &&fd);
+		server_socket(file_descriptor &&fd) noexcept;
 
-		server_socket(server_socket &&rhs);
+		server_socket(server_socket &&rhs) noexcept;
 
 		server_socket(ipv4_endpoint endpoint);
 
