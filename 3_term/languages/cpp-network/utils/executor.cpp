@@ -7,11 +7,15 @@ namespace utils
 		threads_.reserve(n);
 		for (size_t i = 0; i < n; ++i)
 			threads_.push_back(std::thread{[&]() {
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wmissing-noreturn"
-				while (true)
-					queue_.pop()();
-#pragma clang diagnostic pop
+				try
+				{
+					while (true)
+						queue_.pop()();
+				}
+				catch (std::runtime_error &e)
+				{
+					return;
+				}
 			}});
 	}
 

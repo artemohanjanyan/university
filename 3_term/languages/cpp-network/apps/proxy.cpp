@@ -2,6 +2,8 @@
 #include "network/http/http.h"
 #include "utils/log.h"
 
+#include <signal.h>
+
 #include <iostream>
 #include <map>
 #include <list>
@@ -14,6 +16,16 @@ struct proxy_server;
 struct connection;
 
 using timeout_list = std::list<std::pair<std::chrono::system_clock::time_point, connection *>>;
+
+network::event_descriptor sigint_event;
+
+void watch_signal(int sig, void (*handler)(int))
+{
+	struct sigaction action;
+	memset(&action, 0, sizeof(struct sigaction));
+	action.sa_handler = handler;
+	sigaction(sig, &action, NULL);
+}
 
 struct host_data
 {
@@ -295,8 +307,22 @@ int main()
 //	log.print_mask |= utils::verbose;
 	log(utils::debug) << "debug works\n";
 
-	proxy_server server{network::make_local_endpoint(2539), 3};
+	proxy_server server{network::make_local_endpoint(2539), 10};
+
+	network::epoll_registration sigint_registration{&sigint_event.get_fd(), &server.epoll_};
+	sigint_registration
+			.set_on_read([&] {
+				server.epoll_.soft_stop();
+				log(utils::info) << "quiting after SIGINT\n";
+			})
+			.update();
+	watch_signal(SIGINT, [](int) {
+		sigint_event.write(1);
+	});
+
 	server.run();
+
+	log(utils::user) << "bye\n";
 
 	return 0;
 }

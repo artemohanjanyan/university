@@ -5,7 +5,6 @@
 #include <sys/epoll.h>
 
 #include <forward_list>
-#include <iostream>
 
 namespace network
 {
@@ -105,7 +104,11 @@ namespace network
 		{
 			std::array<epoll_event, 10> events;
 			int event_n = epoll_wait(fd_.get_raw_fd(), events.begin(), static_cast<int>(events.size()), -1);
-			check_return_code(event_n);
+			if (event_n == -1)
+			{
+				if (errno != EINTR)
+					check_return_code(event_n);
+			}
 
 			for (int event_i = 0; event_i < event_n && is_running_; ++event_i)
 			{
