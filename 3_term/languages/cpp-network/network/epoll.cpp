@@ -137,7 +137,7 @@ namespace network
 						registration->on_close_();
 					}
 				}
-				catch (std::exception &exception)
+				catch (std::exception const &exception)
 				{
 					log(utils::error) << "Exception thrown while processing file descriptor " <<
 							*registration->fd_ << ": " << exception.what() << "\n";
@@ -152,7 +152,7 @@ namespace network
 						{
 							registration->cleanup_();
 						}
-						catch (std::exception &exception)
+						catch (std::exception const &exception)
 						{
 							log(utils::error) << "Exception during cleanup on file descriptor " <<
 									*registration->fd_ << ": " << exception.what() << "\n";

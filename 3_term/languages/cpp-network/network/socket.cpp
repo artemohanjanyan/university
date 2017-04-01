@@ -98,7 +98,7 @@ namespace network
 				endpoints.push_back(make_ipv4_endpoint_n(address->sin_addr.s_addr, address->sin_port));
 			}
 		}
-		catch (std::exception &exception)
+		catch (std::exception const &exception)
 		{
 			freeaddrinfo(info);
 			throw exception;

@@ -75,6 +75,8 @@ namespace utils
 		blocking_synchronous_queue<task> queue_;
 		std::vector<std::thread> threads_;
 
+		void stop_and_join();
+
 	public:
 		executor(size_t n);
 
