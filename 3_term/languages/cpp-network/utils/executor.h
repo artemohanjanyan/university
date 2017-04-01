@@ -32,7 +32,7 @@ namespace utils
 		T pop()
 		{
 			std::unique_lock<std::mutex> lock(mutex_);
-			while (queue_.empty())
+			while (queue_.empty() && !is_interrupted_)
 				conditional_.wait(lock);
 			if (is_interrupted_)
 				throw std::runtime_error{"interrupted"};
