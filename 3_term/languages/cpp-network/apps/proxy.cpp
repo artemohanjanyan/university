@@ -71,16 +71,17 @@ struct proxy_server
 	network::server_socket server_;
 	network::epoll epoll_;
 	network::epoll_registration server_registration_;
+
+	network::timer_descriptor timer_;
+	network::epoll_registration timer_registration_;
+	timeout_list connection_timeouts_;
+
 	std::map<int, std::unique_ptr<connection>> map_;
 
 	std::unique_ptr<network::event_descriptor> event_descriptor_;
 	network::epoll_registration event_registration_;
 	std::map<std::string, std::set<connection *>> host_to_conn_;
 	network::http::resolver resolver_;
-
-	network::timer_descriptor timer_;
-	network::epoll_registration timer_registration_;
-	timeout_list connection_timeouts_;
 
 	proxy_server(network::ipv4_endpoint endpoint, size_t thread_n);
 
@@ -200,16 +201,17 @@ proxy_server::proxy_server(network::ipv4_endpoint endpoint, size_t thread_n)
 		: server_{endpoint}
 		, epoll_{}
 		, server_registration_{&server_.get_fd(), &epoll_}
+
+		, timer_{}
+		, timer_registration_{&timer_.get_fd(), &epoll_}
+		, connection_timeouts_{}
+
 		, map_{}
 
 		, event_descriptor_{std::make_unique<network::event_descriptor>()}
 		, event_registration_{&event_descriptor_->get_fd(), &epoll_}
 		, host_to_conn_{}
 		, resolver_{thread_n, event_descriptor_.get()}
-
-		, timer_{}
-		, timer_registration_{&timer_.get_fd(), &epoll_}
-		, connection_timeouts_{}
 {
 	make_non_blocking(server_.get_fd());
 	make_non_blocking(event_descriptor_->get_fd());

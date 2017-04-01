@@ -145,17 +145,18 @@ namespace network
 				}
 			}
 
-			for (auto registration : cleanup_set_)
-				if (registration->cleanup_ != nullptr)
-					try
-					{
-						registration->cleanup_();
-					}
-					catch (std::exception &exception)
-					{
-						log(utils::error) << "Exception during cleanup on file descriptor " <<
-								*registration->fd_ << ": " << exception.what() << "\n";
-					}
+			if (is_running_)
+				for (auto registration : cleanup_set_)
+					if (registration->cleanup_ != nullptr)
+						try
+						{
+							registration->cleanup_();
+						}
+						catch (std::exception &exception)
+						{
+							log(utils::error) << "Exception during cleanup on file descriptor " <<
+									*registration->fd_ << ": " << exception.what() << "\n";
+						}
 			cleanup_set_.clear();
 		}
 	}
