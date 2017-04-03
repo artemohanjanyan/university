@@ -7,7 +7,7 @@ Computer technologies department, ITMO University, 2014-now.
 
 ### 3 term
 - [Mathematical logic](https://github.com/artemohanjanyan/university/tree/master/3_term/logic). Formal proof validators, deduction theorem, proof generator for tautologies and generator of a+b proof in formal arithmetics implemented in Haskell.
-- [C++](https://github.com/artemohanjanyan/university/tree/master/3_term/languages). Custom implementation of `boost::optional` and proxy server, written in modern C++. Latter includes low-level RAII wrappers for Linux networking interface for C, asynchronous I/O API backed by epoll, basic incremental HTTP request parser, multithreaded DNS-resolver for lower latency and colorful log.
+- [C++](https://github.com/artemohanjanyan/university/tree/master/3_term/languages). Custom implementation of `optional` and proxy server, written in modern C++. Latter includes low-level RAII wrappers for Linux networking interface for C, asynchronous I/O API backed by epoll, basic incremental HTTP request parser, multithreaded DNS-resolver for lower latency and colorful log.
 - [Android course project](https://github.com/artemohanjanyan/bluetooth-chess). Android application for playing chess via bluetooth.
 
 ### 4 term
