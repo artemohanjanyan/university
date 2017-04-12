@@ -1,14 +1,14 @@
 module TypeInference where
 
-import Data.Maybe (mapMaybe)
-import Control.Monad (foldM)
-import qualified Data.Set as Set
-import qualified Data.Map.Strict as Map
-import Data.List (nub, sort, find)
-import Control.Monad.State.Lazy
+import           Control.Monad            (foldM)
+import           Control.Monad.State.Lazy
+import           Data.List                (find, nub, sort)
+import qualified Data.Map.Strict          as Map
+import           Data.Maybe               (mapMaybe)
+import qualified Data.Set                 as Set
 
-import Expression
-import Reduction
+import           Expression
+import           Reduction
 
 data Equation = Type :=: Type deriving (Eq, Ord)
 type System = [Equation]
@@ -19,8 +19,8 @@ instance Show Equation where
 
 getBaseTypes :: Type -> Set.Set TypeName
 getBaseTypes (BaseType name) = Set.singleton name
-getBaseTypes (t1 :>: t2) = Set.union (getBaseTypes t1) (getBaseTypes t2)
-getBaseTypes (ForAll var t) = Set.delete var $ getBaseTypes t
+getBaseTypes (t1 :>: t2)     = Set.union (getBaseTypes t1) (getBaseTypes t2)
+getBaseTypes (ForAll var t)  = Set.delete var $ getBaseTypes t
 
 typeSubstitute :: Type -> TypeName -> Type -> Type
 typeSubstitute t@(BaseType name) subName subType
@@ -94,7 +94,7 @@ applySystem system = apply
   where
     systemMap = Map.fromList $ map (\(a :=: b) -> (a, b)) system
     apply t@(BaseType _) = Map.findWithDefault t t systemMap
-    apply (t1 :>: t2) = apply t1 :>: apply t2
+    apply (t1 :>: t2)    = apply t1 :>: apply t2
 
 makeSystem :: Expression -> (System, Type)
 makeSystem expr = (rawSystem, exprType)

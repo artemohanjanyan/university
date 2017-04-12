@@ -2,10 +2,10 @@
 
 module Expression where
 
-import Text.Parsec
-import Text.Parsec.Char (char)
-import Data.Char (isDigit, isSpace, isUpper, isLower)
-import Control.Applicative ((*>), (<*))
+import           Control.Applicative ((*>), (<*))
+import           Data.Char           (isDigit, isLower, isSpace, isUpper)
+import           Text.Parsec
+import           Text.Parsec.Char    (char)
 
 data Expression
     = L Var Expression -- L for Lambda
@@ -54,10 +54,10 @@ instance Show Expression where
     show expr = show' expr True True
 
 instance Show Type where
-    show (BaseType name) = name
+    show (BaseType name)       = name
     show (t1@(_ :>: _) :>: t2) = embrace (show t1) ++ " -> " ++ show t2
-    show (t1 :>: t2) = show t1 ++ " -> " ++ show t2
-    show (ForAll var t) = "@" ++ var ++ "." ++ show t
+    show (t1 :>: t2)           = show t1 ++ " -> " ++ show t2
+    show (ForAll var t)        = "@" ++ var ++ "." ++ show t
 
 instance Show CurryExpression where
     show (e ::: t) = show e ++ " : " ++ show t

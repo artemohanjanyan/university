@@ -1,9 +1,9 @@
 module Church where
 
-import Prelude hiding (not, and, or)
+import           Prelude    hiding (and, not, or)
 
-import Expression
-import Reduction
+import           Expression
+import           Reduction
 
 true = expr "\\a.\\b.a"
 --true = L "a" $ L "b" $ V "a"
@@ -19,7 +19,7 @@ fromInt n = L "f" $ L "x" $ foldr ($) (V "x") $ replicate n (V "f" :$:)
 toInt :: Expression -> Int
 toInt (L _ (L _ e)) = toInt' e
   where
-    toInt' (V _) = 0
+    toInt' (V _)     = 0
     toInt' (_ :$: x) = 1 + toInt' x
 
 inc = L "n" $ L "f" $ L "x" $ V "f" $$ (V "n" $$ V "f" $$ V "x")

@@ -1,16 +1,16 @@
 module Reduction where
 
-import qualified Data.Set as Set
-import qualified Data.Map.Strict as Map
-import Data.Maybe (mapMaybe)
-import Control.Monad.State.Lazy
+import           Control.Monad.State.Lazy
+import qualified Data.Map.Strict          as Map
+import           Data.Maybe               (mapMaybe)
+import qualified Data.Set                 as Set
 
-import Expression
+import           Expression
 
 getFreeVars :: Expression -> Set.Set Var
-getFreeVars (L var expr) = Set.delete var $ getFreeVars expr
+getFreeVars (L var expr)      = Set.delete var $ getFreeVars expr
 getFreeVars (expr1 :$: expr2) = Set.union (getFreeVars expr1) (getFreeVars expr2)
-getFreeVars (V var) = Set.singleton var
+getFreeVars (V var)           = Set.singleton var
 
 getBoundVars :: Expression -> Var -> Set.Set Var
 getBoundVars = get' Set.empty

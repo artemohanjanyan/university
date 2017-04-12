@@ -1,10 +1,10 @@
 module Main where
 
-import Text.Parsec
-import Control.Applicative
+import           Control.Applicative
+import           Text.Parsec
 
-import Expression
-import TypeInference
+import           Expression
+import           TypeInference
 
 main = do
     content <- getLine

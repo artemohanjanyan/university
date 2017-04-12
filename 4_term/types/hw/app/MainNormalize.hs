@@ -1,9 +1,9 @@
 module Main where
 
-import Text.Parsec
+import           Text.Parsec
 
-import Expression
-import Reduction
+import           Expression
+import           Reduction
 
 main = do
     --content <- getContents
