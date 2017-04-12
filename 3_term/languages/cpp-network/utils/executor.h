@@ -13,37 +13,69 @@ namespace utils
 	using task = std::function<void()>;
 
 	template <typename T>
-	class blocking_queue
+	class blocking_synchronous_queue
 	{
-		std::queue<T> queue;
-		std::mutex mutex;
-		std::condition_variable conditional;
+		std::queue<T> queue_;
+		std::mutex mutex_;
+		std::condition_variable conditional_;
+		std::atomic<bool> is_interrupted_{false};
 
 	public:
 		void push(T elem)
 		{
-			std::lock_guard<std::mutex> lock(mutex);
-			queue.push(std::move(elem));
-			if (queue.size() == 1)
-				conditional.notify_one();
+			std::lock_guard<std::mutex> lock(mutex_);
+			queue_.push(std::move(elem));
+			if (queue_.size() == 1)
+				conditional_.notify_one();
 		}
 
 		T pop()
 		{
-			std::unique_lock<std::mutex> lock(mutex);
-			while (queue.empty())
-				conditional.wait(lock);
-			T front = std::move(queue.front());
-			queue.pop();
-			return std::move(front);
+			std::unique_lock<std::mutex> lock(mutex_);
+			while (queue_.empty() && !is_interrupted_)
+				conditional_.wait(lock);
+			if (is_interrupted_)
+				throw std::runtime_error{"interrupted"};
+			T front = std::move(queue_.front());
+			queue_.pop();
+			return front;
+		}
+
+		void interrupt()
+		{
+			is_interrupted_ = true;
+			conditional_.notify_all();
+		}
+	};
+
+	template <typename T>
+	class blocking_queue
+	{
+		std::queue<T> queue_;
+		std::mutex mutex_;
+
+	public:
+		void push(T elem)
+		{
+			std::lock_guard<std::mutex> lock(mutex_);
+			queue_.push(std::move(elem));
+		}
+
+		T pop()
+		{
+			std::unique_lock<std::mutex> lock(mutex_);
+			T front = std::move(queue_.front());
+			queue_.pop();
+			return front;
 		}
 	};
 
 	class executor
 	{
-		blocking_queue<task> queue;
-		std::atomic<bool> is_running;
-		std::vector<std::thread> threads;
+		blocking_synchronous_queue<task> queue_;
+		std::vector<std::thread> threads_;
+
+		void stop_and_join();
 
 	public:
 		executor(size_t n);

@@ -12,10 +12,10 @@ namespace network
 
 	class file_descriptor
 	{
-		int fd;
+		int fd_;
 
 	public:
-		explicit file_descriptor(int fd = -1) noexcept;
+		explicit file_descriptor(int fd);
 
 		file_descriptor(file_descriptor const &) = delete;
 
@@ -30,10 +30,12 @@ namespace network
 		bool is_set() const noexcept;
 	};
 
+	void make_non_blocking(file_descriptor const &fd);
+
 	class base_descriptor_resource
 	{
 	protected:
-		file_descriptor fd;
+		file_descriptor fd_;
 
 	public:
 		base_descriptor_resource(file_descriptor &&fd) noexcept;

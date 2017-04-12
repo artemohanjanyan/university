@@ -1,8 +1,9 @@
 #ifndef CPP_NETWORK_LOG_H
 #define CPP_NETWORK_LOG_H
 
+#include "network/file_descriptor.h"
+
 #include <string>
-#include <network/file_descriptor.h>
 
 namespace utils
 {
@@ -27,8 +28,8 @@ namespace utils
 
 		static char const *get_style(log_level level);
 
-		std::ostream &stream;
-		log_level current_level;
+		std::ostream &stream_;
+		log_level current_level_;
 
 	public:
 		log(std::ostream &stream) noexcept;
@@ -40,9 +41,9 @@ namespace utils
 		log &operator()(log_level level);
 
 		log_level print_mask = error | warning | info
-#ifdef CPP_NETWORK_DEBUG
+		#ifndef NDEBUG
 		| debug
-#endif
+		#endif
 		| user;
 	};
 }

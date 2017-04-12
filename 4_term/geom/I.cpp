@@ -39,10 +39,10 @@ struct kd_tree
 		int number_;
 		point point_;
 		axis sep_axis_;
-		shared_ptr<node> left_, right_;
+		unique_ptr<node> left_, right_;
 
 		void build(vector<pair<point, int>>::iterator begin,
-					  vector<pair<point, int>>::iterator end)
+		           vector<pair<point, int>>::iterator end)
 		{
 			auto point_comp = sep_axis_ == axis::x ? x_compare : y_compare;
 			auto comp =
@@ -61,14 +61,14 @@ struct kd_tree
 			axis next_axis = sep_axis_ == axis::x ? axis::y : axis::x;
 			if (begin < median_it)
 			{
-				left_ = make_shared<node>();
+				left_ = make_unique<node>();
 				left_->sep_axis_ = next_axis;
 				left_->build(begin, median_it);
 			}
 			++median_it;
 			if (median_it < end)
 			{
-				right_ = make_shared<node>();
+				right_ = make_unique<node>();
 				right_->sep_axis_ = next_axis;
 				right_->build(median_it, end);
 			}
@@ -111,11 +111,11 @@ struct kd_tree
 		}
 	};
 
-	shared_ptr<node> root_;
+	unique_ptr<node> root_;
 
 	kd_tree(vector<pair<point, int>> &points)
 	{
-		root_ = make_shared<node>();
+		root_ = make_unique<node>();
 		root_->sep_axis_ = axis::x;
 		root_->build(points.begin(), points.end());
 	}

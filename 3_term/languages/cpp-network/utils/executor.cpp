@@ -2,30 +2,49 @@
 
 namespace utils
 {
+	void executor::stop_and_join()
+	{
+		soft_stop();
+		for (std::thread &thread : threads_)
+			thread.join();
+	}
+
 	executor::executor(size_t n)
 	{
-		threads.reserve(n);
-		for (size_t i = 0; i < n; ++i)
-			threads.push_back(std::thread{[&]() {
-				while (is_running)
-					queue.pop()();
-			}});
+		threads_.reserve(n);
+		try
+		{
+			for (size_t i = 0; i < n; ++i)
+				threads_.emplace_back([&]() {
+					try
+					{
+						while (true)
+							queue_.pop()();
+					}
+					catch (std::runtime_error const &e)
+					{
+						return;
+					}
+				});
+		}
+		catch (std::exception const &e)
+		{
+			stop_and_join();
+		}
 	}
 
 	void executor::push_task(task elem)
 	{
-		queue.push(elem);
+		queue_.push(std::move(elem));
 	}
 
 	void executor::soft_stop()
 	{
-		is_running = false;
+		queue_.interrupt();
 	}
 
 	executor::~executor()
 	{
-		soft_stop();
-		for (std::thread &thread : threads)
-			thread.join();
+		stop_and_join();
 	}
 }
