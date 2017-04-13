@@ -1,9 +1,15 @@
-module Church where
+module Simple.Church where
 
 import           Prelude    hiding (and, not, or)
+import           Text.Parsec
 
-import           Expression
-import           Reduction
+import           Simple.Expression
+import           Simple.Reduction
+
+expr :: String -> Expression
+expr str = expr
+  where
+    Right expr = parse expressionParser "" str
 
 true = expr "\\a.\\b.a"
 --true = L "a" $ L "b" $ V "a"

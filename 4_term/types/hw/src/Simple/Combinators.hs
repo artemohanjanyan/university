@@ -1,10 +1,10 @@
-module Combinators where
+module Simple.Combinators where
 
 import qualified Data.Set   as Set
 
-import           Church
-import           Expression
-import           Reduction
+import           Simple.Church
+import           Simple.Expression
+import           Simple.Reduction
 
 s = L "x" $ L "y" $ L "z" $ V "x" :$: V "z" :$: (V "y" :$: V "z")
 k = L "x" $ L "y" $ V "x"

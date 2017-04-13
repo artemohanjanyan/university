@@ -1,4 +1,4 @@
-module TypeInference where
+module Simple.TypeInference where
 
 import           Control.Monad            (foldM)
 import           Control.Monad.State.Lazy
@@ -7,8 +7,8 @@ import qualified Data.Map.Strict          as Map
 import           Data.Maybe               (mapMaybe)
 import qualified Data.Set                 as Set
 
-import           Expression
-import           Reduction
+import           Simple.Expression
+import           Simple.Reduction
 
 data Equation = Type :=: Type deriving (Eq, Ord)
 type System = [Equation]
@@ -20,7 +20,6 @@ instance Show Equation where
 getBaseTypes :: Type -> Set.Set TypeName
 getBaseTypes (BaseType name) = Set.singleton name
 getBaseTypes (t1 :>: t2)     = Set.union (getBaseTypes t1) (getBaseTypes t2)
-getBaseTypes (ForAll var t)  = Set.delete var $ getBaseTypes t
 
 typeSubstitute :: Type -> TypeName -> Type -> Type
 typeSubstitute t@(BaseType name) subName subType
@@ -28,10 +27,6 @@ typeSubstitute t@(BaseType name) subName subType
     | otherwise       = t
 typeSubstitute (t1 :>: t2) subName subType =
         typeSubstitute t1 subName subType :>: typeSubstitute t2 subName subType
-typeSubstitute t@(ForAll var t') subName subType =
-        if var == subName
-        then t
-        else ForAll var $ typeSubstitute t' subName subType
 
 resolveStep :: System -> Maybe (System, Bool)
 resolveStep system = do
@@ -47,6 +42,7 @@ resolveStep system = do
         reverseEquation e@(t :=: x@(BaseType _)) = case t of
             BaseType _ -> (e,       False)
             _          -> (x :=: t, True)
+        reverseEquation e = (e, False)
 
     stepTautology system = (newSystem, length newSystem /= length system)
       where
@@ -58,7 +54,6 @@ resolveStep system = do
     stepUnfold system = fmap makeNewSystem maybeSystem
       where
         doUnfold ((t1 :>: t2) :=: (t3 :>: t4))   = Just [t1 :=: t3, t2 :=: t4]
-        doUnfold (ForAll v1 t1 :=: ForAll v2 t2) = Just [BaseType v1 :=: BaseType v2, t1 :=: t2]
         doUnfold e@(BaseType _ :=: BaseType _)   = Just [e]
         doUnfold _                               = Nothing
         maybeSystem = mapM doUnfold system

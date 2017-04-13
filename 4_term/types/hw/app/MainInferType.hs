@@ -3,8 +3,8 @@ module Main where
 import           Control.Applicative
 import           Text.Parsec
 
-import           Expression
-import           TypeInference
+import           Simple.Expression
+import           Simple.TypeInference
 
 main = do
     content <- getLine

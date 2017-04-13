@@ -15,11 +15,11 @@ cabal-version:       >=1.10
 
 library
   hs-source-dirs:      src
-  exposed-modules:     Church
-                     , Combinators
-                     , Expression
-                     , Reduction
-                     , TypeInference
+  exposed-modules:     Simple.Church
+                     , Simple.Combinators
+                     , Simple.Expression
+                     , Simple.Reduction
+                     , Simple.TypeInference
   build-depends:       base >= 4.7 && < 5
                      , mtl
                      , parsec
