@@ -1,15 +1,15 @@
 module Main where
 
-import           Control.Applicative
 import           Text.Parsec
 
 import           Simple.Expression
 import           Simple.TypeInference
 
+main :: IO ()
 main = do
     content <- getLine
     case parse (expressionParser <* eof)"input" content of
-        Left error -> putStrLn $ show error
+        Left parseError -> putStrLn $ show parseError
         Right expr -> case inferType expr of
             Just (exprType, context) -> do
                 putStrLn $ show exprType

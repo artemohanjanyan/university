@@ -34,13 +34,13 @@ naiveSubstitute expr1 var expr2
     intersection = Set.intersection freeVars boundVars
 
     subst :: Expression -> Var -> Expression -> Expression
-    subst expr@(L var expr') free otherExpr
-        | var == free = expr
-        | otherwise   = L var $ subst expr' free otherExpr
-    subst (expr1 :$: expr2) free otherExpr = subst expr1 free otherExpr :$: subst expr2 free otherExpr
-    subst expr@(V var) free otherExpr
-        | var == free = otherExpr
-        | otherwise   = expr
+    subst expr@(L var' expr') free otherExpr
+        | var' == free = expr
+        | otherwise    = L var' $ subst expr' free otherExpr
+    subst (expr1' :$: expr2') free otherExpr = subst expr1' free otherExpr :$: subst expr2' free otherExpr
+    subst expr@(V var') free otherExpr
+        | var' == free = otherExpr
+        | otherwise    = expr
 
 rename :: Map.Map Var Var -> Expression -> Expression
 rename = rename' Map.empty
@@ -53,7 +53,7 @@ rename = rename' Map.empty
       where
         newVar = dict Map.! var
     rename' act dict (expr1 :$: expr2) = rename' act dict expr1 :$: rename' act dict expr2
-    rename' act dict (V var) = V $ Map.findWithDefault var var act
+    rename' act _ (V var) = V $ Map.findWithDefault var var act
 
 applyRedex :: Expression -> Expression -> Expression
 applyRedex (L var expr1) expr2 = newExpr
@@ -71,15 +71,16 @@ applyRedex (L var expr1) expr2 = newExpr
                 return $ Just (name, newName)
             else return Nothing
       where
-        make' name namespace
+        make' name' namespace
             | Set.member newName namespace = make' newName namespace
             | otherwise                    = newName
           where
-            newName = name ++ "'"
+            newName = name' ++ "'"
 
     renamings = Map.fromList $ mapMaybe id $ evalState (mapM makeRenaming $ Set.toList boundVars) freeVars
 
     Right newExpr = naiveSubstitute (rename renamings expr1) var expr2
+applyRedex expr1 expr2 = expr1 :$: expr2
 
 normalStep :: Expression -> Maybe Expression
 normalStep (L var expr)

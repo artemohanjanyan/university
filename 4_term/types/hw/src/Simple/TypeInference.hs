@@ -1,6 +1,5 @@
 module Simple.TypeInference where
 
-import           Control.Monad            (foldM)
 import           Control.Monad.State.Lazy
 import           Data.List                (find, nub, sort)
 import qualified Data.Map.Strict          as Map
@@ -29,12 +28,12 @@ typeSubstitute (t1 :>: t2) subName subType =
         typeSubstitute t1 subName subType :>: typeSubstitute t2 subName subType
 
 resolveStep :: System -> Maybe (System, Bool)
-resolveStep system = do
-    let (system1, flag1) = stepReverse system
+resolveStep system' = do
+    let (system1, flag1) = stepReverse system'
     let (system2, flag2) = stepTautology system1
     (system3, flag3) <- stepUnfold system2
     (system4, flag4) <- stepSubstitute system3
-    return (system4, flag1 || flag2 || flag3 || flag4)
+    pure (system4, flag1 || flag2 || flag3 || flag4)
   where
     stepReverse system = (newSystem, or flags)
       where
@@ -53,20 +52,20 @@ resolveStep system = do
 
     stepUnfold system = fmap makeNewSystem maybeSystem
       where
-        doUnfold ((t1 :>: t2) :=: (t3 :>: t4))   = Just [t1 :=: t3, t2 :=: t4]
-        doUnfold e@(BaseType _ :=: BaseType _)   = Just [e]
-        doUnfold _                               = Nothing
+        doUnfold ((t1 :>: t2) :=: (t3 :>: t4)) = Just [t1 :=: t3, t2 :=: t4]
+        doUnfold e@(BaseType _ :=: BaseType _) = Just [e]
+        doUnfold _                             = Nothing
         maybeSystem = mapM doUnfold system
         makeNewSystem newSystem' = (newSystem, length newSystem /= length system)
           where
             newSystem = concat newSystem'
 
     stepSubstitute system = case maybeEq of
-            Nothing                               -> Just (system, False)
             Just eq@(BaseType name :=: otherType) ->
                     if Set.member name (getBaseTypes otherType)
                         then Nothing
                         else Just (nub $ sort $ map (substWith eq) system, True)
+            _ -> Just (system, False)
       where
         maybeEq = find check system
         check eq1@(BaseType name :=: _) = any checkOther system
@@ -79,6 +78,7 @@ resolveStep system = do
                     then typeSubstitute type1 name otherType
                             :=: typeSubstitute type2 name otherType
                     else eq1
+        substWith _ eq = eq
 
 resolveSystem :: System -> Maybe System
 resolveSystem system = resolveStep system >>=
@@ -96,22 +96,22 @@ makeSystem expr = (rawSystem, exprType)
   where
     renameAbstractions :: Expression -> State (Int, Map.Map Var Var) Expression
     renameAbstractions (V var) = do
-        (n, map) <- get
-        return $ V $ Map.findWithDefault var var map
+        (_, varMap) <- get
+        pure $ V $ Map.findWithDefault var var varMap
     renameAbstractions (expr1 :$: expr2) = do
         newExpr1 <- renameAbstractions expr1
         newExpr2 <- renameAbstractions expr2
-        return $ newExpr1 :$: newExpr2
-    renameAbstractions (L var expr) = do
-        (n, map) <- get
+        pure $ newExpr1 :$: newExpr2
+    renameAbstractions (L var expr') = do
+        (n, varMap) <- get
         let newVar = show n
-        put (n + 1, Map.insert var newVar map)
-        newExpr <- renameAbstractions expr
-        modify (\(n, _) -> (n, map))
-        return $ L newVar newExpr
+        put (n + 1, Map.insert var newVar varMap)
+        newExpr <- renameAbstractions expr'
+        modify (\(n', _) -> (n', varMap))
+        pure $ L newVar newExpr
 
     makeSystem' :: Expression -> State (Int, System) Type
-    makeSystem' (V var) = return $ BaseType $ "t" ++ var
+    makeSystem' (V var) = pure $ BaseType $ "t" ++ var
     makeSystem' (expr1 :$: expr2) = do
         type1 <- makeSystem' expr1
         type2 <- makeSystem' expr2
@@ -119,17 +119,17 @@ makeSystem expr = (rawSystem, exprType)
         let typeName = "e" ++ show n
         let newType = BaseType typeName
         put (n + 1, type1 :=: type2 :>: newType : system)
-        return newType
-    makeSystem' (L var expr) = do
-        exprType <- makeSystem' expr
-        return $ (BaseType $ "t" ++ var) :>: exprType
+        pure newType
+    makeSystem' (L var expr') = do
+        exprType' <- makeSystem' expr'
+        pure $ (BaseType $ "t" ++ var) :>: exprType'
 
     (exprType, (_, rawSystem)) = runState (makeSystem' $ evalState (renameAbstractions expr) (0, Map.empty)) (0, [])
 
 inferType :: Expression -> Maybe (Type, [(Var, Type)])
 inferType expr = do
     system <- maybeSystem
-    return $ (applySystem system exprType, makeContext system)
+    pure $ (applySystem system exprType, makeContext system)
   where
     (rawSystem, exprType) = makeSystem expr
     maybeSystem = resolveSystem rawSystem

@@ -3,7 +3,7 @@
 module Simple.Expression where
 
 import           Control.Applicative ((*>), (<*))
-import           Data.Char           (isDigit, isLower, isSpace, isUpper)
+import           Data.Char           (isDigit, isLower, isSpace)
 import           Text.Parsec
 import           Text.Parsec.Char    (char)
 
@@ -34,12 +34,13 @@ show' (L var expr) flag1 _ = (if flag1 then id else embrace) $ "\\" ++ var ++ ".
 show' (expr1 :$: expr2) flag1 flag2 = (if flag2 then id else embrace) $ show' expr1 False True ++ " " ++ show' expr2 flag1 False
 show' (V var) _ _ = var
 
+embrace :: String -> String
 embrace str = "(" ++ str ++ ")"
 
 fullShow :: String -> Expression -> String
-fullShow dot (L var expr) = embrace $ "\\" ++ var ++ dot ++ fullShow dot expr
+fullShow dot (L var expr)      = embrace $ "\\" ++ var ++ dot ++ fullShow dot expr
 fullShow dot (expr1 :$: expr2) = embrace $ fullShow dot expr1 ++ " " ++ fullShow dot expr2
-fullShow dot (V name) = name
+fullShow _ (V name)            = name
 
 parensShow :: Expression -> String
 parensShow = fullShow "."
@@ -65,41 +66,47 @@ instance Show CurryExpression where
 expressionParser :: Parsec String () Expression
 expressionParser =
     (   do
-        many $ satisfy isSpace
+        _ <- many $ satisfy isSpace
         application <- optionMaybe applicationParser
         abstraction <- optionMaybe abstractionParser
         case (application, abstraction) of
-            (Just appl, Just abstr) -> return $ appl :$: abstr
-            (Just appl, Nothing   ) -> return $ appl
-            (Nothing  , Just abstr) -> return $ abstr
+            (Just appl, Just abstr) -> pure $ appl :$: abstr
+            (Just appl, Nothing   ) -> pure $ appl
+            (Nothing  , Just abstr) -> pure $ abstr
             (Nothing  , Nothing   ) -> fail ""
     )
 
+abstractionParser :: Parsec String () Expression
 abstractionParser = do
-    token' $ char '\\'
+    _ <- token' $ char '\\'
     vars <- many1 $ token' $ varParser
-    token' $ string "."
+    _ <- token' $ string "."
     expr <- token' $ expressionParser
-    return $ foldr ($) expr $ map L vars
+    pure $ foldr ($) expr $ map L vars
 
-applicationParser = chainl1 (token' atomParser) (return (:$:))
+applicationParser :: Parsec String () Expression
+applicationParser = chainl1 (token' atomParser) (pure (:$:))
 
+atomParser :: Parsec String () Expression
 atomParser = (token' (string "(") *> expressionParser <* token' (string ")")) <|> do
     var <- token' $ varParser
-    return $ V var
+    pure $ V var
 
+varParser :: Parsec String () Var
 varParser = do
     l <- satisfy isLower <?> "variable"
     ls <- many $ satisfy isLower <|> satisfy isDigit <|> char '\''
-    return $ (l:ls)
+    pure $ (l:ls)
 
+token' :: Parsec String () a -> Parsec String () a
 token' parser = parser <* many (satisfy isSpace)
 
+substitutionParser :: Parsec String () (Expression, Var, Expression)
 substitutionParser = do
     expression <- expressionParser
-    char '['
+    _ <- char '['
     variable <- varParser
-    string ":="
+    _ <- string ":="
     substitution <- expressionParser
-    char ']'
-    return (expression, variable, substitution)
+    _ <- char ']'
+    pure (expression, variable, substitution)
