@@ -10,8 +10,10 @@ import           Simple.Expression
 import           Simple.Reduction
 
 data Equation = Type :=: Type deriving (Eq, Ord)
-type System = [Equation]
 infix 8 :=:
+type System = [Equation]
+type Substitution = (TypeName, Type)
+type ResolvedSystem = [Substitution]
 
 instance Show Equation where
     show (t1 :=: t2) = show t1 ++ " = " ++ show t2
@@ -20,19 +22,15 @@ getBaseTypes :: Type -> Set.Set TypeName
 getBaseTypes (BaseType name) = Set.singleton name
 getBaseTypes (t1 :>: t2)     = Set.union (getBaseTypes t1) (getBaseTypes t2)
 
-typeSubstitute :: (TypeName, Type) -> Type -> Type
+typeSubstitute :: Substitution -> Type -> Type
 typeSubstitute (subName, subType) t@(BaseType name)
     | name == subName = subType
     | otherwise       = t
 typeSubstitute sub (t1 :>: t2) =
         typeSubstitute sub t1 :>: typeSubstitute sub t2
 
-applySystem :: System -> Type -> Type
-applySystem system = apply
-  where
-    systemMap = Map.fromList $ map (\(a :=: b) -> (a, b)) system
-    apply t@(BaseType _) = Map.findWithDefault t t systemMap
-    apply (t1 :>: t2)    = apply t1 :>: apply t2
+applySystem :: ResolvedSystem -> Type -> Type
+applySystem system t = foldl (flip typeSubstitute) t system
 
 data ResolveResult a
     = Inconsistent
@@ -99,7 +97,7 @@ resolveSubstituteStep system = do
         | otherwise                           = Inconsistent
     checkRecursion _ = Unmodified ()
 
-    canSubstWith :: Equation -> Maybe (TypeName, Type)
+    canSubstWith :: Equation -> Maybe Substitution
     canSubstWith eq@(BaseType x :=: t) = if any canSubst system
         then Just (x, t)
         else Nothing
@@ -107,7 +105,7 @@ resolveSubstituteStep system = do
         canSubst eq'@(t1 :=: t2) = eq /= eq' && any (Set.member x) [getBaseTypes t1, getBaseTypes t2]
     canSubstWith _ = Nothing
 
-    subst :: (TypeName, Type) -> Equation -> Equation
+    subst :: Substitution -> Equation -> Equation
     subst sub@(x, t) eq@(t1 :=: t2) = if eq /= (BaseType x :=: t)
         then typeSubstitute sub t1 :=: typeSubstitute sub t2
         else eq
@@ -119,11 +117,14 @@ resolveStep system = do
     system3 <- resolveUnfoldStep     system2
     resolveSubstituteStep system3
 
-resolveSystem :: System -> Maybe System
+resolveSystem :: System -> Maybe ResolvedSystem
 resolveSystem system = case resolveStep system of
     Inconsistent       -> Nothing
-    Unmodified system' -> Just system'
     Modified   system' -> resolveSystem system'
+    Unmodified system' -> Just $ map eqToSubst system'
+  where
+    eqToSubst (BaseType x :=: t) = (x, t)
+    eqToSubst _                  = error "unmodified system is not resolved"
 
 makeSystem :: Expression -> (System, Type)
 makeSystem expr = (rawSystem, exprType)
@@ -163,10 +164,8 @@ makeSystem expr = (rawSystem, exprType)
 
 inferType :: Expression -> Maybe (Type, [(Var, Type)])
 inferType expr = do
-    system <- maybeSystem
-    pure $ (applySystem system exprType, makeContext system)
-  where
-    (rawSystem, exprType) = makeSystem expr
-    maybeSystem = resolveSystem rawSystem
-    freeVars = getFreeVars expr
-    makeContext system = map (\var -> (var, applySystem system $ BaseType $ "t" ++ var)) $ Set.toList freeVars
+    let (system, exprType) = makeSystem expr
+    resolvedSystem <- resolveSystem system
+    let freeVars = Set.toList $ getFreeVars expr
+    let context = map (\var -> (var, applySystem resolvedSystem $ BaseType $ "t" ++ var)) freeVars
+    pure (applySystem resolvedSystem exprType, context)
