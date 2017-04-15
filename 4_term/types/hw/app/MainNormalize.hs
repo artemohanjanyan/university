@@ -6,9 +6,8 @@ import           Simple.Expression
 import           Simple.Reduction
 
 main :: IO ()
-main = do
-    content <- getLine
-    case parse expressionParser "input" content of
-        Left parseError -> putStrLn $ show parseError
-        Right expr -> do
-            putStrLn $ show $ normalize expr
+main = interact (unlines . map f . lines)
+  where
+    f str = case parse (expressionParser <* eof) "input" str of
+        Left parseError -> show parseError
+        Right expr -> show $ normalize expr
