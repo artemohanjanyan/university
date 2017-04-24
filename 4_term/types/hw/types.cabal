@@ -1,16 +1,52 @@
-name:              tt-hw
-version:           1.0
-Build-Type:        Simple
-cabal-version:     >= 1.2
+name:                types
+version:             0.1.0.0
+-- synopsis:
+-- description:
+homepage:            https://github.com/artemohanjanyan/university/tree/master/4_term/types/hw/README.md
+license:             BSD3
+license-file:        LICENSE
+author:              Artem Ohanjanyan
+maintainer:          artemohanjanyan@gmail.com
+copyright:           Copyright: (c) 2017 Artem Ohanjanyan
+category:            Type Theory
+build-type:          Simple
+extra-source-files:  README.md
+cabal-version:       >=1.10
 
-executable hw1
-  main-is:         MainNormalize.hs
-  hs-source-dirs:  src/
-  build-depends:   mtl, base, parsec, containers, transformers, text
-  extensions:      PatternGuards
+library
+  hs-source-dirs:      src
+  exposed-modules:     Simple.Church
+                     , Simple.Combinators
+                     , Simple.Expression
+                     , Simple.Reduction
+                     , Simple.TypeInference
+  build-depends:       base >= 4.7 && < 5
+                     , mtl
+                     , parsec
+                     , containers
+                     , transformers
+                     , text
+  default-language:    Haskell2010
 
-executable hw2
-  main-is:         MainInferType.hs
-  hs-source-dirs:  src/
-  build-depends:   mtl, base, parsec, containers, transformers, text
-  extensions:      PatternGuards
+executable normalize
+  hs-source-dirs:      app
+  main-is:             MainNormalize.hs
+  ghc-options:         -threaded -rtsopts -with-rtsopts=-N
+  build-depends:       base
+                     , parsec
+                     , types
+  default-language:    Haskell2010
+
+executable infer-type
+  hs-source-dirs:      app
+  main-is:             MainInferType.hs
+  ghc-options:         -threaded -rtsopts -with-rtsopts=-N
+  build-depends:       base
+                     , parsec
+                     , types
+  default-language:    Haskell2010
+
+source-repository head
+  type:     git
+  location: https://github.com/artemohanjanyan/university
+  subdir:   4_term/types/hw
