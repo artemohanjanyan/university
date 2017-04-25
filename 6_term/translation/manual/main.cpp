@@ -110,7 +110,7 @@ struct parser
 
 	node parse_i()
 	{
-		node res{"I"};
+		node res{"IMPL"};
 		switch (tokens_->at(i).type_)
 		{
 			case token_type::VAR:
@@ -127,7 +127,7 @@ struct parser
 
 	node parse_i1()
 	{
-		node res{"I1"};
+		node res{"IMPL'"};
 		switch (tokens_->at(i).type_)
 		{
 			case token_type::IMPL:
@@ -147,7 +147,7 @@ struct parser
 
 	node parse_d()
 	{
-		node res{"D"};
+		node res{"OR"};
 		switch (tokens_->at(i).type_)
 		{
 			case token_type::VAR:
@@ -164,7 +164,7 @@ struct parser
 
 	node parse_d1()
 	{
-		node res{"D1"};
+		node res{"OR'"};
 		switch (tokens_->at(i).type_)
 		{
 			case token_type::OR:
@@ -186,7 +186,7 @@ struct parser
 
 	node parse_c()
 	{
-		node res{"C"};
+		node res{"AND"};
 		switch (tokens_->at(i).type_)
 		{
 			case token_type::VAR:
@@ -203,7 +203,7 @@ struct parser
 
 	node parse_c1()
 	{
-		node res{"C1"};
+		node res{"AND'"};
 		switch (tokens_->at(i).type_)
 		{
 			case token_type::AND:
@@ -226,7 +226,7 @@ struct parser
 
 	node parse_u()
 	{
-		node res{"U"};
+		node res{"UNARY"};
 		switch (tokens_->at(i).type_)
 		{
 			case token_type::VAR:
