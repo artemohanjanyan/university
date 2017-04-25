@@ -7,7 +7,7 @@
 
 enum class token_type
 {
-	OR, XOR, AND, NOT,
+	IMPL, OR, XOR, AND, NOT,
 	VAR, LPAREN, RPAREN, END
 };
 
@@ -37,7 +37,8 @@ void skip_spaces(std::string const *str, size_t *i)
 std::vector<token> tokenize(std::string const &str)
 {
 	std::vector<token> const special_tokens =
-		{{token_type::OR,     "or"},
+		{{token_type::IMPL,   "impl"},
+		 {token_type::OR,     "or"},
 		 {token_type::XOR,    "xor"},
 		 {token_type::AND,    "and"},
 		 {token_type::NOT,    "not"},
@@ -107,6 +108,43 @@ struct parser
 		++i;
 	}
 
+	node parse_i()
+	{
+		node res{"I"};
+		switch (tokens_->at(i).type_)
+		{
+			case token_type::VAR:
+			case token_type::NOT:
+			case token_type::LPAREN:
+				res.children_.push_back(parse_d());
+				res.children_.push_back(parse_i1());
+				break;
+			default:
+				throw std::runtime_error{"unexpected token"};
+		}
+		return res;
+	}
+
+	node parse_i1()
+	{
+		node res{"I1"};
+		switch (tokens_->at(i).type_)
+		{
+			case token_type::IMPL:
+				res.children_.emplace_back(tokens_->at(i).str_);
+				consume(tokens_->at(i).type_);
+				res.children_.push_back(parse_d());
+				res.children_.push_back(parse_i1());
+				break;
+			case token_type::RPAREN:
+			case token_type::END:
+				break;
+			default:
+				throw std::runtime_error{"unexpected token"};
+		}
+		return res;
+	}
+
 	node parse_d()
 	{
 		node res{"D"};
@@ -136,6 +174,7 @@ struct parser
 				res.children_.push_back(parse_c());
 				res.children_.push_back(parse_d1());
 				break;
+			case token_type::IMPL:
 			case token_type::RPAREN:
 			case token_type::END:
 				break;
@@ -173,6 +212,7 @@ struct parser
 				res.children_.push_back(parse_u());
 				res.children_.push_back(parse_c1());
 				break;
+			case token_type::IMPL:
 			case token_type::OR:
 			case token_type::XOR:
 			case token_type::RPAREN:
@@ -200,7 +240,7 @@ struct parser
 			case token_type::LPAREN:
 				consume(token_type::LPAREN);
 				res.children_.emplace_back("(");
-				res.children_.push_back(parse_d());
+				res.children_.push_back(parse_i());
 				consume(token_type::RPAREN);
 				res.children_.emplace_back(")");
 				break;
@@ -212,7 +252,7 @@ struct parser
 
 	node parse()
 	{
-		auto res = parse_d();
+		auto res = parse_i();
 		consume(token_type::END);
 		return res;
 	}
