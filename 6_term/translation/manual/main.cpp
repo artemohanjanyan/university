@@ -1,4 +1,5 @@
 #include <iostream>
+#include <fstream>
 #include <string>
 #include <vector>
 #include <algorithm>
@@ -211,20 +212,41 @@ struct parser
 
 	node parse()
 	{
-		return parse_d();
+		auto res = parse_d();
+		consume(token_type::END);
+		return res;
 	}
 };
 
 void print_node(std::ostream &out, node const &n, size_t depth = 0)
 {
 	for (size_t i = 0; i < depth; ++i)
-		out << "\t";
+		out << "   ";
 	out << n.str_ << "\n";
 	for (auto const &child : n.children_)
 		print_node(out, child, depth + 1);
 }
 
-int main()
+size_t graph_node(std::ostream &out, node const &n, size_t i = 0)
+{
+	size_t n_i = i;
+	if (n_i == 0)
+		out << "digraph G {\n";
+
+	for (auto const &child : n.children_)
+	{
+		size_t child_i = ++i;
+		i = graph_node(out, child, i);
+		out << n_i << " -> " << child_i << "\n";
+	}
+	out << n_i << " " << "[ label = \"" << n.str_ << "\" ] \n";
+
+	if (n_i == 0)
+		out << "}\n";
+	return i;
+}
+
+int main(int argc, char **argv)
 {
 	try
 	{
@@ -233,10 +255,16 @@ int main()
 		auto tokens = tokenize(s);
 		node n = parser(&tokens).parse();
 		print_node(std::cout, n);
+		if (argc > 1)
+		{
+			std::ofstream graph(argv[1]);
+			graph_node(graph, n);
+		}
 	}
 	catch (std::exception const &e)
 	{
 		std::cout << e.what() << "\n";
+		return 1;
 	}
 	return 0;
 }
