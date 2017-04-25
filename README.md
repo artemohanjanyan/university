@@ -20,4 +20,5 @@ Computer technologies department, ITMO University, 2014-now.
 - [Multithreading](https://github.com/artemohanjanyan/university/tree/distr/5_term/geom). Blocking and non-blocking bank implementations.
 
 ### 6 term
-- [Distributed systems](https://github.com/artemohanjanyan/university/tree/distr/6_term/distr). Implemented in Haskell.
+- [Distributed systems](https://github.com/artemohanjanyan/university/tree/master/6_term/distr). Implemented in Haskell.
+- [Translation methods](https://github.com/artemohanjanyan/university/tree/master/6_term/translation). Some parsers.
