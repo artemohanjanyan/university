@@ -1,8 +1,7 @@
 module Main where
 
-import Types
 import Parser
 import HtmlPrinter
 
 main :: IO ()
-main = putStrLn "hi"
+main = interact (unlines . map ((++ "<br>\n") . formulaToString . parse) . lines)
