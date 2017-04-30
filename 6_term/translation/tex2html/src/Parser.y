@@ -23,10 +23,12 @@ import Data.Char
 
 %%
 
-Formula1        : '$' Formula '$'               { (reverse $2) }
+Formula1        : '$' Formula '$'               { $2 }
 
-Formula         : {- -}                         { [] }
-                | Formula IndexedFormula        { $2 : $1 }
+Formula         : FormulaR                      { reverse $1 }
+
+FormulaR        : {- -}                         { [] }
+                | FormulaR IndexedFormula       { $2 : $1 }
 
 IndexedFormula  : IndexedBody IndexedRest       { uncurry (IndexedFormula $1) $2 }
 

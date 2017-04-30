@@ -1,9 +1,10 @@
 module HtmlPrinter where
 
-import Types
+import           Types
+import qualified Data.Set as Set
 
 formulaToString :: Formula -> String
-formulaToString = unlines . tag "math" . formulaLines
+formulaToString = unlines . (\ls -> ["<math display=\"block\">"] ++ ls ++ ["</math>"]) . formulaLines
 
 formulaLines :: Formula -> [String]
 formulaLines = concatMap indexedFormulaLines
@@ -17,17 +18,30 @@ indexedFormulaLines (IndexedFormula body msub msup) =
         (Nothing, Nothing)   -> bodyStr
   where
     bodyStr = indexedBodyLines body
-    mrow = tag "mrow"
-    iStr = mrow . formulaLines
 
 indexedBodyLines :: IndexedBody -> [String]
 indexedBodyLines (IndexedAtom atom) = atomFormulaLines atom
-indexedBodyLines (Command command args) = undefined
+indexedBodyLines (Command command args)
+    | Set.member command commandSet = tag ("m" ++ command) $ concat $ map iStr args
+    | otherwise                     = tag (getTag command) ["&" ++ command ++ ";"]
+  where
+    commandSet = Set.fromList ["frac", "sqrt"]
+
+    miTags = Set.fromList ["pi", "gamma", "lambda"]
+    getTag str = if Set.member str miTags
+        then "mi"
+        else "mo"
 
 atomFormulaLines :: AtomFormula -> [String]
-atomFormulaLines (AtomString str) = tag "mi" [str]
+atomFormulaLines (AtomString str) = concatMap (tag "mi" . pure . pure) str
 atomFormulaLines (AtomNumber num) = tag "mn" [num]
 atomFormulaLines (AtomChar   c  ) = tag "mo" [[c]]
 
 tag :: String -> [String] -> [String]
 tag tagName str = ["<" ++ tagName ++ ">"] ++ map (' ' :) str ++ ["</" ++ tagName ++ ">"]
+
+mrow :: [String] -> [String]
+mrow = tag "mrow"
+
+iStr :: Formula -> [String]
+iStr = mrow . formulaLines

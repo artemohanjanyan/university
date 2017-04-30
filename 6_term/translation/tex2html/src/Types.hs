@@ -1,5 +1,5 @@
 module Types
-    ( Formula (..)
+    ( Formula
     , IndexedFormula (..)
     , IndexedBody (..)
     , AtomFormula (..)
