@@ -130,23 +130,23 @@ makeSystem :: Expression -> (System, Type)
 makeSystem expr = (rawSystem, exprType)
   where
     renameAbstractions :: Expression -> State (Int, Map.Map Var Var) Expression
-    renameAbstractions (V var) = do
+    renameAbstractions (Var var) = do
         (_, varMap) <- get
-        pure $ V $ Map.findWithDefault var var varMap
+        pure $ Var $ Map.findWithDefault var var varMap
     renameAbstractions (expr1 :$: expr2) = do
         newExpr1 <- renameAbstractions expr1
         newExpr2 <- renameAbstractions expr2
         pure $ newExpr1 :$: newExpr2
-    renameAbstractions (L var expr') = do
+    renameAbstractions (Lambda var expr') = do
         (n, varMap) <- get
         let newVar = show n
         put (n + 1, Map.insert var newVar varMap)
         newExpr <- renameAbstractions expr'
         modify (\(n', _) -> (n', varMap))
-        pure $ L newVar newExpr
+        pure $ Lambda newVar newExpr
 
     makeSystem' :: Expression -> State (Int, System) Type
-    makeSystem' (V var) = pure $ BaseType $ "t" ++ var
+    makeSystem' (Var var) = pure $ BaseType $ "t" ++ var
     makeSystem' (expr1 :$: expr2) = do
         type1 <- makeSystem' expr1
         type2 <- makeSystem' expr2
@@ -155,7 +155,7 @@ makeSystem expr = (rawSystem, exprType)
         let newType = BaseType typeName
         put (n + 1, type1 :=: type2 :>: newType : system)
         pure newType
-    makeSystem' (L var expr') = do
+    makeSystem' (Lambda var expr') = do
         exprType' <- makeSystem' expr'
         pure $ (BaseType $ "t" ++ var) :>: exprType'
 
