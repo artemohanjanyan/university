@@ -95,7 +95,7 @@ atomParser = (token' (string "(") *> expressionParser <* token' (string ")")) <|
 varParser :: Parsec String () Var
 varParser = do
     l <- satisfy isLower <?> "variable"
-    ls <- many $ satisfy isLower <|> satisfy isDigit <|> char '\''
+    ls <- (many $ satisfy isLower <|> satisfy isDigit <|> char '\'') <?> "variable suffix"
     pure $ (l:ls)
 
 token' :: Parsec String () a -> Parsec String () a
