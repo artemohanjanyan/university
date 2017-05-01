@@ -76,5 +76,5 @@ algorithmW context (Let var expr1 expr2) = do
     (s2, t2) <- algorithmW nextContext expr2
     pure (s2 . s1, t2)
 
-inferHMType :: HMExpression -> Maybe Type
-inferHMType expr = snd . fst <$> (runStateT (algorithmW [] expr) 0)
+hmInferType :: HMExpression -> Maybe Type
+hmInferType expr = snd . fst <$> (runStateT (algorithmW [] expr) 0)
