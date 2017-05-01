@@ -11,5 +11,7 @@ main = interact ((++ "\n") . f)
     f str = case parse (hmParser <* eof) "input" str of
         Left parseError -> show parseError
         Right expr -> case hmInferType expr of
-            Just t  -> show t
+            Just (t, context) ->
+                let varTypes = map (\(var, varType) -> var ++ ":" ++ show varType) context in
+                    init $ unlines (show t : varTypes)
             Nothing -> "Выражение не имеет типа."

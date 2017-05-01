@@ -31,7 +31,7 @@ cleanShow = cleanShow' True True
   where
     cleanShow' :: Bool -> Bool -> HMExpression -> String
     cleanShow' flag1 _     (Lambda var expr)      = (if flag1 then id else embrace) $
-                                                     "\\" ++ var ++ "." ++ show expr
+                                                     "\\" ++ var ++ "." ++ cleanShow' True True expr
     cleanShow' flag1 flag2 (expr1 :$: expr2)      = (if flag2 then id else embrace) $
                                                      cleanShow' False True expr1 ++ " " ++
                                                      cleanShow' flag1 False expr2
@@ -89,4 +89,5 @@ atomParser = (token' (string "(") *> hmParser <* token' (string ")")) <|>
 hmVarParser :: Parsec String () Var
 hmVarParser = do
     _ <- notFollowedBy $ string "in"
+    _ <- notFollowedBy $ string "let"
     varParser

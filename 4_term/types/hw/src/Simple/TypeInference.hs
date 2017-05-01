@@ -111,11 +111,12 @@ resolveSubstituteStep system = do
         else eq
 
 resolveStep :: System -> ResolveResult System
-resolveStep system = do
-    system1 <- resolveReverseStep    system
-    system2 <- resolveTautologyStep  system1
-    system3 <- resolveUnfoldStep     system2
-    resolveSubstituteStep system3
+resolveStep system =
+    resolveReverseStep system >>=
+    resolveTautologyStep      >>=
+    resolveUnfoldStep         >>=
+    resolveTautologyStep      >>=
+    resolveSubstituteStep
 
 resolveSystem :: System -> Maybe ResolvedSystem
 resolveSystem system = case resolveStep system of

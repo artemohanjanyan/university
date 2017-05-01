@@ -11,6 +11,12 @@ type Unificator = Type -> Type
 
 type Context = [(Var, Rank1Type)]
 
+getFreeVars :: HMExpression -> Set.Set Var
+getFreeVars (Lambda var expr) = Set.delete var $ getFreeVars expr
+getFreeVars (expr1 :$: expr2) = Set.union (getFreeVars expr1) (getFreeVars expr2)
+getFreeVars (Var var)         = Set.singleton var
+getFreeVars (Let var e1 e2)   = Set.union (getFreeVars e1) (Set.delete var $ getFreeVars e2)
+
 unify :: Type -> Type -> Maybe Unificator
 unify t1 t2 = applySystem <$> resolveSystem [t1 :=: t2]
 
@@ -70,11 +76,19 @@ algorithmW context (Lambda var expr) = do
     pure (s1, s1 beta :>: t1)
 algorithmW context (Let var expr1 expr2) = do
     (s1, t1) <- algorithmW context expr1
+    let varType = typeClosure t1 $ applyUnificator s1 context
     let s1ContextX = applyUnificator s1 $ removeVar var context
-    let varType = typeClosure t1 s1ContextX
     let nextContext = (var, varType) : s1ContextX
     (s2, t2) <- algorithmW nextContext expr2
     pure (s2 . s1, t2)
 
-hmInferType :: HMExpression -> Maybe Type
-hmInferType expr = snd . fst <$> (runStateT (algorithmW [] expr) 0)
+hmInferType :: HMExpression -> Maybe (Type, [(Var, Type)])
+hmInferType expr = fst <$> runStateT algorithm 0
+  where
+    algorithm :: StateT Int Maybe (Type, [(Var, Type)])
+    algorithm = do
+        let freeVars = Set.toList $ getFreeVars expr
+        freeTypes <- replicateM (length freeVars) getNewType
+        let context = zip freeVars $ map (flip typeClosure []) freeTypes
+        (s, t) <- algorithmW context expr
+        pure (t, zip freeVars $ map s freeTypes)

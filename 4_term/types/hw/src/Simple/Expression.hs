@@ -3,7 +3,7 @@
 module Simple.Expression where
 
 import           Control.Applicative ((*>), (<*))
-import           Data.Char           (isDigit, isLower, isSpace)
+import           Data.Char           (isDigit, isAlpha, isSpace)
 import           Text.Parsec
 import           Text.Parsec.Char    (char)
 
@@ -94,8 +94,8 @@ atomParser = (token' (string "(") *> expressionParser <* token' (string ")")) <|
 
 varParser :: Parsec String () Var
 varParser = do
-    l <- satisfy isLower <?> "variable"
-    ls <- (many $ satisfy isLower <|> satisfy isDigit <|> char '\'') <?> "variable suffix"
+    l <- satisfy isAlpha <?> "variable"
+    ls <- (many $ satisfy isAlpha <|> satisfy isDigit <|> char '\'') <?> "variable suffix"
     pure $ (l:ls)
 
 token' :: Parsec String () a -> Parsec String () a
