@@ -39,18 +39,11 @@ data ResolveResult a
     deriving (Show)
 
 instance Functor ResolveResult where
-    fmap _  Inconsistent  = Inconsistent
-    fmap f (Unmodified x) = Unmodified (f x)
-    fmap f (  Modified x) =   Modified (f x)
+    fmap = liftM
 
 instance Applicative ResolveResult where
     pure = Unmodified
-    Inconsistent   <*> _              = Inconsistent
-    _              <*> Inconsistent   = Inconsistent
-    (  Modified f) <*> (  Modified x) =   Modified (f x)
-    (  Modified f) <*> (Unmodified x) =   Modified (f x)
-    (Unmodified f) <*> (  Modified x) =   Modified (f x)
-    (Unmodified f) <*> (Unmodified x) = Unmodified (f x)
+    (<*>) = ap
 
 instance Monad ResolveResult where
     Inconsistent   >>= _ = Inconsistent
