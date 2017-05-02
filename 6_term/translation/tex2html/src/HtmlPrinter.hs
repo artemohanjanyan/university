@@ -4,7 +4,7 @@ import           Types
 import qualified Data.Set as Set
 
 formulaToString :: Formula -> String
-formulaToString = unlines . (\ls -> ["<math display=\"block\">"] ++ ls ++ ["</math>"]) . formulaLines
+formulaToString = unlines . taga "math" [("display", "block")] . formulaLines
 
 formulaLines :: Formula -> [String]
 formulaLines = concatMap indexedFormulaLines
@@ -22,6 +22,10 @@ indexedFormulaLines (IndexedFormula body msub msup) =
 indexedBodyLines :: IndexedBody -> [String]
 indexedBodyLines (IndexedAtom atom) = atomFormulaLines atom
 indexedBodyLines (Command command args)
+    | command == "choose" = tag "mrow"
+        (tag "mo" ["("] ++
+            (taga "mfrac" [("linethickness", "0")] $ concat $ map iStr args) ++
+        tag "mo" [")"])
     | Set.member command commandSet = tag ("m" ++ command) $ concat $ map iStr args
     | otherwise                     = tag (getTag command) ["&" ++ command ++ ";"]
   where
@@ -38,7 +42,15 @@ atomFormulaLines (AtomNumber num) = tag "mn" [num]
 atomFormulaLines (AtomChar   c  ) = tag "mo" [[c]]
 
 tag :: String -> [String] -> [String]
-tag tagName str = ["<" ++ tagName ++ ">"] ++ map (' ' :) str ++ ["</" ++ tagName ++ ">"]
+tag = flip taga []
+
+taga :: String -> [(String, String)] -> [String] -> [String]
+taga tagName args str =
+    ["<" ++ tagName ++
+        concatMap (\(name, param) -> " " ++ name ++ "=\"" ++ param ++ "\"") args ++
+    ">"] ++
+    map (' ' :) str ++
+    ["</" ++ tagName ++ ">"]
 
 mrow :: [String] -> [String]
 mrow = tag "mrow"
