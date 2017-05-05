@@ -22,12 +22,6 @@ implementation Neg Rat where
     a - b = a + negate b
     abs (MkRat a b) = MkRat (abs a) b
 
-{-
-implementation Fractional Rat where
-    (/)   = ?rat_div_rhs
-    recip = ?rat_recip_rhs
--}
-
 ||| Equality on Rat
 data RatEq : Rat -> Rat -> Type where
     ||| a/(1 + b) == c/(1 + d)  <===>  a * (1 + d) == b * (1 + c)
@@ -153,11 +147,26 @@ ratTrans (MkRat (Sub a1 a2) b) (MkRat (Sub c1 c2) d) (MkRat (Sub e1 e2) f)
             Refl
 
     step5 : a1 * S f + e2 * S b = e1 * S b + a2 * S f
-    step5 = ?step5_rhs
+    step5 =
+        rewrite plusCommutative (e1 * S b) (a2 * S f) in
+        multLeftCancel _ _ _ step4
       where
+        addensumIsZero : (x : Nat) -> (y : Nat) -> x + y = 0 -> x = 0
+        addensumIsZero x Z prf = int
+          where
+            int : 0 + x = 0
+            int = rewrite plusCommutative 0 x in prf
+        addensumIsZero x (S k) prf = void $ SIsNotZ int
+          where
+            int : S k + x = 0
+            int = rewrite plusCommutative (S k) x in prf
+
         multLeftCancel : (x : Nat) -> (y : Nat) -> (z : Nat) -> S x * y = S x * z -> y = z
-        multLeftCancel x Z z prf = ?multLeftCancel_rhs_1
-        multLeftCancel x (S k) Z prf = ?multLeftCancel_rhs_3
+        multLeftCancel x Z z prf = sym $ addensumIsZero _ _ (sym int)
+          where
+            int : 0 * x = z + (x * z)
+            int = rewrite multCommutative 0 x in prf
+        multLeftCancel x y Z prf = sym $ multLeftCancel x Z y (sym prf)
         multLeftCancel x (S k) (S j) prf =
             let rec = multLeftCancel x k j in
             rewrite rec (plusLeftCancel _ _ _ int2) in
