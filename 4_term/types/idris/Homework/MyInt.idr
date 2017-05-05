@@ -3,6 +3,7 @@ module Homework.MyInt
 import Setoid
 
 %access public export
+%default total
 
 ||| Integer number
 data MyInt =

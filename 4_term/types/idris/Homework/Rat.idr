@@ -4,6 +4,7 @@ import Setoid
 import Homework.MyInt
 
 %access public export
+%default total
 
 data Rat =
     ||| MkRat a b represents a divided by (1 + b)
@@ -166,7 +167,10 @@ ratTrans (MkRat (Sub a1 a2) b) (MkRat (Sub c1 c2) d) (MkRat (Sub e1 e2) f)
           where
             int : 0 * x = z + (x * z)
             int = rewrite multCommutative 0 x in prf
-        multLeftCancel x y Z prf = sym $ multLeftCancel x Z y (sym prf)
+        multLeftCancel x y Z prf = addensumIsZero _ _ int
+          where
+            int : y + (x * y) = 0 * x
+            int = rewrite multCommutative 0 x in prf
         multLeftCancel x (S k) (S j) prf =
             let rec = multLeftCancel x k j in
             rewrite rec (plusLeftCancel _ _ _ int2) in
