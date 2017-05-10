@@ -39,18 +39,11 @@ data ResolveResult a
     deriving (Show)
 
 instance Functor ResolveResult where
-    fmap _  Inconsistent  = Inconsistent
-    fmap f (Unmodified x) = Unmodified (f x)
-    fmap f (  Modified x) =   Modified (f x)
+    fmap = liftM
 
 instance Applicative ResolveResult where
     pure = Unmodified
-    Inconsistent   <*> _              = Inconsistent
-    _              <*> Inconsistent   = Inconsistent
-    (  Modified f) <*> (  Modified x) =   Modified (f x)
-    (  Modified f) <*> (Unmodified x) =   Modified (f x)
-    (Unmodified f) <*> (  Modified x) =   Modified (f x)
-    (Unmodified f) <*> (Unmodified x) = Unmodified (f x)
+    (<*>) = ap
 
 instance Monad ResolveResult where
     Inconsistent   >>= _ = Inconsistent
@@ -111,11 +104,12 @@ resolveSubstituteStep system = do
         else eq
 
 resolveStep :: System -> ResolveResult System
-resolveStep system = do
-    system1 <- resolveReverseStep    system
-    system2 <- resolveTautologyStep  system1
-    system3 <- resolveUnfoldStep     system2
-    resolveSubstituteStep system3
+resolveStep system =
+    resolveReverseStep system >>=
+    resolveTautologyStep      >>=
+    resolveUnfoldStep         >>=
+    resolveTautologyStep      >>=
+    resolveSubstituteStep
 
 resolveSystem :: System -> Maybe ResolvedSystem
 resolveSystem system = case resolveStep system of
@@ -130,23 +124,23 @@ makeSystem :: Expression -> (System, Type)
 makeSystem expr = (rawSystem, exprType)
   where
     renameAbstractions :: Expression -> State (Int, Map.Map Var Var) Expression
-    renameAbstractions (V var) = do
+    renameAbstractions (Var var) = do
         (_, varMap) <- get
-        pure $ V $ Map.findWithDefault var var varMap
+        pure $ Var $ Map.findWithDefault var var varMap
     renameAbstractions (expr1 :$: expr2) = do
         newExpr1 <- renameAbstractions expr1
         newExpr2 <- renameAbstractions expr2
         pure $ newExpr1 :$: newExpr2
-    renameAbstractions (L var expr') = do
+    renameAbstractions (Lambda var expr') = do
         (n, varMap) <- get
         let newVar = show n
         put (n + 1, Map.insert var newVar varMap)
         newExpr <- renameAbstractions expr'
         modify (\(n', _) -> (n', varMap))
-        pure $ L newVar newExpr
+        pure $ Lambda newVar newExpr
 
     makeSystem' :: Expression -> State (Int, System) Type
-    makeSystem' (V var) = pure $ BaseType $ "t" ++ var
+    makeSystem' (Var var) = pure $ BaseType $ "t" ++ var
     makeSystem' (expr1 :$: expr2) = do
         type1 <- makeSystem' expr1
         type2 <- makeSystem' expr2
@@ -155,7 +149,7 @@ makeSystem expr = (rawSystem, exprType)
         let newType = BaseType typeName
         put (n + 1, type1 :=: type2 :>: newType : system)
         pure newType
-    makeSystem' (L var expr') = do
+    makeSystem' (Lambda var expr') = do
         exprType' <- makeSystem' expr'
         pure $ (BaseType $ "t" ++ var) :>: exprType'
 

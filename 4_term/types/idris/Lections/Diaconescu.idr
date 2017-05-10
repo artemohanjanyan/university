@@ -3,6 +3,7 @@ module Lections.Diaconescu
 import Setoid
 
 %access public export
+%default total
 
 ||| Чтобы создать экземпляр Or, мы либо создадим a, либо создадим b.
 data Or a b = Inl a | Inr b
