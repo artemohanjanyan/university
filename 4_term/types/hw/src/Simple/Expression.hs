@@ -8,9 +8,9 @@ import           Text.Parsec
 import           Text.Parsec.Char    (char)
 
 data Expression
-    = Lambda Var Expression -- L for Lambda
+    = Lambda Var Expression
     | Expression :$: Expression
-    | Var Var -- V for Var
+    | Var Var
     deriving (Eq, Ord)
 infixl 9 :$:
 type Var = String
