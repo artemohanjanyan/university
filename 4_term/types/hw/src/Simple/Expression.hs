@@ -3,14 +3,14 @@
 module Simple.Expression where
 
 import           Control.Applicative ((*>), (<*))
-import           Data.Char           (isDigit, isLower, isSpace)
+import           Data.Char           (isDigit, isAlpha, isSpace)
 import           Text.Parsec
 import           Text.Parsec.Char    (char)
 
 data Expression
-    = L Var Expression -- L for Lambda
+    = Lambda Var Expression
     | Expression :$: Expression
-    | V Var -- V for Var
+    | Var Var
     deriving (Eq, Ord)
 infixl 9 :$:
 type Var = String
@@ -30,17 +30,17 @@ infix 1 :::
 ------------
 
 show' :: Expression -> Bool -> Bool -> [Char]
-show' (L var expr) flag1 _ = (if flag1 then id else embrace) $ "\\" ++ var ++ "." ++ show expr
+show' (Lambda var expr) flag1 _     = (if flag1 then id else embrace) $ "\\" ++ var ++ "." ++ show expr
 show' (expr1 :$: expr2) flag1 flag2 = (if flag2 then id else embrace) $ show' expr1 False True ++ " " ++ show' expr2 flag1 False
-show' (V var) _ _ = var
+show' (Var var)         _     _     = var
 
 embrace :: String -> String
 embrace str = "(" ++ str ++ ")"
 
 fullShow :: String -> Expression -> String
-fullShow dot (L var expr)      = embrace $ "\\" ++ var ++ dot ++ fullShow dot expr
+fullShow dot (Lambda var expr) = embrace $ "\\" ++ var ++ dot ++ fullShow dot expr
 fullShow dot (expr1 :$: expr2) = embrace $ fullShow dot expr1 ++ " " ++ fullShow dot expr2
-fullShow _ (V name)            = name
+fullShow _   (Var name)        = name
 
 parensShow :: Expression -> String
 parensShow = fullShow "."
@@ -82,7 +82,7 @@ abstractionParser = do
     vars <- many1 $ token' $ varParser
     _ <- token' $ string "."
     expr <- token' $ expressionParser
-    pure $ foldr ($) expr $ map L vars
+    pure $ foldr ($) expr $ map Lambda vars
 
 applicationParser :: Parsec String () Expression
 applicationParser = chainl1 (token' atomParser) (pure (:$:))
@@ -90,12 +90,12 @@ applicationParser = chainl1 (token' atomParser) (pure (:$:))
 atomParser :: Parsec String () Expression
 atomParser = (token' (string "(") *> expressionParser <* token' (string ")")) <|> do
     var <- token' $ varParser
-    pure $ V var
+    pure $ Var var
 
 varParser :: Parsec String () Var
 varParser = do
-    l <- satisfy isLower <?> "variable"
-    ls <- many $ satisfy isLower <|> satisfy isDigit <|> char '\''
+    l <- satisfy isAlpha <?> "variable"
+    ls <- (many $ satisfy isAlpha <|> satisfy isDigit <|> char '\'') <?> "variable suffix"
     pure $ (l:ls)
 
 token' :: Parsec String () a -> Parsec String () a

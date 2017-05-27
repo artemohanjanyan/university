@@ -1,6 +1,7 @@
 module Setoid
 
 %access public export
+%default total
 
 ||| Reflexivity property
 Reflx : {A : Type} -> (R : A -> A -> Type) -> Type
