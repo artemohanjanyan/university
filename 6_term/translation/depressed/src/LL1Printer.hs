@@ -7,11 +7,12 @@ import Common
 import qualified Data.Map.Strict as Map
 import qualified Data.Set as Set
 import Data.Either (isRight)
-import Data.List (groupBy, sort, intercalate)
+import Data.List (groupBy, sort, intercalate, find)
 import Control.Monad (when)
 
 constantPrefix :: String -> String
 constantPrefix funcName = "\
+    \import Data.Either (isLeft)\n\
     \import Control.Monad.State.Strict\n\
     \data EndOfInput = EndOfInput deriving (Show, Eq, Ord)\n\n" ++
     funcName ++ " ts = fst $ runState runParser tokens\n\
@@ -45,7 +46,7 @@ printParser input = do
     sortedRules  = sort grammarRules
 
     first        = makeFirst grammar
-    follow       = makeFollow grammar
+    follow       = makeFollow grammar first
 
     nonTerminalFuncName   (NonTerminal str) = "runParser_" ++ str
     nonTerminalSwitchName (NonTerminal str) = "runParser_" ++ str ++ "_switch"
@@ -63,7 +64,10 @@ printParser input = do
             \    (curToken : _) <- get\n\
             \    " ++ nonTerminalSwitchName nonTerminal ++ " curToken\n"
         mapM_ printRule rules
-        -- TODO
+        let epsilonRule = find (\(_ :-> (ss, _)) -> null ss) rules
+        case epsilonRule of
+            Just rule -> printEpsilonRule rule
+            Nothing   -> pure ()
         putStrLn ""
 
     printRule :: Rule -> IO ()
@@ -73,9 +77,9 @@ printParser input = do
                 filter (/= Left Epsilon) $
                 Set.toList $
                 runFirst symbols first
-        let symbolToCtor (Right (Terminal str)) = fst $ tokenMap Map.! str;
+        let symbolToCtor (Right (Terminal str)) = "is" ++ (fst $ tokenMap Map.! str);
             symbolToCtor _                      = ""
-        let firstCtors = map (\s -> "is" ++ symbolToCtor s ++ " curToken") firstSymbols
+        let firstCtors = map (\s -> symbolToCtor s ++ " curToken") firstSymbols
         let condition = intercalate " || " ("False" : firstCtors)
         putStr $ nonTerminalSwitchName nonTerminal ++ " curToken\n\
             \    | " ++ condition ++ " = do\n"
@@ -83,6 +87,19 @@ printParser input = do
         putStr "        pure $ "
         printFomula formula
         putStrLn ""
+
+    printEpsilonRule :: Rule -> IO ()
+    printEpsilonRule (nonTerminal :-> (_, formula)) = do
+        let followSymbols = Set.toList $ follow Map.! nonTerminal
+        let symbolToCtor (Right (Terminal str)) = "is" ++ (fst $ tokenMap Map.! str);
+            symbolToCtor _                      = "isLeft"
+        let followCtors = map (\s -> symbolToCtor s ++ " curToken") followSymbols
+        let condition = intercalate " || " ("False" : followCtors)
+        putStr $ nonTerminalSwitchName nonTerminal ++ " curToken\n\
+            \    | " ++ condition ++ " = do\n"
+        putStr "        pure $ "
+        printFomula formula
+        putStrLn ";"
 
     printFomula :: AttributeFormula -> IO ()
     printFomula (AttributeFormula formula) = mapM_ print' formula
