@@ -1,6 +1,14 @@
 module Main where
 
-import Lib
+import InputParser
+import LL1Printer
+
+import Text.Megaparsec
+import           Text.Megaparsec.Error (parseErrorPretty)
 
 main :: IO ()
-main = someFunc
+main = do
+    contents <- getContents
+    case runParser inputParser "STDIN" contents of
+        Left  e     -> putStr $ parseErrorPretty e
+        Right input -> printParser input
