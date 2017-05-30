@@ -1,9 +1,9 @@
 module Main where
 
-import InputParser
-import LL1Printer
+import           InputParser
+import           LL1Printer
 
-import Text.Megaparsec
+import           Text.Megaparsec
 import           Text.Megaparsec.Error (parseErrorPretty)
 
 main :: IO ()

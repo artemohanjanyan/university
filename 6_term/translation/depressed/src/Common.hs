@@ -1,12 +1,12 @@
 module Common where
 
-import Grammar
+import           Grammar
 
-import Control.Monad.State.Strict
-import Data.Either (isRight)
-import Data.List (tails)
-import qualified Data.Set        as Set
-import qualified Data.Map.Strict as Map
+import           Control.Monad.State.Strict
+import           Data.Either                (isRight)
+import           Data.List                  (tails)
+import qualified Data.Map.Strict            as Map
+import qualified Data.Set                   as Set
 
 data Epsilon    = Epsilon    deriving (Show, Eq, Ord)
 type FirstValue = Either Epsilon Terminal

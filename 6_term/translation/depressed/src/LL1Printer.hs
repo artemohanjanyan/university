@@ -1,14 +1,14 @@
 module LL1Printer where
 
-import Input
-import Grammar
-import Common
+import           Common
+import           Grammar
+import           Input
 
+import           Control.Monad   (when)
+import           Data.Either     (isRight)
+import           Data.List       (find, groupBy, intercalate, sort)
 import qualified Data.Map.Strict as Map
-import qualified Data.Set as Set
-import Data.Either (isRight)
-import Data.List (groupBy, sort, intercalate, find)
-import Control.Monad (when)
+import qualified Data.Set        as Set
 
 constantPrefix :: String -> String
 constantPrefix funcName = "\
@@ -105,7 +105,7 @@ printParser input = do
     printFomula (AttributeFormula formula) = mapM_ print' formula
       where
         print' (Left (AttributeArgument n)) = putStr $ "ret" ++ show n
-        print' (Right c) = putStr [c]
+        print' (Right c)                    = putStr [c]
 
     printConsume :: (Symbol, Int) -> IO ()
     printConsume (Symbol (Right (Terminal str)), n) = do
