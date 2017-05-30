@@ -25,10 +25,8 @@ import Data.Char
 
 Formula1        : '$' Formula '$'               { $2 }
 
-Formula         : FormulaR                      { reverse $1 }
-
-FormulaR        : {- -}                         { [] }
-                | FormulaR IndexedFormula       { $2 : $1 }
+Formula         : {- -}                         { [] }
+                | IndexedFormula Formula        { $1 : $2 }
 
 IndexedFormula  : IndexedBody IndexedRest       { uncurry (IndexedFormula $1) $2 }
 
@@ -47,9 +45,9 @@ SupRest         : SubIndex                      { $1 }
 IndexArg        : '\{' Formula '\}'             { $2 }
                 | AtomFormula                   { [IndexedFormula (IndexedAtom $1) Nothing Nothing] }
 
-Command         : '\\' word CommandArgs         { Command $2 (reverse $3) }
+Command         : '\\' word CommandArgs         { Command $2 $3 }
 CommandArgs     : {- empty -}                   { [] }
-                | CommandArgs '\{' Formula '\}' { $3 : $1 }
+                | '\{' Formula '\}' CommandArgs { $2 : $4 }
 
 AtomFormula     : word                          { AtomString $1 }
                 | number                        { AtomNumber $1 }

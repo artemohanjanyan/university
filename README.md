@@ -41,4 +41,6 @@ Blocking and non-blocking bank implementations.
 
 ### 6 term
 - [Distributed systems](https://github.com/artemohanjanyan/university/tree/master/6_term/distr). Implemented in Haskell.
-- [Translation methods](https://github.com/artemohanjanyan/university/tree/master/6_term/translation). Some parsers.
+- [Translation methods](https://github.com/artemohanjanyan/university/tree/master/6_term/translation).
+[Parser generator](https://github.com/artemohanjanyan/university/tree/master/6_term/translation/depressed) for LL(1) grammars and
+[formula translator](https://github.com/artemohanjanyan/university/tree/master/6_term/translation/tex2html) from TeX to MathML.
