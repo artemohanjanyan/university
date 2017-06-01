@@ -1,0 +1,79 @@
+\documentclass[12pt]{article}
+
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{amsthm}
+\usepackage{mathtext}
+\usepackage[T1,T2A]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage[left=2cm,right=2cm,top=2cm,bottom=2cm,bindingoffset=0cm]{geometry}
+\usepackage{geometry}
+\usepackage[mathscr]{euscript}
+\usepackage{microtype}
+\usepackage{enumitem}
+\usepackage{bm}
+\usepackage{listings}
+\usepackage{cancel}
+\usepackage{proof}
+\usepackage{epigraph}
+\usepackage{titlesec}
+\usepackage{xcolor}
+\usepackage{stmaryrd}
+\usepackage[hidelinks]{hyperref}
+
+\usepackage[russian]{babel}
+\selectlanguage{russian}
+
+\title{\textsc{Вторая контрольная работа, вариант №2}}
+\author{Оганджанян Артем}
+\date{}
+
+\begin{document}
+
+\theoremstyle{plain}
+\newtheorem*{statement}{Утверждение}
+
+\pagenumbering{gobble}
+
+\maketitle
+
+\section{\texorpdfstring{Задача 2}{Task 2}}
+
+\[
+    f_X(x) = \frac{e^{-\left|x\right|}}{2}
+\]
+
+\subsection{\texorpdfstring{Характеристическая функция}{Characteristic function}}
+
+\begin{align*}
+    \varphi_X(t)
+    &= \int_{-\infty}^{+\infty} e^{itx} f_X(x) \mathrm{d}x
+    = \int_{-\infty}^{+\infty} e^{itx} \frac{e^{-\left|x\right|}}{2} \mathrm{d}x \\
+    &= \frac{1}{2} \left(\int_{-\infty}^0 e^{itx + x} \mathrm{d}x
+        + \int_0^{+\infty} e^{itx - x} \mathrm{d}x \right) \\
+    &= \frac{1}{2} \left(\left.\frac{1}{it+1} e^{itx+x}\right|_{-\infty}^0
+        + \left.\frac{1}{it-1} e^{-x\left(1-it\right)}\right|_0^{+\infty} \right) \\
+    &= \frac{1}{2} \left(\frac{1}{it+1} - \frac{1}{it-1} \right)
+    = \frac{it - 1 - it - 1}{2(it+1)(it-1)}
+    = \frac{- 2}{2(-t^2 - 1)} \\
+    &= \frac{1}{t^2 + 1}
+\end{align*}
+
+\subsection{\texorpdfstring{Моменты}{Moments}}
+
+\begin{gather*}
+    \mathbb E X^n = i^{-n} \left.\frac{\mathrm{d}^n}{\mathrm{d}t^n}\varphi_X(t)\right|_{t=0} \\
+    \frac{1}{1 - t} = 1 + t + t^2 + t^3 + \dots \\
+    \frac{1}{1 + t^2} = 1 - t^2 + t^4 - t^6 + \dots \\
+    \frac{1}{1 + t^2} = \frac{\varphi^{(0)}_X(0)}{0!} t^0 + \frac{\varphi^{(2)}_X(0)}{2!} t^2 + \frac{\varphi^{(4)}_X(0)}{4!} t^4 + \frac{\varphi^{(6)}_X(0)}{6!} t^6 + \dots \\
+    \varphi_X^{(n)}(0) = \begin{cases}
+        (-1)^k n!, & n = 2k \\
+        0,                   & n = 2k + 1
+    \end{cases} \\
+    \mathbb{E} X^n = \begin{cases}
+        n!, & n = 2k \\
+        0,  & n = 2k + 1
+    \end{cases}
+\end{gather*}
+
+\end{document}
