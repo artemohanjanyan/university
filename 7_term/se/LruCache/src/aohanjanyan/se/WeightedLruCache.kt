@@ -1,6 +1,8 @@
 package aohanjanyan.se
 
-class WeightedLruCache<in Key, Value>(private val maxWeight: Int) : WeightedCache<Key, Value> {
+class WeightedLruCache<in Key, Value>(private val maxWeight: Int) :
+        Cache<Key, Value>,
+        WeightedCache<Key, Value> {
 
     private class ListData<out Key, Value>(val key: Key, var value: Value, var weight: Int)
 
@@ -31,6 +33,7 @@ class WeightedLruCache<in Key, Value>(private val maxWeight: Int) : WeightedCach
         val existing = pointerMap[key]
         if (existing != null) {
             existing.moveToHead()
+            existing.value().value = value
             if (existing.value().weight != weight) {
                 totalWeight -= existing.value().weight
                 totalWeight += weight
@@ -43,8 +46,7 @@ class WeightedLruCache<in Key, Value>(private val maxWeight: Int) : WeightedCach
         }
 
         dropExcess()
-        assert(linkedList.size() == pointerMap.size,
-                { "size of list != size of map" })
+        assert(linkedList.size() == pointerMap.size, { "size of list != size of map" })
     }
 
     private fun dropExcess() {

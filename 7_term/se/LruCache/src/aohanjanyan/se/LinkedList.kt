@@ -3,7 +3,7 @@ package aohanjanyan.se
 class LinkedList<T> {
 
     fun addToHead(value: T): Pointer<T> = Node(value)
-            .apply { appendAfter(fakeNode); ++size }
+            .apply { appendAfter(fakeNode) }
 
     fun head(): Pointer<T>? = fakeNode.next
             .takeIf { it != fakeNode }
@@ -38,6 +38,8 @@ class LinkedList<T> {
         }
 
         override fun remove() {
+            prev!!.next = next
+            next!!.prev = prev
             prev = null
             next = null
             --size
