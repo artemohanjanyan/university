@@ -1,4 +1,4 @@
-package aohanjanyan.se
+package aohanjanyan.sd
 
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.*

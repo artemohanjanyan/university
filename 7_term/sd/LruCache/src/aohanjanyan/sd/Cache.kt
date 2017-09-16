@@ -1,4 +1,4 @@
-package aohanjanyan.se
+package aohanjanyan.sd
 
 interface Cache<in Key, Value> {
     fun put(key: Key, value: Value)

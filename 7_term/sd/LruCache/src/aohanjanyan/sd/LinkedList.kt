@@ -1,4 +1,4 @@
-package aohanjanyan.se
+package aohanjanyan.sd
 
 class LinkedList<T> {
 
