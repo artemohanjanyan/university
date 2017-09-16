@@ -1,28 +1,38 @@
 package aohanjanyan.se
 
+import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.*
+import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 
 internal class LinkedListTest {
-    private fun initData(): Pair<LinkedList<Int>, List<LinkedList.Pointer<Int>>> {
-        val list = LinkedList<Int>()
-        val pointers = ArrayList<LinkedList.Pointer<Int>>()
+    private lateinit var list: LinkedList<Int>
+    private lateinit var pointers: MutableList<LinkedList.Pointer<Int>>
+
+    @BeforeEach
+    fun initData() {
+        list = LinkedList()
+        pointers = ArrayList()
         for (i in 0 until 5) {
             pointers.add(list.addToHead(i))
         }
-        return Pair(list, pointers)
+    }
+
+    @AfterEach
+    fun checkStructure() {
+        list.checkStructure()
     }
 
     @Test
     fun emptyHeadTailTest() {
-        val list = LinkedList<Int>()
+        list = LinkedList<Int>()
         assertNull(list.head())
         assertNull(list.tail())
     }
 
     @Test
     fun addToHeadTest() {
-        val list = LinkedList<Int>()
+        list = LinkedList<Int>()
         assertEquals(0, list.addToHead(0).value())
         assertEquals(1, list.addToHead(1).value())
         assertEquals(2, list.addToHead(2).value())
@@ -32,7 +42,6 @@ internal class LinkedListTest {
 
     @Test
     fun sizeTest() {
-        val (list, _) = initData()
         assertEquals(5, list.size())
         list.addToHead(-1)
         assertEquals(6, list.size())
@@ -42,7 +51,7 @@ internal class LinkedListTest {
 
     @Test
     fun inflateAndClearTest() {
-        val list = LinkedList<Int>()
+        list = LinkedList<Int>()
         assertNull(list.head())
         assertNull(list.tail())
         for (i in 0 until 5) {
@@ -65,7 +74,6 @@ internal class LinkedListTest {
 
     @Test
     fun moveToHeadTest() {
-        val (list, pointers) = initData()
         for (pointer in pointers) {
             pointer.moveToHead()
         }

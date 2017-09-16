@@ -55,4 +55,20 @@ class LinkedList<T> {
             ++size
         }
     }
+
+    internal fun checkStructure() {
+        val collectToList = { next: (Node) -> Node? ->
+            val list = ArrayList<T>()
+            var node = next(fakeNode)
+            while (node != fakeNode) {
+                list.add(node!!.value())
+                node = next(node)
+            }
+            list
+        }
+
+        val forwardOrder = collectToList { it.next }
+        val reverseOrder = collectToList { it.prev }
+        assert(forwardOrder == reverseOrder.reversed())
+    }
 }
