@@ -34,9 +34,9 @@ based on dependent types and Curry-Howard correspondence.
 Deeper Java course with homework covering different parts of Java API, including concurrency and reflection API.
 
 ### 5 term
-- [Computational geometry](https://github.com/artemohanjanyan/university/tree/distr/5_term/geom).
+- [Computational geometry](https://github.com/artemohanjanyan/university/tree/master/5_term/geom).
 Working with Delaunay triangulation in C++.
-- [Multithreading](https://github.com/artemohanjanyan/university/tree/distr/5_term/geom).
+- [Multithreading](https://github.com/artemohanjanyan/university/tree/master/5_term/multi).
 Blocking and non-blocking bank implementations.
 
 ### 6 term
