@@ -1,0 +1,69 @@
+\documentclass{article}
+
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{amsthm}
+\usepackage{mathtext}
+\usepackage{mathtools}
+\usepackage[T1,T2A]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage[left=2cm,right=2cm,top=2cm,bottom=2cm]{geometry}
+\usepackage{microtype}
+\usepackage{enumitem}
+\usepackage{bm}
+\usepackage{cancel}
+\usepackage{proof}
+\usepackage{epigraph}
+\usepackage{titlesec}
+\usepackage[dvipsnames]{xcolor}
+\usepackage{stmaryrd}
+\usepackage{cellspace}
+\usepackage{cmll}
+\usepackage{multirow}
+\usepackage{booktabs}
+\usepackage{tikz}
+\usepackage{caption}
+\usepackage{wrapfig}
+\usepackage{minted}
+\usepackage{svg}
+
+\usepackage[hidelinks]{hyperref}
+
+\usepackage[russian]{babel}
+\selectlanguage{russian}
+
+\hypersetup{%
+    colorlinks=true,
+    linkcolor=blue
+}
+
+\pagenumbering{gobble}
+
+\title{\vspace{-10ex}}
+\author{Артем Оганджанян\vspace{-10ex}}
+\date{}
+
+\begin{document}
+
+\maketitle
+\vspace{-5ex}
+
+\begin{figure}[ht]
+    \centering
+    \includesvg[width=\textwidth]{../ERM}
+    \caption{Модель сущность-связь.}
+\end{figure}
+
+\begin{figure}[ht]
+    \centering
+    \includesvg[width=\textwidth]{../PDM}
+    \caption{Физическая модель.}
+\end{figure}
+
+\subsection{\texorpdfstring{Создание}{Creation}}
+\inputminted{sql}{/home/artem/workspace/study/university/7_term/db/hw2/report/create.sql}
+
+\subsection{\texorpdfstring{Заполнение}{Inflation}}
+\inputminted{sql}{/home/artem/workspace/study/university/7_term/db/hw2/report/inflate.sql}
+
+\end{document}
