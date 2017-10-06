@@ -1,0 +1,128 @@
+\documentclass{article}
+
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{amsthm}
+\usepackage{mathtext}
+\usepackage{mathtools}
+\usepackage[T1,T2A]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage[left=2cm,right=2cm,top=2cm,bottom=2cm]{geometry}
+\usepackage{microtype}
+\usepackage{enumitem}
+\usepackage{bm}
+\usepackage{cancel}
+\usepackage{proof}
+\usepackage{epigraph}
+\usepackage{titlesec}
+\usepackage[dvipsnames]{xcolor}
+\usepackage{stmaryrd}
+\usepackage{cellspace}
+\usepackage{cmll}
+\usepackage{multirow}
+\usepackage{booktabs}
+\usepackage{tikz}
+\usepackage{caption}
+\usepackage{wrapfig}
+\usepackage{minted}
+\usepackage{svg}
+
+\usepackage[hidelinks]{hyperref}
+
+\usepackage[russian]{babel}
+\selectlanguage{russian}
+
+\hypersetup{%
+    colorlinks=true,
+    linkcolor=blue
+}
+
+\DeclareMathOperator{\StudentId}{StudentId}
+\DeclareMathOperator{\StudentName}{StudentName}
+\DeclareMathOperator{\GroupId}{GroupId}
+\DeclareMathOperator{\GroupName}{GroupName}
+\DeclareMathOperator{\CourseId}{CourseId}
+\DeclareMathOperator{\CourseName}{CourseName}
+\DeclareMathOperator{\LecturerId}{LecturerId}
+\DeclareMathOperator{\LecturerName}{LecturerName}
+\DeclareMathOperator{\Mark}{Mark}
+
+\pagenumbering{gobble}
+
+\title{Домашнее задание №3}
+\author{Артем Оганджанян, M3439}
+\date{}
+
+\begin{document}
+
+\maketitle
+
+Дано отношение с атрибутами:
+$\StudentId$,
+$\StudentName$,
+$\GroupId$,
+$\GroupName$,
+$\CourseId$,
+$\CourseName$,
+$\LecturerId$,
+$\LecturerName$,
+$\Mark$.
+
+\subsection{\texorpdfstring{Функциональные зависимости}{Task 1}}
+
+\begin{align*}
+    \StudentId            &\rightarrow \StudentName  \\
+    \GroupId              &\rightarrow \GroupName    \\
+    \CourseId             &\rightarrow \CourseName   \\
+    \LecturerId           &\rightarrow \LecturerName \\
+    \StudentId            &\rightarrow \GroupId      \\
+    \StudentId, \CourseId &\rightarrow \Mark, \LecturerId
+\end{align*}
+
+\subsection{\texorpdfstring{Ключи}{Task 2}}
+
+Возьмём множество всех атрибутов.
+\[
+    \StudentId,
+    \StudentName,
+    \GroupId,
+    \GroupName,
+    \CourseId,
+    \CourseName,
+    \LecturerId,
+    \LecturerName,
+    \Mark
+\]
+Воспользуемся первыми четырьмя функциональными зависимостями.
+\[
+    \StudentId,
+    \GroupId,
+    \CourseId,
+    \LecturerId,
+    \Mark
+\]
+Воспользуемся пятой и шестой функциональными зависимостями.
+\[
+    \StudentId,
+    \CourseId
+\]
+Получили ключ $\{\StudentId, \CourseId\}$. Других ключей нет, т.к. перестановка
+порядка использования функциональных зависимостей ничего не меняет.
+
+\subsection{\texorpdfstring{Неприводимое множество функциональных зависимостей}
+    {Task3}}
+Воспользуемся правилом расщепления.
+\begin{align*}
+    \StudentId            &\rightarrow \StudentName  \\
+    \GroupId              &\rightarrow \GroupName    \\
+    \CourseId             &\rightarrow \CourseName   \\
+    \LecturerId           &\rightarrow \LecturerName \\
+    \StudentId            &\rightarrow \GroupId      \\
+    \StudentId, \CourseId &\rightarrow \Mark         \\
+    \StudentId, \CourseId &\rightarrow \LecturerId
+\end{align*}
+В последних двух правилах ни один из атрибутов удалить нельзя.
+Ни одно из правил также удалить нельзя. Получаем неприводимое множество
+функциональных зависимостей.
+
+\end{document}
