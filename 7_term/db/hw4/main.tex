@@ -1,0 +1,144 @@
+\documentclass{article}
+
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{amsthm}
+\usepackage{mathtext}
+\usepackage{mathtools}
+\usepackage[T1,T2A]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage[left=2cm,right=2cm,top=2cm,bottom=2cm]{geometry}
+\usepackage{microtype}
+\usepackage{enumitem}
+\usepackage{bm}
+\usepackage{cancel}
+\usepackage{proof}
+\usepackage{epigraph}
+\usepackage{titlesec}
+\usepackage[dvipsnames]{xcolor}
+\usepackage{stmaryrd}
+\usepackage{cellspace}
+\usepackage{cmll}
+\usepackage{multirow}
+\usepackage{booktabs}
+\usepackage{tikz}
+\usepackage{caption}
+\usepackage{wrapfig}
+\usepackage{minted}
+\usepackage{svg}
+
+\usepackage[hidelinks]{hyperref}
+
+\usepackage[russian]{babel}
+\selectlanguage{russian}
+
+\hypersetup{%
+    colorlinks=true,
+    linkcolor=blue
+}
+
+\DeclareMathOperator{\StudentId}{StudentId}
+\DeclareMathOperator{\StudentName}{StudentName}
+\DeclareMathOperator{\GroupId}{GroupId}
+\DeclareMathOperator{\GroupName}{GroupName}
+\DeclareMathOperator{\CourseId}{CourseId}
+\DeclareMathOperator{\CourseName}{CourseName}
+\DeclareMathOperator{\LecturerId}{LecturerId}
+\DeclareMathOperator{\LecturerName}{LecturerName}
+\DeclareMathOperator{\Mark}{Mark}
+
+%\pagenumbering{gobble}
+
+\title{Домашнее задание №4}
+\author{Артем Оганджанян, M3439}
+\date{}
+
+\begin{document}
+
+\maketitle
+
+\subsection{\texorpdfstring{Условие}{Statement}}
+
+Дано отношение $R$ со следующими атрибутами:
+$\StudentId$,
+$\StudentName$,
+$\GroupId$,
+$\GroupName$,
+$\CourseId$,
+$\CourseName$,
+$\LecturerId$,
+$\LecturerName$,
+$\Mark$.
+
+Функциональные зависимости:
+\begin{align*}
+    \StudentId  &\rightarrow \StudentName  & \StudentId            &\rightarrow \GroupId    \\
+    \GroupId    &\rightarrow \GroupName    & \CourseId,  \GroupId  &\rightarrow \LecturerId \\
+    \CourseId   &\rightarrow \CourseName   & \StudentId, \CourseId &\rightarrow \Mark       \\
+    \LecturerId &\rightarrow \LecturerName & &
+\end{align*}
+
+Ключ "--- $\{\StudentId, \CourseId\}$.
+
+\subsection{\texorpdfstring{Приведение к пятой нормальной форме}{Task1}}
+
+Для приведения к нормальной форме Бойса-Кодда сначала декомпозируем отношение по
+следующим функциональным зависимостям:
+$\StudentId  \rightarrow \StudentName$,
+$\GroupId    \rightarrow \GroupName$,
+$\CourseId   \rightarrow \CourseName$,
+$\LecturerId \rightarrow \LecturerName$.
+\begin{align*}
+    R & = \pi_{\underline \StudentId, \StudentName}(R) \\
+      & \bowtie \pi_{\underline \GroupId, \GroupName}(R) \\
+      & \bowtie \pi_{\underline \CourseId, \CourseName}(R) \\
+      & \bowtie \pi_{\underline \LecturerId, \LecturerName}(R) \\
+      & \bowtie \pi_{\underline \StudentId, \GroupId,
+                     \underline \CourseId, \LecturerId, \Mark}(R)
+\end{align*}
+Последнее отношение декомпозируем по функциональным зависимостям 
+$\CourseId, \GroupId \rightarrow \LecturerId$ и
+$\StudentId \rightarrow \GroupId$.
+\begin{align*}
+    \pi_{\underline \StudentId, \GroupId,
+         \underline \CourseId, \LecturerId, \Mark}(R) &=
+    \pi_{\underline \CourseId, \underline{\smash\GroupId}, \LecturerId}(R)\\
+    &\bowtie \pi_{\underline \StudentId, \GroupId}(R) \\
+    &\bowtie \pi_{\underline \StudentId, \underline \CourseId, \Mark}(R)
+\end{align*}
+
+Проверим, что отношения находятся в четвёртой нормальной форме. Все проекции на
+два атрибута находятся в 4НФ. В отношении
+$\pi_{\underline \CourseId, \underline{\smash\GroupId}, \LecturerId}(R)$
+единственная многозначная зависимость "--- это функциональная зависимость
+$\CourseId, \GroupId \rightarrow \LecturerId$.
+Для неё свойства
+\begin{itemize}
+    \item $\forall X \twoheadrightarrow Y|Z, \forall A : X \rightarrow A$
+    \item $\forall X \twoheadrightarrow Y|Z: X \text{ "--- надключ}$
+\end{itemize}
+выполняются. Аналогично проверяется
+$\pi_{\underline \StudentId, \underline \CourseId, \Mark}(R)$.
+
+Проверим, что отношения находятся в пятой нормальной форме. В проекциях на три
+атрибута зависимостей соединений из трёх элементов нет. Значит, могут быть
+зависимости соединений только из двух элементов. Мы уже знаем, что в полученных
+отношениях все многозначные зависимости "--- это функциональные зависимости.
+Поскольку мы уже привели отношения к нормальной форме Бойса-Кодда, все их левые
+части "--- это надключи. Значит, по теореме Фейгина, все зависимости соединений
+состоят только из надключей.
+
+\begin{figure}[ht]
+    \centering
+    \includesvg[width=0.7\textwidth]{../ERM}
+    \caption{Модель сущность-связь.
+    В ассоциации Teaching используются ограничения по Чену.}
+\end{figure}
+
+\begin{figure}[ht]
+    \centering
+    \includesvg[width=0.7\textwidth]{../PDM}
+    \caption{Физическая модель.}
+\end{figure}
+ 
+\end{document}
