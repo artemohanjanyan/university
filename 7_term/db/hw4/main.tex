@@ -7,7 +7,7 @@
 \usepackage{mathtools}
 \usepackage[T1,T2A]{fontenc}
 \usepackage[utf8]{inputenc}
-\usepackage[left=2cm,right=2cm,top=2cm,bottom=2cm]{geometry}
+\usepackage[left=1cm,right=1cm,top=1cm,bottom=1cm]{geometry}
 \usepackage{microtype}
 \usepackage{enumitem}
 \usepackage{bm}
@@ -47,7 +47,7 @@
 \DeclareMathOperator{\LecturerName}{LecturerName}
 \DeclareMathOperator{\Mark}{Mark}
 
-%\pagenumbering{gobble}
+\pagenumbering{gobble}
 
 \title{Домашнее задание №4}
 \author{Артем Оганджанян, M3439}
@@ -130,7 +130,7 @@ $\pi_{\underline \StudentId, \underline \CourseId, \Mark}(R)$.
 
 \begin{figure}[ht]
     \centering
-    \includesvg[width=0.7\textwidth]{../ERM}
+    \includesvg[width=0.55\textwidth]{../ERM}
     \caption{Модель сущность-связь.
     В ассоциации Teaching используются ограничения по Чену.}
 \end{figure}
@@ -140,5 +140,11 @@ $\pi_{\underline \StudentId, \underline \CourseId, \Mark}(R)$.
     \includesvg[width=0.7\textwidth]{../PDM}
     \caption{Физическая модель.}
 \end{figure}
+
+\subsection{\texorpdfstring{Создание базы данных}{Creation script}}
+\inputminted{sql}{../scripts/create.sql}
+
+\subsection{\texorpdfstring{Наполнение базы данными}{Inflation script}}
+\inputminted{sql}{../scripts/inflate.sql}
  
 \end{document}
