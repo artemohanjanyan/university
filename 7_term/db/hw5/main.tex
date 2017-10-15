@@ -7,7 +7,7 @@
 \usepackage{mathtools}
 \usepackage[T1,T2A]{fontenc}
 \usepackage[utf8]{inputenc}
-\usepackage[left=1cm,right=1cm,top=1cm,bottom=1cm]{geometry}
+\usepackage[margin=1cm]{geometry}
 \usepackage{microtype}
 \usepackage{enumitem}
 \usepackage{bm}
@@ -26,7 +26,6 @@
 \usepackage{wrapfig}
 \usepackage{minted}
 \usepackage{svg}
-%\usepackage{wasysym}
 
 \usepackage[hidelinks]{hyperref}
 
@@ -37,6 +36,8 @@
     colorlinks=true,
     linkcolor=blue
 }
+
+\DeclareMathOperator{\avg}{avg}
 
 \newcommand{\Students}{\mathrm{Students}}
 \newcommand{\StudentId}{\mathrm{StudentId}}
@@ -63,6 +64,8 @@
 \date{}
 
 \begin{document}
+
+\renewcommand{\count}{\operatorname{count}}
 
 \maketitle
 
@@ -123,7 +126,7 @@
         лектора с $\LecturerId=l_0$.
     \[
         \Students \ltimes (
-        \pi_{\Students, \CourseId}\Marks \div
+        \pi_{\Students, \CourseId}(\Marks) \div
         \pi_{\CourseId}(\sigma_{\LecturerId=l_0}(\Plan)))
     \]
     \item Для каждого студента имя и предметы, которые он должен посещать.
@@ -135,7 +138,8 @@
     \[
         \sigma_{\LecturerId=l_0}(\Plan) \rtimes \Students
     \]
-    \item Пары студентов, такие, что все сданные первым студентом предметы сдал и второй студент.
+    \item Такие пары студентов $\mathrm{Pairs}$,
+        что все сданные первым студентом предметы сдал и второй студент.
     \begin{gather*}
         \mathrm{Names} = \pi_{\StudentId, \StudentName}(\Students) \\
         \mathrm{Names1} =
@@ -151,19 +155,48 @@
             \rho_{\StudentId=\mathrm{StudentId2}}(\pi_{\StudentId, \CourseId}(\Marks))
             \divideontimes
             \rho_{\StudentId=\mathrm{StudentId1}}(\pi_{\CourseId, \StudentId}(\Marks))) \\
-        \pi_{\mathrm{StudentId1},\mathrm{StudentName1},
+        \mathrm{Pairs} = \pi_{\mathrm{StudentId1},\mathrm{StudentName1},
              \mathrm{StudentId2},\mathrm{StudentName2}}(
         \mathrm{Names1} \join \mathrm{A} \join \mathrm{Names2}
         )
     \end{gather*}
     \item Такие группы и предметы, что все студенты группы сдали предмет.
+    \[
+        (\pi_{\CourseId, \StudentId}(\Marks) \divideontimes
+        \pi_{\StudentId, \GroupId}(\Students))
+        \join \Groups \join \Courses
+    \]
     \item Средний балл студента.
     \begin{enumerate}
-        \item По идентификатору.
+        \item По идентификатору $\StudentId=s_0$.
+        \[
+            \avg_{\Mark, \varnothing}(\sigma_{\StudentId=s_0}(\Marks))
+        \]
         \item Для каждого студента.
+        \[
+            \avg_{\Mark, \{\StudentId\}}(\Marks)
+            \join \pi_{\StudentId, \StudentName}(\Students)
+        \]
     \end{enumerate}
     \item Средний балл средних баллов студентов каждой группы.
+    \[
+        \avg_{\Mark, \{\GroupId\}}(
+        \avg_{\Mark, \{\StudentId\}}(\Marks)
+        \join \pi_{\StudentId, \GroupId}(\Students))
+    \]
     \item Для каждого студента число предметов, которые у него были, число сданных предметов и число не сданных предметов.
+    \begin{gather*}
+        \mathrm{TakenCourses} = 
+            \rho_{\CourseId=\mathrm{Taken}}(
+            \count_{\CourseId, \{\StudentId\}}(\Students \join \Plan))\\
+        \mathrm{PassedCourses} =
+            \rho_{\CourseId=\mathrm{Passed}}(
+            \count_{\CourseId, \{\StudentId\}}(\Marks))\\
+        \mathrm{Summary} = \varepsilon_{
+                \mathrm{Failed}=\mathrm{Taken}-\mathrm{Passed}}(
+            \mathrm{TakenCourses}
+            \join \mathrm{PassedCourses})
+    \end{gather*}
 \end{enumerate}
 
 \end{document}
