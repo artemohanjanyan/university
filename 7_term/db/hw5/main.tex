@@ -1,0 +1,169 @@
+\documentclass{article}
+
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{amsthm}
+\usepackage{mathtext}
+\usepackage{mathtools}
+\usepackage[T1,T2A]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage[left=1cm,right=1cm,top=1cm,bottom=1cm]{geometry}
+\usepackage{microtype}
+\usepackage{enumitem}
+\usepackage{bm}
+\usepackage{cancel}
+\usepackage{proof}
+\usepackage{epigraph}
+\usepackage{titlesec}
+\usepackage[dvipsnames]{xcolor}
+\usepackage{stmaryrd}
+\usepackage{cellspace}
+\usepackage{cmll}
+\usepackage{multirow}
+\usepackage{booktabs}
+\usepackage{tikz}
+\usepackage{caption}
+\usepackage{wrapfig}
+\usepackage{minted}
+\usepackage{svg}
+%\usepackage{wasysym}
+
+\usepackage[hidelinks]{hyperref}
+
+\usepackage[russian]{babel}
+\selectlanguage{russian}
+
+\hypersetup{%
+    colorlinks=true,
+    linkcolor=blue
+}
+
+\newcommand{\Students}{\mathrm{Students}}
+\newcommand{\StudentId}{\mathrm{StudentId}}
+\newcommand{\StudentName}{\mathrm{StudentName}}
+\newcommand{\Groups}{\mathrm{Groups}}
+\newcommand{\GroupId}{\mathrm{GroupId}}
+\newcommand{\GroupName}{\mathrm{GroupName}}
+\newcommand{\Courses}{\mathrm{Courses}}
+\newcommand{\CourseId}{\mathrm{CourseId}}
+\newcommand{\CourseName}{\mathrm{CourseName}}
+\newcommand{\Plan}{\mathrm{Plan}}
+\newcommand{\Lecturers}{\mathrm{Lecturers}}
+\newcommand{\LecturerId}{\mathrm{LecturerId}}
+\newcommand{\LecturerName}{\mathrm{LecturerName}}
+\newcommand{\Marks}{\mathrm{Marks}}
+\newcommand{\Mark}{\mathrm{Mark}}
+
+\newcommand{\join}{\mathbin{\mathrlap{\ltimes}{\rtimes}}}
+
+\pagenumbering{gobble}
+
+\title{Домашнее задание №5}
+\author{Артем Оганджанян, M3439}
+\date{}
+
+\begin{document}
+
+\maketitle
+
+\subsection{\texorpdfstring{База данных}{DB}}
+
+\begin{itemize}
+    \item $\Students: \StudentId, \StudentName, \GroupId$
+    \item $\Groups: \GroupId, \GroupName$
+    \item $\Courses: \CourseId, \CourseName$
+    \item $\Lecturers: \LecturerId, \LecturerName$
+    \item $\Plan: \GroupId, \CourseId, \LecturerId$
+    \item $\Marks: \StudentId, \CourseId, \Mark$
+\end{itemize}
+
+\subsection{\texorpdfstring{Запросы}{Queries}}
+
+\setlist[enumerate]{label*=\arabic*.}
+\begin{enumerate}
+    \item Информация о студентах с заданной оценкой $m_0$ по предмету «Базы данных».
+    \[
+        \sigma_{\Mark = m_0}
+        (\sigma_{\CourseName = \text{`Базы данных'}}(\Courses)
+        \rtimes \Marks)
+        \rtimes \Students
+    \]
+    \item Информация о студентах, не имеющих оценки по предмету «Базы данных».
+    \begin{enumerate}
+        \item Среди всех студентов.
+        \[
+            \Students \setminus (
+            (\sigma_{\CourseName = \text{`Базы данных'}}(\Courses)
+            \rtimes \Marks)
+            \rtimes \Students)
+        \]
+        \item Среди студентов, у которых есть этот предмет.
+        \[
+            \Students \ltimes (
+            \Plan \ltimes
+            \sigma_{\CourseName = \text{`Базы данных'}}(\Courses))
+            \setminus (
+            (\sigma_{\CourseName = \text{`Базы данных'}}(\Courses)
+            \rtimes \Marks)
+            \rtimes \Students)
+        \]
+    \end{enumerate}
+    \item Информация о студентах, имеющих хотя бы одну оценку у заданного
+        лектора с $\LecturerId=l_0$.
+    \[
+        \Students \ltimes (\sigma_{\LecturerId = l_0}(\Plan) \join \Marks)
+    \]
+    \item Идентификаторы студентов, не имеющих ни одной оценки у заданного
+        лектора с $\LecturerId=l_0$.
+    \[
+        \pi_{\StudentId}(\Students)\setminus
+        \pi_{\StudentId}(\sigma_{\LecturerId = l_0}(\Plan) \join \Marks)
+    \]
+    \item Студентов, имеющих оценки по всем предметам заданного
+        лектора с $\LecturerId=l_0$.
+    \[
+        \Students \ltimes (
+        \pi_{\Students, \CourseId}\Marks \div
+        \pi_{\CourseId}(\sigma_{\LecturerId=l_0}(\Plan)))
+    \]
+    \item Для каждого студента имя и предметы, которые он должен посещать.
+    \[
+        \pi_{\StudentName, \CourseName}(\Students \join \Plan \join \Courses)
+    \]
+    \item По лектору с $\LecturerId=l_0$ всех студентов,
+        у которых он хоть что-нибудь преподавал.
+    \[
+        \sigma_{\LecturerId=l_0}(\Plan) \rtimes \Students
+    \]
+    \item Пары студентов, такие, что все сданные первым студентом предметы сдал и второй студент.
+    \begin{gather*}
+        \mathrm{Names} = \pi_{\StudentId, \StudentName}(\Students) \\
+        \mathrm{Names1} =
+            \rho_{\StudentId=\mathrm{StudentId1}}(
+            \rho_{\StudentName=\mathrm{StudentName1}}(
+            \mathrm{Names})) \\
+        \mathrm{Names2} =
+            \rho_{\StudentId=\mathrm{StudentId2}}(
+            \rho_{\StudentName=\mathrm{StudentName2}}(
+            \mathrm{Names})) \\
+        \mathrm{A} =
+            \sigma_{\mathrm{StudentId1} \neq \mathrm{StudentId2}}(
+            \rho_{\StudentId=\mathrm{StudentId2}}(\pi_{\StudentId, \CourseId}(\Marks))
+            \divideontimes
+            \rho_{\StudentId=\mathrm{StudentId1}}(\pi_{\CourseId, \StudentId}(\Marks))) \\
+        \pi_{\mathrm{StudentId1},\mathrm{StudentName1},
+             \mathrm{StudentId2},\mathrm{StudentName2}}(
+        \mathrm{Names1} \join \mathrm{A} \join \mathrm{Names2}
+        )
+    \end{gather*}
+    \item Такие группы и предметы, что все студенты группы сдали предмет.
+    \item Средний балл студента.
+    \begin{enumerate}
+        \item По идентификатору.
+        \item Для каждого студента.
+    \end{enumerate}
+    \item Средний балл средних баллов студентов каждой группы.
+    \item Для каждого студента число предметов, которые у него были, число сданных предметов и число не сданных предметов.
+\end{enumerate}
+
+\end{document}
