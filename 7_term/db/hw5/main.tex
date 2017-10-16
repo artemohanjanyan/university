@@ -91,6 +91,16 @@
         \rtimes \Marks)
         \rtimes \Students
     \]
+    \begin{minted}{sql}
+select * from
+    Students natural join
+    (select StudentId from
+        (select CourseId from Courses where CourseName = 'Базы данных') as C
+        natural join Marks
+      where
+        Mark=M0
+    ) as S;
+    \end{minted}
     \item Информация о студентах, не имеющих оценки по предмету «Базы данных».
     \begin{enumerate}
         \item Среди всех студентов.
@@ -100,6 +110,15 @@
             \rtimes \Marks)
             \rtimes \Students)
         \]
+    \begin{minted}{sql}
+select * from Students except all select * from (
+    Students natural join
+    (select StudentId from
+        (select CourseId from Courses where CourseName = 'Базы данных') as C
+        natural join Marks
+    ) as S
+);
+    \end{minted}
         \item Среди студентов, у которых есть этот предмет.
         \[
             \Students \ltimes (
@@ -110,18 +129,44 @@
             \rtimes \Marks)
             \rtimes \Students)
         \]
+    \begin{minted}{sql}
+select StudentId, StudentName, GroupId from
+    Students natural join Plan natural join Courses
+  where
+    CourseName='Базы данных'
+except all select * from (
+    Students natural join
+    (select StudentId from
+        (select CourseId from Courses where CourseName = 'Базы данных') as C
+        natural join Marks
+    ) as S
+);
+    \end{minted}
     \end{enumerate}
     \item Информация о студентах, имеющих хотя бы одну оценку у заданного
         лектора с $\LecturerId=l_0$.
     \[
         \Students \ltimes (\sigma_{\LecturerId = l_0}(\Plan) \join \Marks)
     \]
+    \begin{minted}{sql}
+select StudentId, StudentName, GroupId from
+    Students natural join Plan natural join Marks
+  where
+    LecturerId=L0;
+    \end{minted}
     \item Идентификаторы студентов, не имеющих ни одной оценки у заданного
         лектора с $\LecturerId=l_0$.
     \[
         \pi_{\StudentId}(\Students)\setminus
         \pi_{\StudentId}(\sigma_{\LecturerId = l_0}(\Plan) \join \Marks)
     \]
+    \begin{minted}{sql}
+select StudentId from Students
+except all select StudentId from
+    Plan natural join Marks
+  where
+    LecturerId=L0;
+    \end{minted}
     \item Студентов, имеющих оценки по всем предметам заданного
         лектора с $\LecturerId=l_0$.
     \[
@@ -133,11 +178,20 @@
     \[
         \pi_{\StudentName, \CourseName}(\Students \join \Plan \join \Courses)
     \]
+    \begin{minted}{sql}
+select StudentName, CourseName from
+    Students natural join Plan natural join Courses;
+    \end{minted}
     \item По лектору с $\LecturerId=l_0$ всех студентов,
         у которых он хоть что-нибудь преподавал.
     \[
         \sigma_{\LecturerId=l_0}(\Plan) \rtimes \Students
     \]
+    \begin{minted}{sql}
+select StudentId, StudentName, GroupId from
+    Students natural join Plan
+  where LecturerId=L0;
+    \end{minted}
     \item Такие пары студентов $\mathrm{Pairs}$,
         что все сданные первым студентом предметы сдал и второй студент.
     \begin{gather*}
@@ -172,31 +226,71 @@
         \[
             \avg_{\Mark, \varnothing}(\sigma_{\StudentId=s_0}(\Marks))
         \]
+        \begin{minted}{sql}
+select avg(Mark) from Marks where StudentId=S0;
+        \end{minted}
         \item Для каждого студента.
         \[
             \avg_{\Mark, \{\StudentId\}}(\Marks)
             \join \pi_{\StudentId, \StudentName}(\Students)
         \]
+        \begin{minted}{sql}
+select avg(Mark), StudentId, StudentName from
+    Marks natural join Students
+  group by
+    StudentId, StudentName;
+        \end{minted}
     \end{enumerate}
     \item Средний балл средних баллов студентов каждой группы.
     \[
         \avg_{\Mark, \{\GroupId\}}(
         \avg_{\Mark, \{\StudentId\}}(\Marks)
         \join \pi_{\StudentId, \GroupId}(\Students))
+        \join \Groups
     \]
-    \item Для каждого студента число предметов, которые у него были, число сданных предметов и число не сданных предметов.
+    \begin{minted}{sql}
+select avg(Mark), GroupId, GroupName from
+    (select avg(Mark) as Mark, StudentId, GroupId from
+        Marks natural join Students
+      group by
+        StudentId, GroupId
+    ) as M
+    natural join Groups
+  group by
+    GroupId, GroupName;
+    \end{minted}
+    \item Для каждого студента число предметов, которые у него были, число сданных предметов и число несданных предметов.
     \begin{gather*}
         \mathrm{TakenCourses} = 
             \rho_{\CourseId=\mathrm{Taken}}(
             \count_{\CourseId, \{\StudentId\}}(\Students \join \Plan))\\
         \mathrm{PassedCourses} =
             \rho_{\CourseId=\mathrm{Passed}}(
-            \count_{\CourseId, \{\StudentId\}}(\Marks))\\
+            \count_{\CourseId, \{\StudentId\}}(\Marks
+            \mathbin{\ltimes\hspace{-3pt}\resizebox{3pt}{\heightof{=}}{=}}
+            \Students))\\
         \mathrm{Summary} = \varepsilon_{
                 \mathrm{Failed}=\mathrm{Taken}-\mathrm{Passed}}(
             \mathrm{TakenCourses}
             \join \mathrm{PassedCourses})
+            \join \mathrm{Students}
     \end{gather*}
+    \begin{minted}{sql}
+select StudentId, StudentName, Taken, Passed, Taken - Passed as Failed from
+    (select count(CourseId) as Taken, StudentId from
+        Students natural join Plan
+      group by
+        StudentId
+    ) as T
+    natural join
+    (select count(CourseId) as Passed, StudentId from
+        Marks right join Students using (StudentId)
+      group by
+        StudentId
+    ) as P
+    natural join
+    Students;
+    \end{minted}
 \end{enumerate}
 
 \end{document}
