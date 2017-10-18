@@ -1,0 +1,296 @@
+\documentclass{article}
+
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{amsthm}
+\usepackage{mathtext}
+\usepackage{mathtools}
+\usepackage[T1,T2A]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage[margin=1cm]{geometry}
+\usepackage{microtype}
+\usepackage{enumitem}
+\usepackage{bm}
+\usepackage{cancel}
+\usepackage{proof}
+\usepackage{epigraph}
+\usepackage{titlesec}
+\usepackage[dvipsnames]{xcolor}
+\usepackage{stmaryrd}
+\usepackage{cellspace}
+\usepackage{cmll}
+\usepackage{multirow}
+\usepackage{booktabs}
+\usepackage{tikz}
+\usepackage{caption}
+\usepackage{wrapfig}
+\usepackage{minted}
+\usepackage{svg}
+
+\usepackage[hidelinks]{hyperref}
+
+\usepackage[russian]{babel}
+\selectlanguage{russian}
+
+\hypersetup{%
+    colorlinks=true,
+    linkcolor=blue
+}
+
+\DeclareMathOperator{\avg}{avg}
+
+\newcommand{\Students}{\mathrm{Students}}
+\newcommand{\StudentId}{\mathrm{StudentId}}
+\newcommand{\StudentName}{\mathrm{StudentName}}
+\newcommand{\Groups}{\mathrm{Groups}}
+\newcommand{\GroupId}{\mathrm{GroupId}}
+\newcommand{\GroupName}{\mathrm{GroupName}}
+\newcommand{\Courses}{\mathrm{Courses}}
+\newcommand{\CourseId}{\mathrm{CourseId}}
+\newcommand{\CourseName}{\mathrm{CourseName}}
+\newcommand{\Plan}{\mathrm{Plan}}
+\newcommand{\Lecturers}{\mathrm{Lecturers}}
+\newcommand{\LecturerId}{\mathrm{LecturerId}}
+\newcommand{\LecturerName}{\mathrm{LecturerName}}
+\newcommand{\Marks}{\mathrm{Marks}}
+\newcommand{\Mark}{\mathrm{Mark}}
+
+\newcommand{\join}{\mathbin{\mathrlap{\ltimes}{\rtimes}}}
+
+\pagenumbering{gobble}
+
+\title{Домашнее задание №5}
+\author{Артем Оганджанян, M3439}
+\date{}
+
+\begin{document}
+
+\renewcommand{\count}{\operatorname{count}}
+
+\maketitle
+
+\subsection{\texorpdfstring{База данных}{DB}}
+
+\begin{itemize}
+    \item $\Students: \StudentId, \StudentName, \GroupId$
+    \item $\Groups: \GroupId, \GroupName$
+    \item $\Courses: \CourseId, \CourseName$
+    \item $\Lecturers: \LecturerId, \LecturerName$
+    \item $\Plan: \GroupId, \CourseId, \LecturerId$
+    \item $\Marks: \StudentId, \CourseId, \Mark$
+\end{itemize}
+
+\subsection{\texorpdfstring{Запросы}{Queries}}
+
+\setlist[enumerate]{label*=\arabic*.}
+\begin{enumerate}
+    \item Информация о студентах с заданной оценкой $m_0$ по предмету «Базы данных».
+    \[
+        \sigma_{\Mark = m_0}
+        (\sigma_{\CourseName = \text{`Базы данных'}}(\Courses)
+        \rtimes \Marks)
+        \rtimes \Students
+    \]
+    \begin{minted}{sql}
+select * from
+    Students natural join
+    (select StudentId from
+        (select CourseId from Courses where CourseName = 'Базы данных') as C
+        natural join Marks
+      where
+        Mark=M0
+    ) as S;
+    \end{minted}
+    \item Информация о студентах, не имеющих оценки по предмету «Базы данных».
+    \begin{enumerate}
+        \item Среди всех студентов.
+        \[
+            \Students \setminus (
+            (\sigma_{\CourseName = \text{`Базы данных'}}(\Courses)
+            \rtimes \Marks)
+            \rtimes \Students)
+        \]
+    \begin{minted}{sql}
+select * from Students except all select * from (
+    Students natural join
+    (select StudentId from
+        (select CourseId from Courses where CourseName = 'Базы данных') as C
+        natural join Marks
+    ) as S
+);
+    \end{minted}
+        \item Среди студентов, у которых есть этот предмет.
+        \[
+            \Students \ltimes (
+            \Plan \ltimes
+            \sigma_{\CourseName = \text{`Базы данных'}}(\Courses))
+            \setminus (
+            (\sigma_{\CourseName = \text{`Базы данных'}}(\Courses)
+            \rtimes \Marks)
+            \rtimes \Students)
+        \]
+    \begin{minted}{sql}
+select StudentId, StudentName, GroupId from
+    Students natural join Plan natural join Courses
+  where
+    CourseName='Базы данных'
+except all select * from (
+    Students natural join
+    (select StudentId from
+        (select CourseId from Courses where CourseName = 'Базы данных') as C
+        natural join Marks
+    ) as S
+);
+    \end{minted}
+    \end{enumerate}
+    \item Информация о студентах, имеющих хотя бы одну оценку у заданного
+        лектора с $\LecturerId=l_0$.
+    \[
+        \Students \ltimes (\sigma_{\LecturerId = l_0}(\Plan) \join \Marks)
+    \]
+    \begin{minted}{sql}
+select StudentId, StudentName, GroupId from
+    Students natural join Plan natural join Marks
+  where
+    LecturerId=L0;
+    \end{minted}
+    \item Идентификаторы студентов, не имеющих ни одной оценки у заданного
+        лектора с $\LecturerId=l_0$.
+    \[
+        \pi_{\StudentId}(\Students)\setminus
+        \pi_{\StudentId}(\sigma_{\LecturerId = l_0}(\Plan) \join \Marks)
+    \]
+    \begin{minted}{sql}
+select StudentId from Students
+except all select StudentId from
+    Plan natural join Marks
+  where
+    LecturerId=L0;
+    \end{minted}
+    \item Студентов, имеющих оценки по всем предметам заданного
+        лектора с $\LecturerId=l_0$.
+    \[
+        \Students \ltimes (
+        \pi_{\Students, \CourseId}(\Marks) \div
+        \pi_{\CourseId}(\sigma_{\LecturerId=l_0}(\Plan)))
+    \]
+    \item Для каждого студента имя и предметы, которые он должен посещать.
+    \[
+        \pi_{\StudentName, \CourseName}(\Students \join \Plan \join \Courses)
+    \]
+    \begin{minted}{sql}
+select StudentName, CourseName from
+    Students natural join Plan natural join Courses;
+    \end{minted}
+    \item По лектору с $\LecturerId=l_0$ всех студентов,
+        у которых он хоть что-нибудь преподавал.
+    \[
+        \sigma_{\LecturerId=l_0}(\Plan) \rtimes \Students
+    \]
+    \begin{minted}{sql}
+select StudentId, StudentName, GroupId from
+    Students natural join Plan
+  where LecturerId=L0;
+    \end{minted}
+    \item Такие пары студентов $\mathrm{Pairs}$,
+        что все сданные первым студентом предметы сдал и второй студент.
+    \begin{gather*}
+        \mathrm{Names} = \pi_{\StudentId, \StudentName}(\Students) \\
+        \mathrm{Names1} =
+            \rho_{\StudentId=\mathrm{StudentId1}}(
+            \rho_{\StudentName=\mathrm{StudentName1}}(
+            \mathrm{Names})) \\
+        \mathrm{Names2} =
+            \rho_{\StudentId=\mathrm{StudentId2}}(
+            \rho_{\StudentName=\mathrm{StudentName2}}(
+            \mathrm{Names})) \\
+        \mathrm{A} =
+            \sigma_{\mathrm{StudentId1} \neq \mathrm{StudentId2}}(
+            \rho_{\StudentId=\mathrm{StudentId2}}(\pi_{\StudentId, \CourseId}(\Marks))
+            \divideontimes
+            \rho_{\StudentId=\mathrm{StudentId1}}(\pi_{\CourseId, \StudentId}(\Marks))) \\
+        \mathrm{Pairs} = \pi_{\mathrm{StudentId1},\mathrm{StudentName1},
+             \mathrm{StudentId2},\mathrm{StudentName2}}(
+        \mathrm{Names1} \join \mathrm{A} \join \mathrm{Names2}
+        )
+    \end{gather*}
+    \item Такие группы и предметы, что все студенты группы сдали предмет.
+    \[
+        (\pi_{\CourseId, \StudentId}(\Marks) \divideontimes
+        \pi_{\StudentId, \GroupId}(\Students))
+        \join \Groups \join \Courses
+    \]
+    \item Средний балл студента.
+    \begin{enumerate}
+        \item По идентификатору $\StudentId=s_0$.
+        \[
+            \avg_{\Mark, \varnothing}(\sigma_{\StudentId=s_0}(\Marks))
+        \]
+        \begin{minted}{sql}
+select avg(Mark) from Marks where StudentId=S0;
+        \end{minted}
+        \item Для каждого студента.
+        \[
+            \avg_{\Mark, \{\StudentId\}}(\Marks)
+            \join \pi_{\StudentId, \StudentName}(\Students)
+        \]
+        \begin{minted}{sql}
+select avg(Mark), StudentId, StudentName from
+    Marks natural join Students
+  group by
+    StudentId, StudentName;
+        \end{minted}
+    \end{enumerate}
+    \item Средний балл средних баллов студентов каждой группы.
+    \[
+        \avg_{\Mark, \{\GroupId\}}(
+        \avg_{\Mark, \{\StudentId\}}(\Marks)
+        \join \pi_{\StudentId, \GroupId}(\Students))
+        \join \Groups
+    \]
+    \begin{minted}{sql}
+select avg(Mark), GroupId, GroupName from
+    (select avg(Mark) as Mark, StudentId, GroupId from
+        Marks natural join Students
+      group by
+        StudentId, GroupId
+    ) as M
+    natural join Groups
+  group by
+    GroupId, GroupName;
+    \end{minted}
+    \item Для каждого студента число предметов, которые у него были, число сданных предметов и число несданных предметов.
+    \begin{gather*}
+        \mathrm{TakenCourses} = 
+            \rho_{\CourseId=\mathrm{Taken}}(
+            \count_{\CourseId, \{\StudentId\}}(\Students \join \Plan))\\
+        \mathrm{PassedCourses} =
+            \rho_{\CourseId=\mathrm{Passed}}(
+            \count_{\CourseId, \{\StudentId\}}(\Marks
+            \mathbin{\ltimes\hspace{-3pt}\resizebox{3pt}{\heightof{=}}{=}}
+            \Students))\\
+        \mathrm{Summary} = \varepsilon_{
+                \mathrm{Failed}=\mathrm{Taken}-\mathrm{Passed}}(
+            \mathrm{TakenCourses}
+            \join \mathrm{PassedCourses})
+            \join \mathrm{Students}
+    \end{gather*}
+    \begin{minted}{sql}
+select StudentId, StudentName, Taken, Passed, Taken - Passed as Failed from
+    (select count(CourseId) as Taken, StudentId from
+        Students natural join Plan
+      group by
+        StudentId
+    ) as T
+    natural join
+    (select count(CourseId) as Passed, StudentId from
+        Marks right join Students using (StudentId)
+      group by
+        StudentId
+    ) as P
+    natural join
+    Students;
+    \end{minted}
+\end{enumerate}
+
+\end{document}
