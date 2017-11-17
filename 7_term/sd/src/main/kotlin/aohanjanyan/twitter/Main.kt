@@ -1,11 +1,13 @@
 package aohanjanyan.twitter
 
+import twitter4j.TwitterFactory
 import java.time.LocalDateTime
 import java.time.temporal.ChronoUnit
 import java.util.*
 
 fun main(args: Array<String>) {
-    val tweets = SimpleTweetProvider().getTweetsByHashtag("pixel")
+    val tweetProvider = SimpleTweetProvider(TwitterFactory().instance)
+    val tweets = tweetProvider.getTweetsByHashtag("pixel")
 
     val now = LocalDateTime.now()
     val tweetsByHours = tweets
