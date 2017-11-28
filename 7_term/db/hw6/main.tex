@@ -1,0 +1,399 @@
+\documentclass{article}
+
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{amsthm}
+\usepackage{mathtext}
+\usepackage{mathtools}
+\usepackage[T1,T2A]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage[margin=2cm]{geometry}
+\usepackage{microtype}
+\usepackage{enumitem}
+\usepackage{bm}
+\usepackage{cancel}
+\usepackage{proof}
+\usepackage{epigraph}
+\usepackage{titlesec}
+\usepackage[dvipsnames]{xcolor}
+\usepackage{stmaryrd}
+\usepackage{cellspace}
+\usepackage{cmll}
+\usepackage{multirow}
+\usepackage{booktabs}
+\usepackage{tikz}
+\usepackage{caption}
+\usepackage{wrapfig}
+\usepackage{minted}
+\usepackage{svg}
+
+\usepackage[hidelinks]{hyperref}
+
+\usepackage[russian]{babel}
+\selectlanguage{russian}
+
+\hypersetup{%
+    colorlinks=true,
+    linkcolor=blue
+}
+
+\DeclareMathOperator{\avg}{avg}
+
+\newcommand{\Students}{\mathrm{Students}}
+\newcommand{\Sq}{\mathrm{S1}}
+\newcommand{\Sw}{\mathrm{S2}}
+\newcommand{\Sqi}{\mathrm{StudentId1}}
+\newcommand{\Swi}{\mathrm{StudentId2}}
+\newcommand{\Sqn}{\mathrm{StudentName1}}
+\newcommand{\Swn}{\mathrm{StudentName2}}
+\newcommand{\StudentId}{\mathrm{StudentId}}
+\newcommand{\StudentName}{\mathrm{StudentName}}
+\newcommand{\Groups}{\mathrm{Groups}}
+\newcommand{\GroupId}{\mathrm{GroupId}}
+\newcommand{\GroupName}{\mathrm{GroupName}}
+\newcommand{\Courses}{\mathrm{Courses}}
+\newcommand{\CourseId}{\mathrm{CourseId}}
+\newcommand{\CourseName}{\mathrm{CourseName}}
+\newcommand{\Plan}{\mathrm{Plan}}
+\newcommand{\Lecturers}{\mathrm{Lecturers}}
+\newcommand{\LecturerId}{\mathrm{LecturerId}}
+\newcommand{\LecturerName}{\mathrm{LecturerName}}
+\newcommand{\Marks}{\mathrm{Marks}}
+\newcommand{\Mark}{\mathrm{Mark}}
+\newcommand{\select}{\mathtt{select}~}
+\newcommand{\from}{~\mathtt{from}~}
+\newcommand{\as}{~\mathtt{as}~}
+\newcommand{\where}{~\mathtt{where}~}
+
+\newcommand{\poloneq}{\mathrel{\phantom{\coloneq}}}
+
+\pagenumbering{gobble}
+
+\title{Домашнее задание №6}
+\author{Артем Оганджанян, M3439}
+\date{}
+
+\begin{document}
+
+\renewcommand{\count}{\operatorname{count}}
+
+\maketitle
+
+\subsection{\texorpdfstring{База данных}{DB}}
+
+\begin{itemize}
+    \item $\Students: \StudentId, \StudentName, \GroupId$
+    \item $\Groups: \GroupId, \GroupName$
+    \item $\Courses: \CourseId, \CourseName$
+    \item $\Lecturers: \LecturerId, \LecturerName$
+    \item $\Plan: \GroupId, \CourseId, \LecturerId$
+    \item $\Marks: \StudentId, \CourseId, \Mark$
+\end{itemize}
+
+\subsection{\texorpdfstring{Запросы}{Queries}}
+
+\setlist[enumerate]{label*=\arabic*.}
+\begin{enumerate}
+    \item Информация о студентах с заданной оценкой $m_0$ по предмету «Базы данных».
+    Исчисление кортежей:
+    \begin{align*}
+        \Students \where \exists M (\exists C
+        (&\ \StudentId = M.\StudentId \\
+            \land&\ M.\Mark = m_0 \\
+            \land&\ M.\CourseId = C.\CourseId \\
+            \land&\ C.\CourseName = \text{`Базы данных'}))
+    \end{align*}
+    Datalog:
+    \begin{align*}
+        \Students(\StudentId, \StudentName, \GroupId)
+        &\coloneq \Students(\StudentId, \StudentName, \GroupId), \\
+        &\poloneq \Marks(\StudentId, \CourseId, \_), \\
+        &\poloneq \Courses(\CourseId, \text{`Базы данных'})
+    \end{align*}
+    SQL:
+    \begin{minted}{sql}
+select StudentId, StudentName, GroupId
+from Students natural join Marks natural join Courses
+where Mark = M0 and CourseName = 'Базы данных';
+    \end{minted}
+    \item Информация о студентах, не имеющих оценки по предмету «Базы данных».
+    \begin{enumerate}
+        \item Среди всех студентов.
+        Исчисление кортежей:
+        \begin{align*}
+%            &\select \StudentId, \StudentName, \GroupId \span \span \\
+%            &\from \Students, \Marks \span \span \\
+%            &\where \neg \exists C
+%            (\span&\ \Marks.\StudentId = \Students.\StudentId \\
+%            \span\span\land&\  \Marks.\CourseId = C.\CourseId \\
+%            \span\span\land&\  C.\CourseName = \text{`Базы данных'})
+            \Students \where \forall M (\neg \exists C
+            (&\ M.\StudentId = \StudentId \\
+                \land&\  M.\CourseId = C.\CourseId \\
+                \land&\  C.\CourseName = \text{`Базы данных'}))
+        \end{align*}
+        Datalog:
+        \begin{align*}
+            \Students(\StudentId, \StudentName, \GroupId)
+            &\coloneq \Students(\StudentId, \StudentName, \GroupId), \\
+            &\poloneq \neg \Marks(\StudentId, \CourseId, \_), \\
+            &\poloneq \Courses(\CourseId, \text{`Базы данных'})
+        \end{align*}
+        SQL:
+        \begin{minted}{sql}
+select * from Students where not exists (
+    select * from Marks where exists (
+        select * from Courses where Marks.StudentId = Students.StudentId
+                                and Marks.CourseId = Courses.CourseId
+                                and Courses.CourseName = 'Базы данных'
+    )
+);
+        \end{minted}
+        \item Среди студентов, у которых есть этот предмет.
+        Исчисление кортежей:
+        \begin{align*}
+            \Students \where
+            \exists C (&\ C.\CourseName = \text{`Базы данных'} \\
+            \land&\  \exists P (P.\GroupId = \GroupId
+                \land P.\CourseId = C.\CourseId) \\
+            \land&\  \forall M
+                (M.\StudentId <> \StudentId \lor M.\CourseId <> C.\CourseId)
+            )
+        \end{align*}
+        Datalog:
+        \begin{align*}
+            \Students(\StudentId, \StudentName, \GroupId)
+            &\coloneq \Students(\StudentId, \StudentName, \GroupId), \\
+            &\poloneq \neg \Marks(\StudentId, \CourseId, \_), \\
+            &\poloneq \Courses(\CourseId, \text{`Базы данных'}) \\
+            &\poloneq \Plan(\GroupId, \CourseId, \_)
+        \end{align*}
+        SQL:
+        \begin{minted}{sql}
+select * from Students where exists ( select * from Courses where
+    CourseName = 'Базы данных'
+    and exists ( select * from Plan where
+        Plan.GroupId = Students.GroupId
+        and Plan.CourseId = Courses.CourseId
+    )
+    and not exists ( select * from Marks where
+        Marks.StudentId = Students.StudentId and Marks.CourseId = Courses.CourseId
+    )
+);
+        \end{minted}
+    \end{enumerate}
+    \item Информация о студентах, имеющих хотя бы одну оценку у заданного
+        лектора с $\LecturerId=l_0$.
+    Исчисление кортежей:
+    \begin{align*}
+        \Students \where \exists P (\exists M (
+        &\ M.\StudentId = \StudentId \\
+        \land&\ P.\LecturerId = l_0 \\
+        \land&\ P.\CourseId = M.\CourseId))
+    \end{align*}
+    Datalog:
+    \begin{align*}
+        \Students(\StudentId, \StudentName, \GroupId)
+        &\coloneq \Students(\StudentId, \StudentName, \GroupId), \\
+        &\poloneq \Marks(\StudentId, \CourseId, \_), \\
+        &\poloneq \Plan(\GroupId, \CourseId, l_0)
+    \end{align*}
+    SQL:
+    \begin{minted}{sql}
+select * from Students where exists (
+    select * from Plan where exists (
+        select * from Marks where Marks.StudentId = Students.StudentId
+                              and Plan.LecturerId = L0
+                              and Plan.CourseId = Marks.CourseId
+    )
+);
+    \end{minted}
+    \item Идентификаторы студентов, не имеющих ни одной оценки у заданного
+        лектора с $\LecturerId=l_0$.
+    Исчисление кортежей:
+    \begin{align*}
+        \select \StudentId \from \Students \where
+        \forall P (\forall M (
+        &\  M.\StudentId <> \StudentId \\
+        \lor&\ P.\LecturerId <> l_0 \\
+        \lor&\ P.\CourseId <> M.\CourseId))
+    \end{align*}
+    Datalog:
+    \begin{align*}
+        \Students(\StudentId)
+        &\coloneq \Students(\StudentId, \_, \GroupId), \\
+        &\poloneq \neg \Marks(\StudentId, \CourseId, \_), \\
+        &\poloneq \Plan(\GroupId, \CourseId, l_0)
+    \end{align*}
+    SQL:
+    \begin{minted}{sql}
+select StudentId from Students where not exists (
+    select * from Plan where exists (
+        select * from Marks where Marks.StudentId = Students.StudentId
+                              and Plan.LecturerId = L0
+                              and Plan.CourseId = Marks.CourseId
+    )
+);
+    \end{minted}
+    \item Студентов, имеющих оценки по всем предметам заданного
+        лектора с $\LecturerId=l_0$.
+    Исчисление кортежей:
+    \begin{align*}
+        \Students \where \forall P
+        (&\ P.\LecturerId <> l_0\\
+        \lor&\ (\exists M (M.\StudentId = \StudentId
+        \land M.\CourseId = P.\CourseId)))
+    \end{align*}
+    Datalog:
+    \begin{align*}
+        \mathrm{NotStudents}(\StudentId, \StudentName, \GroupId)
+        &\coloneq \Students(\StudentId, \StudentName, \GroupId), \\
+        &\poloneq \Plan(\GroupId, \CourseId, l_0), \\
+        &\poloneq \neg \Marks(\StudentId, \CourseId, \_) \\
+        \Students(\StudentId, \StudentName, \GroupId)
+        &\coloneq \Students(\StudentId, \StudentName, \GroupId), \\
+        &\poloneq
+            \neg \mathrm{NotStudents}(\StudentId, \StudentName, \GroupId)
+    \end{align*}
+    SQL:
+    \begin{minted}{sql}
+select * from Students where not exists (
+    select * from Plan where
+        Plan.LecturerId = L0
+        and not exists (
+            select * from Marks where Marks.StudentId = Students.StudentId
+                                  and Marks.CourseId = Plan.CourseId
+        )
+);
+    \end{minted}
+    \item Для каждого студента имя и предметы, которые он должен посещать.
+    Исчисление кортежей:
+    \begin{align*}
+        &\select \Students.\StudentName, \Courses.\CourseName \\
+        &\from \Students, \Courses, \Plan \\
+        &\where \Students.\GroupId = \Plan.\GroupId
+            \land \Courses.\CourseId = \Plan.\CourseId
+    \end{align*}
+    Datalog:
+    \begin{align*}
+        \Students(\StudentName, \CourseName)
+        &\coloneq \Students(\StudentId, \StudentName, \GroupId), \\
+        &\poloneq \Plan(\GroupId, \CourseId, \_) \\
+        &\poloneq \Courses(\CourseId, \CourseName)
+    \end{align*}
+    SQL:
+    \begin{minted}{sql}
+select StudentName, CourseName
+from Students natural join Plan natural join Courses;
+    \end{minted}
+    \item По лектору с $\LecturerId=l_0$ всех студентов,
+        у которых он хоть что-нибудь преподавал.
+    Исчисление кортежей:
+    \[
+        \Students \where \exists P (P.\LecturerId = l_0
+        \land P.\GroupId = \GroupId)
+    \]
+    Datalog:
+    \begin{align*}
+        \Students(\StudentId, \StudentName, \GroupId)
+        &\coloneq \Students(\StudentId, \StudentName, \GroupId), \\
+        &\poloneq \Plan(\GroupId, \_, l_0)
+    \end{align*}
+    SQL:
+    \begin{minted}{sql}
+select * from Students where exists (
+    select * from Plan where Plan.LecturerId = L0
+                         and Plan.GroupId = Students.GroupId
+);
+    \end{minted}
+    \item Такие пары студентов,
+        что все сданные первым студентом предметы сдал и второй студент.
+    Исчисление кортежей:
+    \begin{align*}
+        &\Sq \dblcolon \Students; \\
+        &\Sw \dblcolon \Students; \\
+        &\select \Sq.\StudentId \as \mathrm{StudentId1},
+                 \Sq.\StudentName \as \mathrm{StudentName1}, \\
+        &\phantom{\select} \Sw.\StudentId \as \mathrm{StudentId2},
+                           \Sw.\StudentName \as \mathrm{StudentName2} \\
+        &\from \Sq, \Sw \\
+        &\where \Sq.\StudentId <> \Sw.\StudentId \land \phantom{q}\\
+        &\phantom{\where} \forall M_1 (M_1.\StudentId <> \Sq.\StudentId \lor \phantom{q}\\
+        &\phantom{\where \forall M_1 (} M_1.\Mark < 60 \lor \phantom{q}\\
+        &\phantom{\where \forall M_1 (}
+            \exists M_2 (M_2.\StudentId = \Sw.\StudentId
+            \land M_1.\CourseId = M_2.\CourseId
+            \land M_2.\Mark \geq 60))
+    \end{align*}
+    Datalog:
+    \begin{align*}
+        \mathrm{Passed}(\StudentId, \CourseId)
+        &\coloneq \Students(\StudentId, \_, \_), \\
+        &\poloneq \Marks(\StudentId, \CourseId, \Mark), \\
+        &\poloneq \Mark \geq 60 \\
+        \mathrm{NotPairs}(\Sqi, \Swi)
+        &\coloneq \Students(\Sqi, \_, \_), \\
+        &\poloneq \Students(\Swi, \_, \_), \\
+        &\poloneq \mathrm{Passed}(\Sqi, \CourseId), \\
+        &\poloneq \neg \mathrm{Passed}(\Swi, \CourseId) \\
+        \mathrm{Pairs}(\Sqi, \Sqn, \Swi, \Swn)
+        &\coloneq \Students(\Sqi, \Sqn, \_), \\
+        &\poloneq \Students(\Swi, \Swn, \_), \\
+        &\poloneq \neg \mathrm{NotPairs}(\Sqi, \Swi)
+    \end{align*}
+    SQL:
+    \begin{minted}{sql}
+select S1.StudentId, S1.StudentName, S2.StudentId, S2.StudentName
+from Students as S1, Students as S2
+where S1.StudentId <> S2.StudentId and not exists (
+    select * from Marks as M1 where
+        M1.StudentId = S1.StudentId
+        and M1.Mark >= 60
+        and not exists (
+            select * from Marks as M2 where
+                M2.StudentId = S2.StudentId
+                and M1.CourseId = M2.CourseId
+                and M2.Mark >= 60
+        )
+);
+    \end{minted}
+    \item Такие группы и предметы, что все студенты группы сдали предмет.
+    Исчисление кортежей:
+    \begin{align*}
+        \Groups, \Courses \where
+        \forall S (S.\GroupId <> \GroupId
+        \lor \exists M (&\ M.\StudentId = S.\StudentId \\
+        \land&\ M.\CourseId = \CourseId \\
+        \land&\ M.\Mark \geq 60))
+    \end{align*}
+    Datalog:
+    \begin{align*}
+        \mathrm{Passed}(\StudentId, \CourseId)
+        &\coloneq \Students(\StudentId, \_, \_), \\
+        &\poloneq \Marks(\StudentId, \CourseId, \Mark), \\
+        &\poloneq \Mark \geq 60 \\
+        \mathrm{NotPairs}(\GroupId, \CourseId)
+        &\coloneq \Students(\StudentId, \_, \GroupId), \\
+        &\poloneq \neg \mathrm{Passed}(\StudentId, \CourseId) \\
+        \mathrm{Pairs}(\GroupId, \GroupName, \CourseId, \CourseName)
+        &\coloneq \Groups(\GroupId, \GroupName), \\
+        &\poloneq \Courses(\CourseId, \CourseName), \\
+        &\poloneq \neg \mathrm{NotPairs}(\GroupId, \GroupName)
+    \end{align*}
+    SQL:
+    \begin{minted}{sql}
+select * from Groups as G, Courses as C
+where not exists (
+    select * from Students as S where
+        S.GroupId = G.GroupId
+        and not exists (
+            select * from Marks as M where
+                M.StudentId = S.StudentId
+                and M.CourseId = C.CourseId
+                and M.Mark >= 60
+        )
+);
+    \end{minted}
+\end{enumerate}
+
+\end{document}
