@@ -19,7 +19,9 @@ asynchronous I/O API backed by epoll,
 basic incremental HTTP request parser,
 multithreaded DNS-resolver for lower latency,
 and colorful log.
-- [Android course project](https://github.com/artemohanjanyan/bluetooth-chess). Android application for playing chess via Bluetooth.
+- [Android course project](https://github.com/artemohanjanyan/bluetooth-chess).
+Android application for playing chess via Bluetooth.
+Team project.
 
 ### 4 term
 - Type Theory course.
@@ -31,16 +33,16 @@ based on dependent types and Curry-Howard correspondence.
 [Course notes](https://github.com/artemohanjanyan/tt-conspect) in LaTeX (in Russian) which are worth many sleepless nights spent on them.
 - [Repository for Operating Systems course](https://github.com/artemohanjanyan/os) starring rshd server in (almost) pure C.
 - [Java technologies](https://github.com/artemohanjanyan/university/tree/master/4_term/java).
-Deeper Java course with homework covering different parts of Java API, including concurrency and reflection API.
+Deeper Java course with homework covering different parts of Java API,
+including concurrency (HW 8 "web crawler")
+and reflection API (HW 3 "implementor", an application which generates dummy implementations of provided classes and interfaces).
 
 ### 5 term
 - [Computational geometry](https://github.com/artemohanjanyan/university/tree/master/5_term/geom).
 Working with Delaunay triangulation in C++.
-- [Multithreading](https://github.com/artemohanjanyan/university/tree/master/5_term/multi).
-Blocking and non-blocking bank implementations.
 
 ### 6 term
-- [Distributed systems](https://github.com/artemohanjanyan/university/tree/master/6_term/distr). Implemented in Haskell.
 - [Translation methods](https://github.com/artemohanjanyan/university/tree/master/6_term/translation).
 [Parser generator](https://github.com/artemohanjanyan/university/tree/master/6_term/translation/depressed) for LL(1) grammars and
-[formula translator](https://github.com/artemohanjanyan/university/tree/master/6_term/translation/tex2html) from TeX to MathML.
+[formula translator](https://github.com/artemohanjanyan/university/tree/master/6_term/translation/tex2html) from TeX to MathML,
+implemented in Haskell.
