@@ -1,0 +1,162 @@
+\documentclass{article}
+
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{amsthm}
+\usepackage{mathtext}
+\usepackage{mathtools}
+\usepackage[T1,T2A]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage[left=2cm,right=2cm,top=2cm,bottom=2cm]{geometry}
+\usepackage{microtype}
+\usepackage{enumitem}
+\usepackage{bm}
+\usepackage{cancel}
+\usepackage{proof}
+\usepackage{epigraph}
+\usepackage{titlesec}
+\usepackage[dvipsnames]{xcolor}
+\usepackage{stmaryrd}
+\usepackage{cellspace}
+\usepackage{cmll}
+\usepackage{multirow}
+\usepackage{booktabs}
+\usepackage{tikz}
+\usepackage{caption}
+\usepackage{wrapfig}
+\usepackage{minted}
+\usepackage{svg}
+
+\usepackage[hidelinks]{hyperref}
+
+\usepackage[russian]{babel}
+\selectlanguage{russian}
+
+\hypersetup{%
+    colorlinks=true,
+    linkcolor=blue
+}
+
+%\pagenumbering{gobble}
+
+\title{Домашнее задание по теории кодирования}
+\author{Артем Оганджанян, M3439}
+\date{}
+
+\begin{document}
+
+\maketitle
+
+\section{\texorpdfstring{Глава 2}{Section 2}}
+\[
+    H =
+    \begin{pmatrix}
+        0 & 1 & 0 & 1 & 0 & 0 & 1 & 1 & 1 & 1 \\
+        1 & 0 & 1 & 1 & 1 & 0 & 1 & 0 & 0 & 1 \\
+        0 & 1 & 1 & 1 & 1 & 1 & 0 & 0 & 1 & 1 \\
+        1 & 0 & 0 & 1 & 1 & 0 & 1 & 0 & 1 & 0
+    \end{pmatrix}
+\]
+\subsection{\texorpdfstring{Задача 3}{Task 3}}
+Поменяем местами 6-ой и 7-ой столбцы, чтобы последние 4 столбца были ЛНЗ.
+\[
+    H' =
+    \begin{pmatrix}
+        0 & 1 & 0 & 1 & 0 & 1 & 0 & 1 & 1 & 1 \\
+        1 & 0 & 1 & 1 & 1 & 1 & 0 & 0 & 0 & 1 \\
+        0 & 1 & 1 & 1 & 1 & 0 & 1 & 0 & 1 & 1 \\
+        1 & 0 & 0 & 1 & 1 & 1 & 0 & 0 & 1 & 0
+    \end{pmatrix}
+\]
+Приведём её к виду $H' = (P^T\ I_4)$.
+\begin{align*}
+    &\begin{pmatrix}
+        0 & 1 & 0 & 1 & 0 & 1 & 0 & 1 & 1 & 1 \\
+        1 & 0 & 1 & 1 & 1 & 1 & 0 & 0 & 0 & 1 \\
+        0 & 1 & 1 & 1 & 1 & 0 & 1 & 0 & 1 & 1 \\
+        1 & 0 & 0 & 1 & 1 & 1 & 0 & 0 & 1 & 0
+    \end{pmatrix}
+    \xrightarrow{1\coloneqq1+3}
+    &&\begin{pmatrix}
+        0 & 0 & 1 & 0 & 1 & 1 & 1 & 1 & 0 & 0 \\
+        1 & 0 & 1 & 1 & 1 & 1 & 0 & 0 & 0 & 1 \\
+        0 & 1 & 1 & 1 & 1 & 0 & 1 & 0 & 1 & 1 \\
+        1 & 0 & 0 & 1 & 1 & 1 & 0 & 0 & 1 & 0
+    \end{pmatrix}
+    \xrightarrow{2\coloneqq1+2+3}\\
+    &\begin{pmatrix}
+        0 & 0 & 1 & 0 & 1 & 1 & 1 & 1 & 0 & 0 \\
+        1 & 1 & 1 & 0 & 1 & 0 & 0 & 1 & 1 & 0 \\
+        0 & 1 & 1 & 1 & 1 & 0 & 1 & 0 & 1 & 1 \\
+        1 & 0 & 0 & 1 & 1 & 1 & 0 & 0 & 1 & 0
+    \end{pmatrix}
+    \xrightarrow{3\coloneqq1+2+3+4}
+    &&\begin{pmatrix}
+        0 & 0 & 1 & 0 & 1 & 1 & 1 & 1 & 0 & 0 \\
+        1 & 1 & 1 & 0 & 1 & 0 & 0 & 1 & 1 & 0 \\
+        0 & 0 & 1 & 0 & 0 & 0 & 0 & 0 & 1 & 1 \\
+        1 & 0 & 0 & 1 & 1 & 1 & 0 & 0 & 1 & 0
+    \end{pmatrix}
+    \xrightarrow{4\coloneqq3+4}\\
+    &\begin{pmatrix}
+        0 & 0 & 1 & 0 & 1 & 1 & 1 & 1 & 0 & 0 \\
+        1 & 1 & 1 & 0 & 1 & 0 & 0 & 1 & 1 & 0 \\
+        0 & 0 & 1 & 0 & 0 & 0 & 0 & 0 & 1 & 1 \\
+        1 & 0 & 1 & 1 & 1 & 1 & 0 & 0 & 0 & 1
+    \end{pmatrix}
+    \xrightarrow{3\coloneqq3+4}
+    &&\begin{pmatrix}
+        0 & 0 & 1 & 0 & 1 & 1 & 1 & 1 & 0 & 0 \\
+        1 & 1 & 1 & 0 & 1 & 0 & 0 & 1 & 1 & 0 \\
+        1 & 0 & 0 & 1 & 1 & 1 & 0 & 0 & 1 & 0 \\
+        1 & 0 & 1 & 1 & 1 & 1 & 0 & 0 & 0 & 1
+    \end{pmatrix}
+    \xrightarrow{2\coloneqq2+3}\\
+    &\begin{pmatrix}
+        0 & 0 & 1 & 0 & 1 & 1 & 1 & 1 & 0 & 0 \\
+        0 & 1 & 1 & 1 & 0 & 1 & 0 & 1 & 0 & 0 \\
+        1 & 0 & 0 & 1 & 1 & 1 & 0 & 0 & 1 & 0 \\
+        1 & 0 & 1 & 1 & 1 & 1 & 0 & 0 & 0 & 1
+    \end{pmatrix}
+    \xrightarrow{1\coloneqq1+2}\
+    &&\begin{pmatrix}
+        0 & 1 & 0 & 1 & 1 & 0 & 1 & 0 & 0 & 0 \\
+        0 & 1 & 1 & 1 & 0 & 1 & 0 & 1 & 0 & 0 \\
+        1 & 0 & 0 & 1 & 1 & 1 & 0 & 0 & 1 & 0 \\
+        1 & 0 & 1 & 1 & 1 & 1 & 0 & 0 & 0 & 1
+    \end{pmatrix}
+\end{align*}
+Получаем
+\[
+    G' =
+    \begin{pmatrix}
+        1 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 1 & 1 \\
+        0 & 1 & 0 & 0 & 0 & 0 & 1 & 1 & 0 & 0 \\
+        0 & 0 & 1 & 0 & 0 & 0 & 0 & 1 & 0 & 1 \\
+        0 & 0 & 0 & 1 & 0 & 0 & 1 & 1 & 1 & 1 \\
+        0 & 0 & 0 & 0 & 1 & 0 & 1 & 0 & 1 & 1 \\
+        0 & 0 & 0 & 0 & 0 & 1 & 0 & 1 & 1 & 1 \\
+    \end{pmatrix}
+    \quad
+    \xRightarrow[~6\coloneqq7~]{~7\coloneqq6~}
+    \quad
+    G =
+    \begin{pmatrix}
+        1 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 1 & 1 \\
+        0 & 1 & 0 & 0 & 0 & 1 & 0 & 1 & 0 & 0 \\
+        0 & 0 & 1 & 0 & 0 & 0 & 0 & 1 & 0 & 1 \\
+        0 & 0 & 0 & 1 & 0 & 1 & 0 & 1 & 1 & 1 \\
+        0 & 0 & 0 & 0 & 1 & 1 & 0 & 0 & 1 & 1 \\
+        0 & 0 & 0 & 0 & 0 & 0 & 1 & 1 & 1 & 1 \\
+    \end{pmatrix}
+    \text{.}
+\]
+$n = 10$, $k = 6$, скорость $R=\frac{6}{10}=0.6=\frac{3}{5}$.
+
+Несложно проверить, что любые два столбца матрицы $H$ ЛНЗ, то есть в сумме дают
+ненулевой вектор, то есть все столбцы различны.
+В то же время, первый, второй и четвёртый столбцы в сумме дают нулевой вектор.
+По теореме 2.4 это означает, что минимальное расстояние кода с проверочной
+матрицей $H$ равно трём.
+
+\end{document}
