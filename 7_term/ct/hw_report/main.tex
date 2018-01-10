@@ -159,4 +159,30 @@ $n = 10$, $k = 6$, скорость $R=\frac{6}{10}=0.6=\frac{3}{5}$.
 По теореме 2.4 это означает, что минимальное расстояние кода с проверочной
 матрицей $H$ равно трём.
 
+\subsection{\texorpdfstring{Задача 7}{Task 7}}
+\begin{table}[h]
+    \centering
+    \begin{tabular}{c c} \toprule
+        Синдром & Вектор ошибок \\ \midrule
+        $\begin{pmatrix}0&0&0&1\end{pmatrix}$&$\begin{pmatrix}0&0&0&0&0&0&0&0&1&0\end{pmatrix}$\\
+        $\begin{pmatrix}0&0&1&0\end{pmatrix}$&$\begin{pmatrix}0&0&0&0&0&1&0&0&0&0\end{pmatrix}$\\
+        $\begin{pmatrix}0&0&1&1\end{pmatrix}$&$\begin{pmatrix}1&0&0&0&0&0&0&0&0&0\end{pmatrix}$\\
+        $\begin{pmatrix}0&1&0&0\end{pmatrix}$&$\begin{pmatrix}0&0&0&1&0&0&0&0&0&0\end{pmatrix}$\\
+        $\begin{pmatrix}0&1&0&1\end{pmatrix}$&$\begin{pmatrix}0&0&0&0&0&0&0&0&0&1\end{pmatrix}$\\
+        $\begin{pmatrix}0&1&1&0\end{pmatrix}$&$\begin{pmatrix}0&0&0&0&1&0&0&0&0&0\end{pmatrix}$\\
+        $\begin{pmatrix}0&1&1&1\end{pmatrix}$&$\begin{pmatrix}0&0&0&0&0&1&0&0&0&1\end{pmatrix}$\\
+        $\begin{pmatrix}1&0&0&0\end{pmatrix}$&$\begin{pmatrix}0&0&0&0&0&0&0&1&0&0\end{pmatrix}$\\
+        $\begin{pmatrix}1&0&0&1\end{pmatrix}$&$\begin{pmatrix}0&0&0&0&0&0&0&1&1&0\end{pmatrix}$\\
+        $\begin{pmatrix}1&0&1&0\end{pmatrix}$&$\begin{pmatrix}0&1&0&0&0&0&0&0&0&0\end{pmatrix}$\\
+        $\begin{pmatrix}1&0&1&1\end{pmatrix}$&$\begin{pmatrix}0&0&1&0&0&0&0&0&0&0\end{pmatrix}$\\
+        $\begin{pmatrix}1&1&0&0\end{pmatrix}$&$\begin{pmatrix}0&0&0&0&0&0&1&0&1&0\end{pmatrix}$\\
+        $\begin{pmatrix}1&1&0&1\end{pmatrix}$&$\begin{pmatrix}0&0&0&0&0&0&1&0&0&0\end{pmatrix}$\\
+        $\begin{pmatrix}1&1&1&0\end{pmatrix}$&$\begin{pmatrix}0&0&0&0&1&0&0&1&0&0\end{pmatrix}$\\
+        $\begin{pmatrix}1&1&1&1\end{pmatrix}$&$\begin{pmatrix}0&0&0&0&0&1&1&0&0&0\end{pmatrix}$\\ \bottomrule
+    \end{tabular}
+    \caption{Таблица синдромного декодирования.}
+\end{table}
+Код:
+\inputminted[linenos]{python}{../../code/ch2/syndec.py}
+
 \end{document}
