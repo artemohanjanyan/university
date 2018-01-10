@@ -40,7 +40,7 @@
 %\pagenumbering{gobble}
 
 \title{Домашнее задание по теории кодирования}
-\author{Артем Оганджанян, M3439}
+\author{Артем Оганджанян, M3439, вариант 49}
 \date{}
 
 \begin{document}
@@ -184,5 +184,71 @@ $n = 10$, $k = 6$, скорость $R=\frac{6}{10}=0.6=\frac{3}{5}$.
 \end{table}
 Код:
 \inputminted[linenos]{python}{../../code/ch2/syndec.py}
+
+\section{\texorpdfstring{Глава 3}{Section 3}}
+$n = 24$, $k = 12$, $d = 8$.
+Граница Хэминга:
+\[
+    2^k \leq \frac{2^n}{\sum_{i=0}^t C_n^i} \text{, где } d \geq 2t + 1\text{.}
+\]
+Граница Варшамова-Гильберта:
+\[
+    2^{n-k} > \sum_{i=0}^{d-2} C_{n-1}^i\text{.}
+\]
+Граница Грайсмера:
+\[
+    n \geq \sum_{i=0}^{k-1} \left\lceil \frac{d}{2^i} \right\rceil
+\]
+
+\subsection{\texorpdfstring{Задача 3}{Task 3}}
+Граница Хэминга:
+\[
+    \sum_{i=0}^3 C_{24}^i \leq 2^{24-k} \implies 2325 \leq 2^{24-k} \implies
+    2^k \leq \frac{2^{24}}{2325} \implies k \leq 12\text{.}
+\]
+Граница Варшамова-Гильберта:
+\[
+    2^{24-k} > \sum_{i=0}^6 C_{23}^i \implies 2^{24-k} > 145499 \implies
+    2^k < \frac{2^{24}}{145499} \implies k \leq 6\text{.}
+\]
+Проверим $k \in [7..12]$ с помощью границы Грайсмера:
+\begin{center}
+    \begin{tabular}{c c}
+        \toprule
+        $k$ & $\min n$ \\ \midrule
+        7  & 18 \\
+        8  & 19 \\
+        9  & 20 \\
+        10 & 21 \\
+        11 & 22 \\
+        12 & 23 \\ \bottomrule
+    \end{tabular}
+\end{center}
+Все $k$ в промежутке удовлетворяют границе Грайсмера.
+Получаем, что $k \leq 12$.
+
+\subsection{\texorpdfstring{Задача 4}{Task 4}}
+Граница Хэминга:
+\[
+    2^{12} \leq \frac{2^{24}}{\sum_{i=0}^t C_{24}^i} \implies
+    \sum_{i=0}^t C_{24}^i \leq 2^{12} \implies
+    t_{\max} = 3 \implies d \leq 8 \text{.}
+\]
+Граница Варшамова-Гильберта:
+\[
+    2^{n-k} = 2^{12} > \sum_{i=0}^{d-2} C_{23}^i \implies d \leq 5\text{.}
+\]
+Проверим $d \in [6..8]$ с помощью границы Грайсмера:
+\begin{center}
+    \begin{tabular}{c c}
+        \toprule
+        $d$ & $\min n$ \\ \midrule
+        6 & 20 \\
+        7 & 22 \\
+        8 & 23 \\ \bottomrule
+    \end{tabular}
+\end{center}
+Все $d$ в промежутке удовлетворяют границе Грайсмера.
+Получаем, что $d \leq 8$.
 
 \end{document}
