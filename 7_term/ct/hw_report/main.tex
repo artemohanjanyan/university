@@ -164,21 +164,21 @@ $n = 10$, $k = 6$, скорость $R=\frac{6}{10}=0.6=\frac{3}{5}$.
     \centering
     \begin{tabular}{c c} \toprule
         Синдром & Вектор ошибок \\ \midrule
-        $\begin{pmatrix}0&0&0&1\end{pmatrix}$&$\begin{pmatrix}0&0&0&0&0&0&0&0&1&0\end{pmatrix}$\\
+        $\begin{pmatrix}0&0&0&1\end{pmatrix}$&$\begin{pmatrix}0&0&0&1&0&0&0&0&0&1\end{pmatrix}$\\
         $\begin{pmatrix}0&0&1&0\end{pmatrix}$&$\begin{pmatrix}0&0&0&0&0&1&0&0&0&0\end{pmatrix}$\\
-        $\begin{pmatrix}0&0&1&1\end{pmatrix}$&$\begin{pmatrix}1&0&0&0&0&0&0&0&0&0\end{pmatrix}$\\
-        $\begin{pmatrix}0&1&0&0\end{pmatrix}$&$\begin{pmatrix}0&0&0&1&0&0&0&0&0&0\end{pmatrix}$\\
-        $\begin{pmatrix}0&1&0&1\end{pmatrix}$&$\begin{pmatrix}0&0&0&0&0&0&0&0&0&1\end{pmatrix}$\\
-        $\begin{pmatrix}0&1&1&0\end{pmatrix}$&$\begin{pmatrix}0&0&0&0&1&0&0&0&0&0\end{pmatrix}$\\
-        $\begin{pmatrix}0&1&1&1\end{pmatrix}$&$\begin{pmatrix}0&0&0&0&0&1&0&0&0&1\end{pmatrix}$\\
+        $\begin{pmatrix}0&0&1&1\end{pmatrix}$&$\begin{pmatrix}0&0&0&0&0&0&0&1&1&0\end{pmatrix}$\\
+        $\begin{pmatrix}0&1&0&0\end{pmatrix}$&$\begin{pmatrix}0&0&0&1&0&0&0&0&1&0\end{pmatrix}$\\
+        $\begin{pmatrix}0&1&0&1\end{pmatrix}$&$\begin{pmatrix}1&0&0&0&0&0&0&0&0&0\end{pmatrix}$\\
+        $\begin{pmatrix}0&1&1&0\end{pmatrix}$&$\begin{pmatrix}0&0&1&0&0&0&0&0&0&0\end{pmatrix}$\\
+        $\begin{pmatrix}0&1&1&1\end{pmatrix}$&$\begin{pmatrix}0&0&0&0&1&0&0&0&0&0\end{pmatrix}$\\
         $\begin{pmatrix}1&0&0&0\end{pmatrix}$&$\begin{pmatrix}0&0&0&0&0&0&0&1&0&0\end{pmatrix}$\\
-        $\begin{pmatrix}1&0&0&1\end{pmatrix}$&$\begin{pmatrix}0&0&0&0&0&0&0&1&1&0\end{pmatrix}$\\
+        $\begin{pmatrix}1&0&0&1\end{pmatrix}$&$\begin{pmatrix}0&0&0&0&0&1&0&0&1&0\end{pmatrix}$\\
         $\begin{pmatrix}1&0&1&0\end{pmatrix}$&$\begin{pmatrix}0&1&0&0&0&0&0&0&0&0\end{pmatrix}$\\
-        $\begin{pmatrix}1&0&1&1\end{pmatrix}$&$\begin{pmatrix}0&0&1&0&0&0&0&0&0&0\end{pmatrix}$\\
-        $\begin{pmatrix}1&1&0&0\end{pmatrix}$&$\begin{pmatrix}0&0&0&0&0&0&1&0&1&0\end{pmatrix}$\\
+        $\begin{pmatrix}1&0&1&1\end{pmatrix}$&$\begin{pmatrix}0&0&0&0&0&0&0&0&1&0\end{pmatrix}$\\
+        $\begin{pmatrix}1&1&0&0\end{pmatrix}$&$\begin{pmatrix}0&0&0&0&0&1&0&0&0&1\end{pmatrix}$\\
         $\begin{pmatrix}1&1&0&1\end{pmatrix}$&$\begin{pmatrix}0&0&0&0&0&0&1&0&0&0\end{pmatrix}$\\
-        $\begin{pmatrix}1&1&1&0\end{pmatrix}$&$\begin{pmatrix}0&0&0&0&1&0&0&1&0&0\end{pmatrix}$\\
-        $\begin{pmatrix}1&1&1&1\end{pmatrix}$&$\begin{pmatrix}0&0&0&0&0&1&1&0&0&0\end{pmatrix}$\\ \bottomrule
+        $\begin{pmatrix}1&1&1&0\end{pmatrix}$&$\begin{pmatrix}0&0&0&0&0&0&0&0&0&1\end{pmatrix}$\\
+        $\begin{pmatrix}1&1&1&1\end{pmatrix}$&$\begin{pmatrix}0&0&0&1&0&0&0&0&0&0\end{pmatrix}$\\ \bottomrule
     \end{tabular}
     \caption{Таблица синдромного декодирования.}
 \end{table}
@@ -197,7 +197,7 @@ $n = 24$, $k = 12$, $d = 8$.
 \]
 Граница Грайсмера:
 \[
-    n \geq \sum_{i=0}^{k-1} \left\lceil \frac{d}{2^i} \right\rceil
+    n \geq \sum_{i=0}^{k-1} \left\lceil \frac{d}{2^i} \right\rceil\text{.}
 \]
 
 \subsection{\texorpdfstring{Задача 3}{Task 3}}
@@ -250,5 +250,37 @@ $n = 24$, $k = 12$, $d = 8$.
 \end{center}
 Все $d$ в промежутке удовлетворяют границе Грайсмера.
 Получаем, что $d \leq 8$.
+
+\section{\texorpdfstring{Глава 4}{Section 4}}
+\[
+    H =
+    \begin{pmatrix}
+        0 & 1 & 0 & 1 & 0 & 0 & 1 & 1 & 1 & 1 \\
+        1 & 0 & 1 & 1 & 1 & 0 & 1 & 0 & 0 & 1 \\
+        0 & 1 & 1 & 1 & 1 & 1 & 0 & 0 & 1 & 1 \\
+        1 & 0 & 0 & 1 & 1 & 0 & 1 & 0 & 1 & 0
+    \end{pmatrix}
+\]
+Приведём матрицу к МСФ:
+\[
+    H' =
+    \begin{pmatrix}
+        1&1&1&0&1&0&0&1&1&0\\
+        0&1&0&1&1&1&0&0&0&0\\
+        0&0&1&0&1&1&1&1&0&0\\
+        0&0&0&0&1&1&1&1&1&1
+    \end{pmatrix}
+\]
+
+\begin{figure}[p]
+    \centering
+    \includegraphics[height=0.95\textheight]{h.png}
+    \caption{Синдромная решётка.}
+\end{figure}
+\begin{figure}[p]
+    \centering
+    \includegraphics[height=0.95\textheight]{spen.png}
+    \caption{Решётка, построенная по МСФ.}
+\end{figure}
 
 \end{document}

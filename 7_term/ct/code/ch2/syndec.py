@@ -5,7 +5,7 @@ h = np.array([
     [0, 1, 0, 1, 0, 0, 1, 1, 1, 1],
     [1, 0, 1, 1, 1, 0, 1, 0, 0, 1],
     [0, 1, 1, 1, 1, 1, 0, 0, 1, 1],
-    [1, 0, 0, 1, 1, 0, 1, 0, 1, 0],
+    [1, 0, 0, 1, 1, 0, 1, 0, 1, 0]
 ])
 
 pows = np.ones((h.shape[0]))
@@ -25,4 +25,5 @@ for vec in np.array(list(itertools.product([0, 1], repeat=h.shape[1]))):
         if np.sum(vec) < np.sum(prev):
             ans[i] = vec
 
+print(np.dot(ans, h.T) % 2)
 print(ans)
