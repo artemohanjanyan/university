@@ -1,20 +1,37 @@
 buildscript {
-    ext.kotlin_version = "1.1.60"
-    ext.junit_version = "1.0.1"
+    ext {
+        kotlinVersion = "1.2.21"
+        junitVersion = "1.0.1"
+        springBootVersion = '1.5.9.RELEASE'
+    }
 
     repositories {
         mavenCentral()
     }
 
     dependencies {
-        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
-        classpath "org.junit.platform:junit-platform-gradle-plugin:$junit_version"
+        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlinVersion"
+        classpath "org.junit.platform:junit-platform-gradle-plugin:$junitVersion"
+        classpath "org.springframework.boot:spring-boot-gradle-plugin:${springBootVersion}"
+        classpath "org.jetbrains.kotlin:kotlin-allopen:${kotlinVersion}"
     }
 }
 
-repositories {
-    jcenter()
-    mavenCentral()
+apply plugin: "kotlin"
+apply plugin: "java"
+apply plugin: "idea"
+apply plugin: "org.junit.platform.gradle.plugin"
+apply plugin: "kotlin-spring"
+apply plugin: "org.springframework.boot"
+
+group = 'aohanjanyan'
+version = '0.0.1-SNAPSHOT'
+sourceCompatibility = 1.8
+compileKotlin {
+    kotlinOptions.jvmTarget = "1.8"
+}
+compileTestKotlin {
+    kotlinOptions.jvmTarget = "1.8"
 }
 
 ext.junitPlatformVersion = "1.0.1"
@@ -24,13 +41,17 @@ ext.log4jVersion         = "2.9.0"
 ext.twitter4jVersion     = "4.0.6"
 ext.mockitoVersion       = "2.12.0"
 
-apply plugin: "kotlin"
-apply plugin: "java"
-apply plugin: "idea"
-apply plugin: "org.junit.platform.gradle.plugin"
+repositories {
+    jcenter()
+    mavenCentral()
+}
+
+springBoot {
+    mainClass "aohanjanyan.mvc.MvcApplicationKt"
+}
 
 junitPlatform {
-    logManager 'org.apache.logging.log4j.jul.LogManager'
+    logManager "org.apache.logging.log4j.jul.LogManager"
 }
 
 dependencies {
@@ -57,5 +78,10 @@ dependencies {
 
     // Twitter
     compile "org.twitter4j:twitter4j-core:${twitter4jVersion}"
+
+    //Spring
+    compile "org.springframework.boot:spring-boot-starter-web"
+    compile "org.springframework.boot:spring-boot-starter-thymeleaf"
+    testCompile "org.springframework.boot:spring-boot-starter-test"
 }
 
