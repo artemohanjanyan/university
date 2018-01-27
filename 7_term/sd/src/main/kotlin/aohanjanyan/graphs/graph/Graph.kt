@@ -16,5 +16,9 @@ interface Graph<V, E> {
 
     fun addEdge(from: V, to: V): E
 
+    fun getEdgeVertices(edge: E): Pair<V, V>
+
+    fun getEdge(from: V, to: V): E?
+
     fun removeEdge(edge: E)
 }

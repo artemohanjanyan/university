@@ -1,9 +1,9 @@
 package aohanjanyan.graphs.drawing
 
 interface DrawingApi {
-    fun getDrawingAreaWidth(): Int
+    val drawingAreaWidth: Int
 
-    fun getDrawingAreaHeight(): Int
+    val drawingAreaHeight: Int
 
     fun drawCircle(center: Point, r: Int)
 

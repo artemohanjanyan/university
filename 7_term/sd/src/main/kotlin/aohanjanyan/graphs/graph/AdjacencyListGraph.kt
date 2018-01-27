@@ -50,6 +50,14 @@ class AdjacencyListGraph(initialSize: Int = 0) : Graph<AdjacencyListVertex, Adja
         return edge
     }
 
+    override fun getEdgeVertices(edge: AdjacencyListEdge): Pair<AdjacencyListVertex, AdjacencyListVertex> {
+        return Pair(edge.from, edge.to)
+    }
+
+    override fun getEdge(from: AdjacencyListVertex, to: AdjacencyListVertex): AdjacencyListEdge? {
+        return from.incidentEdges.find { it.from == to || it.to == to }
+    }
+
     override fun removeEdge(edge: AdjacencyListEdge) {
         edge.from.removeEdge(edge)
         edge.to.removeEdge(edge)

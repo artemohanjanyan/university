@@ -6,7 +6,7 @@ class AdjacencyMatrixGraph(initialSize: Int = 0) : Graph<Int, MatrixEdge> {
 
     private var matrix = ArrayList<ArrayList<Boolean>>().apply {
         for (i in 0 until initialSize) {
-            ArrayList<Boolean>((0 until initialSize).map { false })
+            add(ArrayList((0 until initialSize).map { false }))
         }
     }
 
@@ -40,6 +40,17 @@ class AdjacencyMatrixGraph(initialSize: Int = 0) : Graph<Int, MatrixEdge> {
         matrix[from][to] = true
         matrix[to][from] = true
         return MatrixEdge(from, to)
+    }
+
+    override fun getEdgeVertices(edge: MatrixEdge): Pair<Int, Int> {
+        return edge
+    }
+
+    override fun getEdge(from: Int, to: Int): MatrixEdge? {
+        if (matrix[from][to]) {
+            return Pair(from, to)
+        }
+        return null
     }
 
     override fun removeEdge(edge: MatrixEdge) {
