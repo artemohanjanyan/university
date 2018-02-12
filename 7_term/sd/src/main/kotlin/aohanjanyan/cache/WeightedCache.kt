@@ -1,4 +1,4 @@
-package aohanjanyan.sd
+package aohanjanyan.cache
 
 interface WeightedCache<in Key, Value> {
     fun put(key: Key, value: Value, weight: Int)

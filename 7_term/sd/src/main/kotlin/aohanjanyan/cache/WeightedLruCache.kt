@@ -1,4 +1,4 @@
-package aohanjanyan.sd
+package aohanjanyan.cache
 
 class WeightedLruCache<in Key, Value>(private val maxWeight: Int) :
         Cache<Key, Value>,

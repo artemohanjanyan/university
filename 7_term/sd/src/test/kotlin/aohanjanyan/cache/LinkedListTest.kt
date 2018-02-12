@@ -1,4 +1,4 @@
-package aohanjanyan.sd
+package aohanjanyan.cache
 
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.*
@@ -25,14 +25,14 @@ internal class LinkedListTest {
 
     @Test
     fun emptyHeadTailTest() {
-        list = LinkedList<Int>()
+        list = LinkedList()
         assertNull(list.head())
         assertNull(list.tail())
     }
 
     @Test
     fun addToHeadTest() {
-        list = LinkedList<Int>()
+        list = LinkedList()
         assertEquals(0, list.addToHead(0).value())
         assertEquals(1, list.addToHead(1).value())
         assertEquals(2, list.addToHead(2).value())
@@ -51,7 +51,7 @@ internal class LinkedListTest {
 
     @Test
     fun inflateAndClearTest() {
-        list = LinkedList<Int>()
+        list = LinkedList()
         assertNull(list.head())
         assertNull(list.tail())
         for (i in 0 until 5) {

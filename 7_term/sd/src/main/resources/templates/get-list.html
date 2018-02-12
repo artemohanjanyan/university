@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+    <title th:text="${taskList.title}">Task Lists</title>
+</head>
+<body>
+    <table>
+        <tr th:each="task, iterStat : ${taskList.getTasks()}">
+            <td th:if="${!task.done}">
+                <a th:text="${task.str}"></a>
+            </td>
+            <td th:if="${!task.done}">
+                <form th:action="@{do-task}" th:object="${doTaskCommand}" method="post">
+                    <input type="hidden" name="taskListId" th:value="${taskList.id}"/>
+                    <input type="hidden" name="taskI" th:value="${iterStat.index}"/>
+                    <input type="submit" value="Done"/>
+                </form>
+            </td>
+            <td th:if="${task.done}">
+                <s><a th:text="${task.str}"></a></s>
+            </td>
+        </tr>
+    </table>
+    <form th:action="@{add-task}" th:object="${addTaskCommand}" method="post">
+        <input type="hidden" name="taskListId" th:value="${taskList.id}"/>
+        <input type="text" name="taskStr" placeholder="Buy milk"/>
+        <input type="submit" value="Add"/>
+    </form>
+    <a th:href="@{get-lists}">back</a>
+</body>
+</html>
