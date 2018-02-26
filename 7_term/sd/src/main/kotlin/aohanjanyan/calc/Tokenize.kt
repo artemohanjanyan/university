@@ -1,43 +1,88 @@
 package aohanjanyan.calc
 
-fun tokenize(input: String): List<Token> {
-    var i = 0
-    fun skipSpaces() {
-        while (i < input.length && input[i].isWhitespace()) {
-            ++i
+interface TokenizerState {
+    fun processInput(tokenizer: Tokenizer, c: Char)
+
+    fun processEof(tokenizer: Tokenizer) {
+        tokenizer.tokenizerState = EofTokenizerState
+    }
+}
+
+object StartTokenizerState : TokenizerState {
+    override fun processInput(tokenizer: Tokenizer, c: Char) {
+        when (c) {
+            '(' -> tokenizer.tokens.add(LeftBracket)
+            ')' -> tokenizer.tokens.add(RightBracket)
+            '+' -> tokenizer.tokens.add(PlusToken)
+            '-' -> tokenizer.tokens.add(MinusToken)
+            '*' -> tokenizer.tokens.add(MulToken)
+            '/' -> tokenizer.tokens.add(DivToken)
+            in '0'..'9' -> {
+                tokenizer.tokenizerState = NumberTokenizerState()
+                tokenizer.processInput(c)
+            }
+            else -> {
+                if (!c.isWhitespace()) {
+                    throw IllegalArgumentException("unexpected char $c")
+                }
+            }
+        }
+    }
+}
+
+class NumberTokenizerState : TokenizerState {
+    private var number = 0
+
+    override fun processInput(tokenizer: Tokenizer, c: Char) {
+        when (c) {
+            in '0'..'9' -> {
+                number = number * 10 + (c - '0')
+            }
+            else -> {
+                tokenizer.tokens.add(NumberToken(number))
+                tokenizer.tokenizerState = StartTokenizerState
+                tokenizer.processInput(c)
+            }
         }
     }
 
-    val tokens = ArrayList<Token>()
+    override fun processEof(tokenizer: Tokenizer) {
+        tokenizer.tokens.add(NumberToken(number))
+        super.processEof(tokenizer)
+    }
+}
 
-    skipSpaces()
-    while (i < input.length) {
-        tokens.add(
-                when (input[i]) {
-                    '(' -> LeftBracket
-                    ')' -> RightBracket
-                    '+' -> PlusToken
-                    '-' -> MinusToken
-                    '*' -> MulToken
-                    '/' -> DivToken
-                    in '0'..'9' -> {
-                        var number = 0
-                        while (i < input.length && input[i] in '0'..'9') {
-                            number = number * 10 + (input[i] - '0')
-                            ++i
-                        }
-                        --i
-                        NumberToken(number)
-                    }
-                    else -> {
-                        val message = "bad character ${input[i]} at 1:$i"
-                        throw IllegalArgumentException(message)
-                    }
-                }
-        )
-        ++i
-        skipSpaces()
+object EofTokenizerState : TokenizerState {
+    override fun processInput(tokenizer: Tokenizer, c: Char) {
+        throw UnsupportedOperationException("operation on eof state")
     }
 
-    return tokens
+    override fun processEof(tokenizer: Tokenizer) {
+        throw UnsupportedOperationException("operation on eof state")
+    }
+}
+
+class Tokenizer {
+    var tokenizerState: TokenizerState = StartTokenizerState
+
+    val tokens = ArrayList<Token>()
+
+    fun processInput(c: Char) {
+        tokenizerState.processInput(this, c)
+    }
+
+    fun processEof() {
+        tokenizerState.processEof(this)
+    }
+
+    fun processInput(input: String) {
+        input.forEach(this::processInput)
+        processEof()
+    }
+}
+
+fun tokenize(input: String): List<Token> {
+    val tokenizer = Tokenizer()
+    tokenizer.processInput(input)
+    return tokenizer.tokens
 }
