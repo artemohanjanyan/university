@@ -48,12 +48,14 @@ mul = r z (s add [p 3 1, p 3 3])
 --pow = r (s n [z]) (s mul [p 3 1, p 3 3])
 pow = functionFrom "R<S<N, Z>, S<mul, Pi 3 1, Pi 3 3>>"
 iff = s (r (p 2 1) (p 2 2)) [p 3 2, p 3 3, p 3 1]
+sub = functionFrom "R<Pi 1 1, S<R<Z, Pi 3 2>, Pi 3 1, Pi 3 3>>"
 
 customOperations =
     [ (add, symb "add" *> return add)
     , (mul, symb "mul" *> return mul)
     , (pow, symb "pow" *> return pow)
     , (iff, symb "if" *> return iff)
+    , (sub, symb "sub" *> return sub)
     ]
 
 ------------
