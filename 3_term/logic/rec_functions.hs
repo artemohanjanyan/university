@@ -1,119 +1,135 @@
 {-# LANGUAGE FlexibleContexts #-}
 
 import           Control.Applicative ((*>), (<*))
-import           Data.Char           (isDigit)
+import           Control.Monad       (foldM_, void)
+import           Data.Char           (isAlphaNum, isDigit, isLower)
 import           Text.Parsec
 
 data N0
-    = Zero
-    | Succ N0
+  = Zero
+  | Succ N0
 
 toInt :: N0 -> Int
 toInt Zero     = 0
 toInt (Succ x) = 1 + toInt x
 
+fromInt :: Int -> N0
 fromInt x = foldr (const Succ) Zero [1..x]
---fromInt x = foldr ($) Zero $ replicate x Succ
 
 instance Show N0 where
-    show = show . toInt
+  show = show . toInt
 
-z :: [N0] -> N0
-z [x] = Zero
+type RecFunc = [N0] -> N0
 
-n :: [N0] -> N0
+z :: RecFunc
+z [_] = Zero
+z _   = error "bad arity for Z"
+
+n :: RecFunc
 n [x] = Succ x
+n _   = error "bad arity for N"
 
-p :: Int -> Int -> [N0] -> N0
-p n j xs = xs !! (j - 1)
+p :: Int -> Int -> RecFunc
+p nn _ xs | nn /= length xs = error "bad arity for U"
+p _ j xs  = xs !! (j - 1)
 
-s :: ([N0] -> N0) -> [([N0] -> N0)] -> [N0] -> N0
+s :: RecFunc -> [RecFunc] -> RecFunc
 s f gs xs = f $ map ($ xs) gs
 
-r :: ([N0] -> N0) -> ([N0] -> N0) -> [N0] -> N0
+r :: RecFunc -> RecFunc -> RecFunc
 r f g args =
   case y of
     Zero     -> f xs
-    (Succ p) -> g $ xs ++ [p] ++ [r f g $ xs ++ [p]]
+    (Succ i) -> g $ xs ++ [i] ++ [r f g $ xs ++ [i]]
   where
     xs = init args
     y = last args
-
-functionFrom s =
-  case parse function "" s of
-    Right f -> f
-
-add = r (p 1 1) (s n [p 3 3])
-mul = r z (s add [p 3 1, p 3 3])
---pow = r (s n [z]) (s mul [p 3 1, p 3 3])
-pow = functionFrom "R<S<N, Z>, S<mul, Pi 3 1, Pi 3 3>>"
-iff = s (r (p 2 1) (p 2 2)) [p 3 2, p 3 3, p 3 1]
-sub = functionFrom "R<Pi 1 1, S<R<Z, Pi 3 2>, Pi 3 1, Pi 3 3>>"
-
-customOperations =
-    [ (add, symb "add" *> return add)
-    , (mul, symb "mul" *> return mul)
-    , (pow, symb "pow" *> return pow)
-    , (iff, symb "if" *> return iff)
-    , (sub, symb "sub" *> return sub)
-    ]
 
 ------------
 -- Parser --
 ------------
 
-number :: Parsec String () N0
-number = (<?> "number") $
-  do
-    cs <- many1 $ satisfy isDigit
-    many space
-    return $ fromInt $ read cs
+type Parser a = Parsec String () a
 
-expression :: Parsec String () N0
-expression = many space *>
+type CustomFunc = (String, RecFunc)
+
+number :: Parser Int
+number = (<?> "number") $ lexeme $ read <$> (many1 $ satisfy isDigit)
+
+function :: [CustomFunc] -> Parser RecFunc
+function fs = fParser
+  where
+    fsParsers = map (\(funcName, func) -> func <$ try (symb funcName)) fs
+    fParser = foldr (<|>)
+      (   do
+          symb "Z"
+          return z
+      <|> do
+          symb "N"
+          return n
+      <|> do
+          symb "Pi" <|> symb "U"
+          nn <- number
+          j <- number
+          return $ p nn j
+      <|> do
+          symb "S"
+          symb "<"
+          f <- fParser
+          comma
+          gs <- fParser `sepBy` comma
+          symb ">"
+          return (s f gs)
+      <|> do
+          symb "R"
+          symb "<"
+          f <- fParser
+          comma
+          g <- fParser
+          symb ">"
+          return (r f g)
+      ) fsParsers
+
+lexeme :: Parser a -> Parser a
+lexeme = (<* spaces)
+
+symb :: String -> Parser ()
+symb = void . lexeme . string
+
+comma :: Parser ()
+comma = symb ","
+
+identifier :: Parser String
+identifier = lexeme $ (:) <$> satisfy isLower <*> many (satisfy isAlphaNum)
+
+expression :: [CustomFunc] -> Parser N0
+expression fs = spaces *>
   do
-    f <- function
+    f <- function fs
     symb "("
-    xs <- number `sepBy` comma
+    xs <- (fromInt <$> number) `sepBy` comma
     symb ")"
     return $ f xs
 
-function :: Parsec String () ([N0] -> N0)
---many space *>
-function = foldr1 (<|>) $
-    (   do
-        symb "Z"
-        return z
-    <|> do
-        symb "N"
-        return n
-    <|> do
-        symb "Pi"
-        n <- many1 (satisfy isDigit) <* many space
-        j <- many1 (satisfy isDigit) <* many space
-        return $ p (read n) (read j)
-    <|> do
-        symb "S"
-        symb "<"
-        f <- function
-        comma
-        gs <- function `sepBy` comma
-        symb ">"
-        return (s f gs)
-    <|> do
-        symb "R"
-        symb "<"
-        f <- function
-        comma
-        g <- function
-        symb ">"
-        return (r f g)
-    ) : map snd customOperations
+assignment :: [CustomFunc] -> Parser CustomFunc
+assignment fs = spaces *>
+  do
+    funcName <- identifier
+    symb "="
+    func <- function fs
+    pure (funcName, func)
 
-symb s = string s <* many space
-comma = symb ","
+statement :: [CustomFunc] -> Parser (Either N0 CustomFunc)
+statement fs = Left <$> try (expression fs) <|> Right <$> assignment fs
 
-main = do
-  s <- getLine
-  let Right x = parse expression "" s
-  putStrLn $ show x
+main :: IO ()
+main = (zip [1..] . lines) <$> getContents >>= foldM_ goMain []
+  where
+    goMain :: [CustomFunc] -> (Int, String) -> IO [CustomFunc]
+    goMain fs (lineN, stmt) =
+      case parse (statement fs) (show lineN) stmt of
+        Left e -> fs <$ putStrLn (show e)
+        Right stmt' ->
+          case stmt' of
+            Left res -> fs <$ print (toInt res)
+            Right f  -> pure $ f:fs
